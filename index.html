@@ -82,6 +82,24 @@ a{color:var(--gold)}
 }
 .btn.danger{background:#b34940;color:white}
 .btn.small{font-size:12px;padding:7px 10px}
+.admin-mod-row{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;min-height:49px;padding:11px 13px;margin:7px 0;
+  gap:12px;border:1px solid var(--edge);border-radius:12px;
+  background:#26382c;color:var(--text);text-align:left;
+  font-size:15px;cursor:pointer
+}
+.admin-mod-row:hover,.admin-mod-row:focus-visible{
+  border-color:var(--orange);background:#354637
+}
+.admin-mod-row .mod-name{font-weight:750;overflow-wrap:anywhere}
+.admin-mod-row .mod-open{color:var(--gold);font-size:13px;white-space:nowrap}
+.admin-review-actions{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0}
+.admin-review-actions .btn{font-size:14px;padding:11px 14px;min-height:43px}
+.admin-preview-image{width:100%;max-height:270px;object-fit:contain;
+  border-radius:12px;background:#15221a;margin-bottom:15px}
+.admin-current-file{margin-top:7px;overflow-wrap:anywhere;font-size:13px}
+
 /* Mod detail actions: full labels, readable targets and clear pending state. */
 .mod-actions{gap:10px;align-items:stretch}
 .mod-actions .btn{font-size:15px;padding:12px 15px;min-height:46px;line-height:1.3}
@@ -848,8 +866,11 @@ async function saveProfile(f){
   close();
   await go('profile',S.u.id)
 }
-function modFields(m){
-  return `<form id="modForm" data-id="${m?.id||''}">
+function modFields(m,adminEdit=false){
+  return `<form id="modForm" data-id="${m?.id||''}" data-admin="${adminEdit}">
+    ${adminEdit?`<div class="buttons">
+      ${btn('adminModDetail','← Tekshiruvga qaytish',m.id,'ghost')}
+    </div>`:''}
     ${formField(t('name'),'title','text',m?.title||'')}
     <div class="formgroup">
       <label>${t('desc')}</label>
@@ -872,21 +893,25 @@ function modFields(m){
     </div>
     <div class="formgroup">
       <label>${t('image')}</label>
+      ${m?.cover_path?`<img class="admin-preview-image" src="${e(cover(m.cover_path))}" alt="Mod rasmi">
+        <p class="admin-current-file muted">Hozirgi rasm: ${e(m.cover_path.split('/').pop())}</p>`:''}
       <input class="field" type="file" name="image"
         accept="image/jpeg,image/png,image/webp,image/gif"
         ${m?'':'required'}>
     </div>
     <div class="formgroup">
       <label>${t('file')}</label>
+      ${m?.file_path?`<p class="admin-current-file muted">Hozirgi fayl: ${e(m.file_path.split('/').pop())}</p>`:''}
       <input class="field" type="file" name="file"
         accept=".zip,.jar,.mcpack,.mcaddon,.mcworld,.rar,.7z"
         ${m?'':'required'}>
     </div>
     <div class="note">
-      Mod admin tasdig‘idan keyin ko‘rinadi.
-      Tahrirlangan mod qayta tekshiriladi.
+      ${adminEdit?
+        'O‘zgartirishlar saqlanadi. Modni tasdiqlash yoki rad etish alohida bajariladi.':
+        'Mod admin tasdig‘idan keyin ko‘rinadi. Tahrirlangan mod qayta tekshiriladi.'}
     </div>
-    <button class="btn">${t('send')}</button>
+    <button class="btn" type="submit">${adminEdit?'💾 O‘zgarishlarni saqlash':t('send')}</button>
   </form>`
 }
 function create(){
@@ -902,10 +927,16 @@ function create(){
 }
 async function saveMod(f){
   if(!requireUser())return;
+  const adminEdit=f.dataset.admin==='true';
+  if(adminEdit && (!S.me?.is_admin||S.me.username!=='admin'))
+    throw Error('Faqat admin tahrirlay oladi');
   let x=new FormData(f),id=f.dataset.id,m=null;
   if(id){
-    m=check(await DB.from('mods').select('*')
-      .eq('id',id).eq('author_id',S.u.id).single())
+    let query=DB.from('mods').select('*').eq('id',id);
+    if(!adminEdit)query=query.eq('author_id',S.u.id);
+    m=check(await query.single());
+    if(adminEdit&&m.status!=='pending')
+      throw Error('Bu mod endi tekshiruvda emas');
   }
   let image=x.get('image'),file=x.get('file');
   let cover_path=m?.cover_path||'',file_path=m?.file_path||'';
@@ -926,14 +957,19 @@ async function saveMod(f){
   };
   if(data.title.length<3||data.description.length<10)
     throw Error('Mod nomi yoki tavsifi juda qisqa');
-  check(m?
-    await DB.from('mods').update(data)
-      .eq('id',id).eq('author_id',S.u.id):
-    await DB.from('mods').insert({...data,author_id:S.u.id})
-  );
-  toast(t('pending'));
+  if(m){
+    let query=DB.from('mods').update(data).eq('id',id);
+    if(adminEdit)query=query.eq('status','pending');
+    else query=query.eq('author_id',S.u.id);
+    const updated=check(await query.select('id'));
+    if(!updated?.length)throw Error('Mod yangilanmadi. Sahifani qayta oching');
+  }else{
+    check(await DB.from('mods').insert({...data,author_id:S.u.id}));
+  }
+  toast(adminEdit?'✅ Mod tahrirlandi':t('pending'));
   close();
-  await go('profile',S.u.id)
+  if(adminEdit)await adminModDetail(id);
+  else await go('profile',S.u.id)
 }
 async function editMod(id){
   if(!requireUser())return;
@@ -1402,15 +1438,10 @@ async function admin(){
   dialog(t('admin'),`
     <h3>📦 ${t('pending')} (${mods.data.length})</h3>
     ${mods.data.map(m=>`
-      <div class="item">
-        <b>${e(m.title)}</b> · ${e(m.game_version)}
-        <p class="wrap">${e(m.description)}</p>
-        <div class="buttons">
-          ${btn('mod',t('edit'),m.id,'ghost')}
-          ${adminBtn('approve_mod',t('approve'),m.id)}
-          ${adminBtn('reject_mod',t('reject'),m.id,'danger')}
-        </div>
-      </div>`).join('')||blank()}
+      <button class="admin-mod-row" data-act="adminModDetail" data-id="${e(m.id)}">
+        <span class="mod-name">📦 ${e(m.title)}</span>
+        <span class="mod-open">Ochish ›</span>
+      </button>`).join('')||blank()}
     <h3>🔵 ${t('badge')} (${badges.data.length})</h3>
     ${badges.data.map(v=>`
       <div class="item">
@@ -1456,6 +1487,42 @@ async function admin(){
         ${p.verified?
           adminBtn('remove_verification','✓✕',p.id,'ghost'):''}
       </div>`).join('')}`)
+}
+async function adminModDetail(id,preview=false){
+  if(!S.me?.is_admin||S.me.username!=='admin')
+    throw Error('Faqat @admin');
+  const m=check(await DB.from('mods').select('*').eq('id',id).single());
+  const profile=(await users([m.author_id]))[m.author_id];
+  const actions=`<div class="admin-review-actions">
+    ${btn('adminModDetail',preview?'← Orqaga':'👁 Ko‘rish',id,'ghost')}
+    ${m.status==='pending'?btn('adminEditMod','✏️ Tahrirlash',id,'ghost'):''}
+    ${m.status==='pending'?adminBtn('approve_mod','✅ Tasdiqlash',id):''}
+    ${m.status==='pending'?adminBtn('reject_mod','❌ Rad etish',id,'danger'):''}
+    ${btn('admin','📋 Ro‘yxat', '', 'ghost')}
+  </div>`;
+  const previewBody=preview?`
+    ${m.cover_path?`<img class="admin-preview-image"
+      src="${e(cover(m.cover_path))}" alt="Mod rasmi">`:''}
+    <p><b>Muallif:</b> ${profile?'@'+e(profile.username):'—'}</p>
+    <p><b>Versiya:</b> ${e(m.game_version)} · <b>Tur:</b> ${e(m.category)}</p>
+    <p class="wrap">${e(m.description)}</p>
+    <p class="admin-current-file"><b>Mod fayli:</b> ${e(m.file_path?.split('/').pop()||'—')}</p>
+    `:`<p class="muted">Ko‘rish orqali rasm, tavsif va fayl nomini tekshiring.</p>`;
+  dialog(m.title,`
+    <span class="status">${e(m.status)}</span>
+    ${previewBody}
+    ${actions.replace(
+      `data-act="adminModDetail" data-id="${e(id)}"`,
+      `data-act="adminModDetail" data-id="${e(id)}" data-preview="${!preview}"`
+    )}
+  `);
+}
+async function adminEditMod(id){
+  if(!S.me?.is_admin||S.me.username!=='admin')
+    throw Error('Faqat @admin');
+  const m=check(await DB.from('mods').select('*').eq('id',id).single());
+  if(m.status!=='pending')throw Error('Mod tekshiruvda emas');
+  dialog('✏️ '+m.title,modFields(m,true));
 }
 function adminBtn(action,text,id,extra=''){
   return `<button class="btn small ${extra}"
@@ -1524,6 +1591,9 @@ window.addEventListener('click',async event=>{
       await followList(act,id);
     else if(act==='editProfile')editProfile();
     else if(act==='editMod')await editMod(id);
+    else if(act==='adminModDetail')
+      await adminModDetail(id,a.dataset.preview==='true');
+    else if(act==='adminEditMod')await adminEditMod(id);
     else if(act==='removeMod')await removeMod(id);
     else if(act==='like')await toggleTable('mod_likes',id);
     else if(act==='saveMod')await toggleTable('mod_saves',id);
