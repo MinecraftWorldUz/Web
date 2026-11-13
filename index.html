@@ -701,13 +701,13 @@ function authBox(register=false){
       <div class="formgroup">
         <label>Parol</label>
         <input class="field" type="password" name="password"
-          minlength="${register?12:1}" maxlength="72"
+          minlength="${register?8:1}" maxlength="72"
           autocomplete="${register?'new-password':'current-password'}" required>
       </div>
       ${register?`<div class="formgroup">
         <label>Parolni takrorlang</label>
         <input class="field" type="password" name="password2"
-          minlength="12" maxlength="72"
+          minlength="8" maxlength="72"
           autocomplete="new-password" required>
       </div>`:''}
       <button class="btn" type="submit">${t(register?'register':'login')}</button>
@@ -728,8 +728,8 @@ async function submitAuth(f){
   if(!password || new TextEncoder().encode(password).length>72)
     throw Error('Parol bo‘sh bo‘lmasin, 72 baytdan oshmasin');
   if(register){
-    if([...password].length<12)
-      throw Error('Parol kamida 12 belgidan iborat bo‘lsin');
+    if([...password].length<8)
+      throw Error('Parol kamida 8 belgidan iborat bo‘lsin');
     if(password!==form.get('password2'))
       throw Error('Parollar bir xil emas');
   }
