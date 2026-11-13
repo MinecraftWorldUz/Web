@@ -613,7 +613,7 @@ const S={
   u:null,me:null,page:'home',profileId:null,
   sort:'new',category:'all',query:'',tab:'play',
   chatId:null,lang:localStorage.getItem('mw_lang')||'uz',
-  feed:[],cache:{},channel:null
+  feed:[],cache:{},channel:null,homeView:'all',visibleMods:12,gameVersion:'all',savedIds:new Set()
 };
 const V=[
   '1.16','1.17','1.18','1.19','1.20','1.20.1',
@@ -777,13 +777,6 @@ function optionList(arr,sel){
     ${sel===x?'selected':''}>${e(x==='other'?'Other':x)}</option>`
   ).join('')
 }
-async function users(ids){
-  let a=[...new Set(ids.filter(Boolean))];
-  if(!a.length)return {};
-  let r=await DB.from('profiles').select('*').in('id',a);
-  check(r);
-  return Object.fromEntries(r.data.map(p=>[p.id,p]))
-}
 function miniUser(p){
   return `<button class="linkbtn" data-act="user"
     data-id="${e(p?.id)}">${label(p)}</button>`
@@ -833,56 +826,177 @@ async function go(page='home',id=null){
     toast(err.message)
   }
 }
-async function home(){
-  let r=await DB.from('mods').select('*')
-    .eq('status','approved')
-    .order(S.sort==='popular'?'likes_count':'created_at',
-      {ascending:false}).limit(100);
-  check(r);
-  S.feed=r.data;
-  S.cache=await users(S.feed.map(m=>m.author_id));
+const FEED_CACHE_KEY='mw_public_feed_v4';
+const FEED_TTL=5*60*1000;
+let searchTimer=null, homeRequest=0;
+const knownProfiles=new Map();
+function setCachedProfiles(rows){
+  const now=Date.now();
+  for(const p of rows||[])if(p?.id)knownProfiles.set(p.id,{p,at:now});
+}
+async function users(ids){
+  const distinct=[...new Set(ids.filter(Boolean))];
+  const now=Date.now(), result={},missing=[];
+  for(const id of distinct){
+    const c=knownProfiles.get(id);
+    if(c&&now-c.at<90*1000)result[id]=c.p;
+    else missing.push(id);
+  }
+  if(missing.length){
+    const r=await DB.from('profiles')
+      .select('id,username,avatar_url,verified,verified_until,banned_permanently,banned_until,public_id')
+      .in('id',missing.slice(0,200));
+    check(r);
+    setCachedProfiles(r.data);
+    for(const p of r.data)result[p.id]=p;
+  }
+  return result;
+}
+function readFeedCache(){
+  try{
+    const cached=JSON.parse(localStorage.getItem(FEED_CACHE_KEY)||'null');
+    if(cached&&Array.isArray(cached.items)&&Date.now()-cached.at<FEED_TTL)
+      return cached;
+  }catch{}
+  return null;
+}
+function saveFeedCache(){
+  try{
+    localStorage.setItem(FEED_CACHE_KEY,JSON.stringify({
+      at:Date.now(),items:S.feed.slice(0,60),
+      profiles:Object.values(S.cache).filter(Boolean).slice(0,100)
+    }));
+  }catch{}
+}
+function homeShell(){
   $('#app').innerHTML=`
-    <section class="hero">
-      <span class="eyebrow">${ico('sparkles',15)} MINECRAFT CREATOR HUB</span>
-      <h1>${t('welcome')}<br><span>Minecraft World.</span></h1>
-      <p>${t('intro')}</p>
+    <section class="hero compact-hero">
+      <span class="eyebrow">${ico('sparkles',15)} MINECRAFT WORLD 2.0</span>
+      <h1>O‘yin dunyongni<br><span>kengaytir.</span></h1>
+      <p>Eng qiziqarli Minecraft modlarini kashf et, saqla va do‘stlaring bilan bo‘lish.</p>
       <div class="buttons">
-        <button class="btn" data-go="create">${ico('upload',18)} ${t('addMod')}</button>
-        <button class="btn ghost" data-go="community">
-          ${ico('users',19)} ${t('community')}
-        </button>
+        <button class="btn" data-go="create">${ico('upload',19)} Mod joylash</button>
+        <button class="btn ghost" data-go="community">${ico('users',19)} Hamjamiyat</button>
       </div>
-      <span class="autumn">${ico('pickaxe',118)}</span>
+      <span class="autumn">${ico('pickaxe',112)}</span>
     </section>
-    <div class="bar">
-      <h2>${t('mods')}</h2>
-      <div class="tabs">
-        <button data-act="sort" data-sort="new"
-          class="${S.sort==='new'?'on':''}">${t('new')}</button>
-        <button data-act="sort" data-sort="popular"
-          class="${S.sort==='popular'?'on':''}">${t('popular')}</button>
+    <section class="discover-stats">
+      <div class="stat-tile">${ico('package',23)} <b id="feedTotal">—</b><span>Modlar</span></div>
+      <div class="stat-tile">${ico('heart',23)} <b id="feedLikes">—</b><span>Layklar</span></div>
+      <div class="stat-tile">${ico('download',23)} <b id="feedDownloads">—</b><span>Yuklashlar</span></div>
+    </section>
+    <section class="explore">
+      <div class="bar explore-bar">
+        <div><span class="section-kicker">KASHF ETISH</span>
+          <h2>Modlar olami</h2></div>
+        <div class="tabs discover-tabs">
+          <button data-act="homeView" data-view="all" class="${S.homeView==='all'?'on':''}">${ico('globe',17)} Barchasi</button>
+          <button data-act="homeView" data-view="saved" class="${S.homeView==='saved'?'on':''}">${ico('bookmark',17)} Saqlanganlar</button>
+        </div>
       </div>
-    </div>
-    <div class="filters">
-      <input class="field" id="search"
-        placeholder="${t('search')}" value="${e(S.query)}">
-      <select class="field" id="category">
-        <option value="all">${t('all')}</option>
-        ${optionList(C,S.category)}
-      </select>
-    </div>
-    <div id="modGrid" class="grid"></div>`;
+      <div class="filters">
+        <label class="search-wrap">${ico('package',19)}
+          <input class="field" id="search" autocomplete="off"
+            placeholder="Mod nomi yoki tavsifini qidiring..." value="${e(S.query)}">
+        </label>
+        <select class="field" id="category">
+          <option value="all">Barcha kategoriyalar</option>${optionList(C,S.category)}
+        </select>
+        <select class="field" id="gameVersion">
+          <option value="all">Barcha versiyalar</option>
+          ${optionList(V,S.gameVersion||'all')}
+        </select>
+      </div>
+      <div id="quickCategories" class="quick-categories"></div>
+      <div class="results-heading"><span id="resultsCount">Yuklanmoqda...</span>
+        <div class="tabs sort-tabs">
+          <button data-act="sort" data-sort="new" class="${S.sort==='new'?'on':''}">${ico('clock',15)} Yangi</button>
+          <button data-act="sort" data-sort="popular" class="${S.sort==='popular'?'on':''}">${ico('heart',15)} Mashhur</button>
+        </div>
+      </div>
+      <div id="modGrid" class="grid">
+        ${Array.from({length:6},()=>'<div class="skeleton-card"><div class="skeleton-art"></div><div class="skeleton-lines"></div></div>').join('')}
+      </div>
+      <div id="moreModsWrap" class="load-more" hidden></div>
+    </section>`;
   $('#category').value=S.category;
-  filterMods()
+  $('#gameVersion').value=S.gameVersion||'all';
+}
+function refreshFeedCounters(){
+  if(!$('#feedTotal'))return;
+  $('#feedTotal').textContent=count(S.feed.length);
+  $('#feedLikes').textContent=count(S.feed.reduce((sum,m)=>sum+(m.likes_count||0),0));
+  $('#feedDownloads').textContent=count(S.feed.reduce((sum,m)=>sum+(m.downloads_count||0),0));
+  $('#quickCategories').innerHTML=
+    `<button class="category-chip ${S.category==='all'?'selected':''}"
+      data-act="quickCategory" data-category="all">Hammasi</button>`+
+    [...new Set(S.feed.map(m=>m.category).filter(Boolean))].slice(0,6).map(c=>
+      `<button class="category-chip ${S.category===c?'selected':''}"
+        data-act="quickCategory" data-category="${e(c)}">${e(c)}</button>`).join('');
+}
+async function loadSavedIds(){
+  if(!S.u){S.savedIds=new Set();return}
+  const owner=S.u.id;
+  const result=await DB.from('mod_saves').select('mod_id').eq('user_id',owner).limit(500);
+  if(result.error)throw result.error;
+  if(S.u?.id===owner)S.savedIds=new Set((result.data||[]).map(x=>x.mod_id));
+}
+async function home(){
+  const request=++homeRequest;
+  homeShell();
+  const cached=readFeedCache();
+  if(cached){
+    S.feed=cached.items;
+    setCachedProfiles(cached.profiles);
+    S.cache=Object.fromEntries(cached.profiles.map(p=>[p.id,p]));
+    filterMods();
+  }
+  const query=DB.from('mods')
+    .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,created_at')
+    .eq('status','approved')
+    .order(S.sort==='popular'?'likes_count':'created_at',{ascending:false}).limit(60);
+  const savedPromise=S.homeView==='saved'?loadSavedIds():Promise.resolve();
+  const [res,savedResult]=await Promise.allSettled([query,savedPromise]);
+  if(S.page!=='home'||request!==homeRequest)return;
+  if(res.status==='rejected'||res.value.error){
+    if(!cached)throw (res.status==='rejected'?res.reason:res.value.error);
+    toast('Ulanish sust. Oldingi modlar ko‘rsatildi.');
+    return;
+  }
+  if(savedResult.status==='rejected')toast('Saqlangan modlarni olishda xato');
+  S.feed=res.value.data||[];
+  filterMods();
+  saveFeedCache();
+  try{
+    S.cache=await users(S.feed.map(m=>m.author_id));
+    if(S.page==='home'&&request===homeRequest)filterMods();
+    saveFeedCache();
+  }catch(err){console.warn('Author profiles:',err)}
 }
 function filterMods(){
+  if(!$('#modGrid'))return;
+  refreshFeedCounters();
+  const q=S.query.toLocaleLowerCase().trim();
+  const view=S.homeView||'all';
   let result=S.feed.filter(m=>
     (S.category==='all'||m.category===S.category)&&
-    (`${m.title} ${m.description}`.toLowerCase()
-      .includes(S.query.toLowerCase()))
+    (!S.gameVersion||S.gameVersion==='all'||m.game_version===S.gameVersion)&&
+    (view!=='saved'||S.savedIds?.has(m.id))&&
+    (!q||`${m.title} ${m.description} ${m.category}`.toLocaleLowerCase().includes(q))
   );
-  $('#modGrid').innerHTML=result.length?
-    result.map(m=>card(m,S.cache[m.author_id])).join(''):blank()
+  if(S.sort==='popular')result.sort((a,b)=>(b.likes_count||0)-(a.likes_count||0));
+  else result.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  const shown=result.slice(0,S.visibleMods||12);
+  $('#resultsCount').textContent=result.length+' ta mod topildi';
+  $('#modGrid').innerHTML=shown.length?
+    shown.map(m=>card(m,S.cache[m.author_id])).join(''):
+    `<div class="empty wide-empty">${ico(view==='saved'?'bookmark':'package',32)}
+    <b>${view==='saved'?'Hozircha saqlangan mod yo‘q':'Hech narsa topilmadi'}</b>
+    <span>${view==='saved'?'Mod sahifasida Saqlash tugmasini bosing.':'Boshqa so‘z yoki kategoriya bilan qidiring.'}</span></div>`;
+  const more=$('#moreModsWrap');
+  more.hidden=result.length<=shown.length;
+  more.innerHTML=more.hidden?'':`<button class="btn ghost" data-act="moreMods">
+    ${ico('plus',18)} Yana modlar (${result.length-shown.length})</button>`;
 }
 async function profile(id){
   if(!id){
