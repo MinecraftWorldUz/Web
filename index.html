@@ -691,70 +691,81 @@ async function toggleFollow(id){
 function authBox(register=false){
   dialog(register?t('register'):t('login'),`
     <form id="authForm" data-register="${register}">
-
-      ${formField(
-        'Username',
-        'username',
-        'text'
-      )}
-
-      ${formField(
-        'Parol',
-        'password',
-        'password'
-      )}
-
-      ${register?formField(
-        'Parolni takrorlang',
-        'password2',
-        'password'
-      ):''}
-
-      <button class="btn" type="submit">
-        ${t(register?'register':'login')}
-      </button>
-
+      <div class="formgroup">
+        <label>Username</label>
+        <input class="field" name="username"
+          minlength="3" maxlength="20"
+          pattern="[A-Za-z0-9_]{3,20}" autocomplete="username"
+          autocapitalize="off" spellcheck="false" required>
+      </div>
+      <div class="formgroup">
+        <label>Parol</label>
+        <input class="field" type="password" name="password"
+          minlength="${register?12:1}" maxlength="72"
+          autocomplete="${register?'new-password':'current-password'}" required>
+      </div>
+      ${register?`<div class="formgroup">
+        <label>Parolni takrorlang</label>
+        <input class="field" type="password" name="password2"
+          minlength="12" maxlength="72"
+          autocomplete="new-password" required>
+      </div>`:''}
+      <button class="btn" type="submit">${t(register?'register':'login')}</button>
     </form>
-
     <div class="divider"></div>
-
-    <button
-      class="btn ghost"
-      data-act="authSwitch"
-      data-register="${!register}">
-      ${t(register?'login':'register')}
-    </button>
+    <button class="btn ghost" type="button" data-act="authSwitch"
+      data-register="${!register}">${t(register?'login':'register')}</button>
   `);
 }
 
 async function submitAuth(f){
-  let x=new FormData(f);
-  let email=String(x.get('email')).trim();
-  let password=String(x.get('password'));
-  if(password.length<8)throw Error('Parol kamida 8 belgi bo‘lsin');
-  if(f.dataset.register==='true'){
-    let username=String(x.get('username')).trim().toLowerCase();
-    if(!/^[a-z0-9_]{3,20}$/.test(username))
-      throw Error('Username: 3–20 ta a-z, 0-9 yoki _');
-    if(password!==x.get('password2'))
-      throw Error('Parollar mos emas');
-    let exists=await DB.from('profiles').select('id')
-      .eq('username',username).maybeSingle();
-    check(exists);
-    if(exists.data)throw Error('Bu username band');
-    let r=await DB.auth.signUp({
-      email,password,options:{data:{username}}
-    });
-    check(r);
-    toast(r.data.session?'Akkaunt ochildi':
-      'Emailni tasdiqlashingiz kerak bo‘lishi mumkin')
-  }else{
-    check(await DB.auth.signInWithPassword({email,password}))
+  const form=new FormData(f);
+  const username=String(form.get('username')||'').trim().toLowerCase();
+  const password=String(form.get('password')||'');
+  const register=f.dataset.register==='true';
+  if(!/^[a-z0-9_]{3,20}$/.test(username))
+    throw Error('Username 3–20 ta: a–z, 0–9 yoki _');
+  if(!password || new TextEncoder().encode(password).length>72)
+    throw Error('Parol bo‘sh bo‘lmasin, 72 baytdan oshmasin');
+  if(register){
+    if([...password].length<12)
+      throw Error('Parol kamida 12 belgidan iborat bo‘lsin');
+    if(password!==form.get('password2'))
+      throw Error('Parollar bir xil emas');
   }
+  let response;
+  try{
+    response=await fetch(
+      'https://ruovdgyfcucspffrvijh.supabase.co/functions/v1/username-auth',
+      {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        credentials:'omit',
+        cache:'no-store',
+        body:JSON.stringify({
+          action:register?'signup':'login',username,password
+        })
+      }
+    );
+  }catch{
+    throw Error('Login serveri hali ishga tushmagan yoki ulanmagan');
+  }
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok)
+    throw Error(result.error||'Login serveri javob bermadi');
+  if(!result.access_token||!result.refresh_token)
+    throw Error('Server sessiya qaytarmadi');
+  const {error}=await DB.auth.setSession({
+    access_token:result.access_token,
+    refresh_token:result.refresh_token
+  });
+  if(error)throw error;
   close();
+  toast('Xush kelibsiz, @'+username);
   await refreshUser();
-  await go('home')
+  await go('home');
 }
+
 async function refreshUser(){
   let s=await DB.auth.getUser();
   S.u=s.data?.user||null;
