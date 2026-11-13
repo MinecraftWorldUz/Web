@@ -499,6 +499,51 @@ h2{font-size:clamp(21px,2.4vw,28px)}
 .account-full{display:flex;gap:10px;align-items:center;background:#f7a14b16;border:1px solid #f7ac6480;padding:12px;border-radius:12px;color:#f8cfaa;flex:1}
 .account-note{font-size:12px;color:#abc5bc;line-height:1.6;margin:18px 0 0}
 @media(max-width:560px){.account-menu-head strong{font-size:15px}}
+
+.compact-hero{min-height:235px;padding:38px clamp(24px,5vw,58px);margin-bottom:17px}
+.compact-hero h1{font-size:clamp(38px,5.2vw,58px);margin-bottom:11px}
+.compact-hero .eyebrow{margin-bottom:13px}
+.compact-hero p{margin:10px 0}
+.compact-hero .buttons{margin-top:18px}
+.discover-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin-bottom:25px}
+.stat-tile{display:flex;align-items:center;gap:10px;padding:15px 20px;background:linear-gradient(120deg,#18363b,#11252f);border:1px solid #baff833a;border-radius:17px;min-width:0}
+.stat-tile .svg-icon{color:#baff83}
+.stat-tile b{font-size:22px;line-height:1;white-space:nowrap}
+.stat-tile span{font-size:12px;color:#a8c7ba}
+.section-kicker{font-weight:850;letter-spacing:.16em;font-size:10px;color:#baff83}
+.explore-bar{margin:8px 0 12px}
+.explore-bar h2{margin:4px 0}
+.discover-tabs button,.sort-tabs button{display:inline-flex;align-items:center;gap:7px;justify-content:center}
+.search-wrap{flex:2;min-width:210px;position:relative;display:flex;align-items:center}
+.search-wrap .svg-icon{position:absolute;left:15px;z-index:1;color:#adff9e}
+.search-wrap input{padding-left:43px}
+.filters select{flex:1;min-width:155px}
+.quick-categories{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:10px 0 15px}
+.category-chip{padding:8px 13px;border-radius:100px;background:#1b3038;border:1px solid #b2f4d63b;color:#d5e9df;font-weight:700;font-size:12px}
+.category-chip.selected,.category-chip:hover{background:#baff8327;color:#d9ffb9;border-color:#baff83a0}
+.results-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:11px 0 16px}
+#resultsCount{font-size:13px;color:#b4d1c4}
+.sort-tabs{margin:0}
+.sort-tabs button{font-size:12px;min-height:35px;padding:7px 12px}
+.load-more{text-align:center;margin:25px 0}
+.wide-empty{grid-column:1/-1;padding:55px 20px;text-align:center}
+.skeleton-card{height:305px;border-radius:20px;overflow:hidden;background:#152b34;border:1px solid #bbfbe020}
+.skeleton-art{height:170px;background:linear-gradient(105deg,#26423e,#376458,#26423e);background-size:210% 100%;animation:worldSkeleton 1.4s infinite}
+.skeleton-lines{height:95px;margin:20px;border-radius:12px;background:linear-gradient(105deg,#25433c,#385750,#25433c);background-size:210% 100%;animation:worldSkeleton 1.4s infinite}
+@keyframes worldSkeleton{to{background-position-x:-210%}}
+@media(max-width:630px){
+ .stat-tile{padding:10px;flex-direction:column;gap:5px}
+ .stat-tile b{font-size:19px}
+ .stat-tile span{font-size:11px}
+ .compact-hero{padding:31px 22px}
+ .compact-hero h1{font-size:41px}
+ .search-wrap{min-width:100%;flex:1}
+ .filters select{min-width:130px}
+ .discover-tabs{width:100%}
+ .discover-tabs button{flex:1}
+}
+@media(prefers-reduced-motion:reduce){.skeleton-art,.skeleton-lines{animation:none}}
+
 </style>
 </head>
 <body>
@@ -2083,7 +2128,29 @@ window.addEventListener('click',async event=>{
     else if(act==='notifications')await notifications();
     else if(act==='sort'){
       S.sort=a.dataset.sort;
-      await home()
+      document.querySelectorAll('[data-sort]').forEach(x=>
+        x.classList.toggle('on',x.dataset.sort===S.sort));
+      filterMods();
+    }
+    else if(act==='homeView'){
+      if(a.dataset.view==='saved'&&!S.u){authBox();return}
+      S.homeView=a.dataset.view;
+      S.visibleMods=12;
+      document.querySelectorAll('[data-view]').forEach(x=>
+        x.classList.toggle('on',x.dataset.view===S.homeView));
+      if(S.homeView==='saved')await loadSavedIds();
+      filterMods();
+    }
+    else if(act==='quickCategory'){
+      S.category=a.dataset.category;
+      const category=$('#category');
+      if(category)category.value=S.category;
+      S.visibleMods=12;
+      filterMods();
+    }
+    else if(act==='moreMods'){
+      S.visibleMods+=12;
+      filterMods();
     }
     else if(act==='follow')await toggleFollow(id);
     else if(act==='posts')
@@ -2171,7 +2238,11 @@ window.addEventListener('click',async event=>{
 window.addEventListener('input',ev=>{
   if(ev.target.id==='search'){
     S.query=ev.target.value;
-    filterMods()
+    S.visibleMods=12;
+    clearTimeout(searchTimer);
+    searchTimer=setTimeout(()=>{
+      if(S.page==='home')filterMods()
+    },130);
   }else if(ev.target.id==='accountSearch'){
     filterAccounts()
   }
@@ -2179,6 +2250,11 @@ window.addEventListener('input',ev=>{
 window.addEventListener('change',async ev=>{
   if(ev.target.id==='category'){
     S.category=ev.target.value;
+    S.visibleMods=12;
+    filterMods()
+  }else if(ev.target.id==='gameVersion'){
+    S.gameVersion=ev.target.value;
+    S.visibleMods=12;
     filterMods()
   }else if(ev.target.id==='language'){
     S.lang=ev.target.value;
