@@ -544,6 +544,12 @@ h2{font-size:clamp(21px,2.4vw,28px)}
 }
 @media(prefers-reduced-motion:reduce){.skeleton-art,.skeleton-lines{animation:none}}
 
+.art{isolation:isolate}.quick-save{position:absolute;right:12px;top:12px;z-index:2;
+width:42px;height:42px;display:grid;place-items:center;border-radius:13px;
+color:#effff5;background:#0c1f29d9;border:1px solid #b3ff9e85;backdrop-filter:blur(10px)}
+.quick-save:hover,.quick-save.saved{background:#baff83;color:#17301c;
+transform:scale(1.06)}
+@media(max-width:560px){.quick-save{width:38px;height:38px}}
 </style>
 </head>
 <body>
@@ -832,6 +838,9 @@ function card(m,p,own=false){
       ${cover(m.cover_path)?`<img loading="lazy"
         src="${e(cover(m.cover_path))}" alt="">`:ico('package',58)}
       <span class="chip">${e(m.category)}</span>
+      <button class="quick-save ${S.savedIds?.has(m.id)?'saved':''}"
+        data-act="quickSave" data-id="${e(m.id)}" title="Saqlash"
+        aria-label="Modni saqlash">${ico('bookmark',21)}</button>
     </div>
     <div class="cardbody">
       <h3><button class="linkbtn" data-act="mod"
@@ -1327,6 +1336,11 @@ async function refreshUser(){
     const {data:current}=await DB.auth.getSession();
     if(current?.session?.user?.id===S.u.id)
       rememberAccount(current.session,S.me?.username);
+    loadSavedIds().then(()=>{
+      if(S.page==='home')filterMods();
+    }).catch(console.warn);
+  }else{
+    S.savedIds=new Set();
   }
   $('#accountTop').innerHTML=ico('users',19)+'<span>'+e(S.me?'@'+nick(S.me):t('login'))+'</span>'+ico('arrow',14);
   if(S.listenUserId!==S.u?.id){
@@ -1558,6 +1572,7 @@ async function openMod(id){
       ${m.status==='approved'?
         btn('saveMod','Saqlash · '+count(m.saves_count),id,'ghost'):
         `<button class="btn ghost" disabled title="Mod tekshiruvda">${ico('bookmark',18)} Saqlash · ${count(m.saves_count)}</button>`}
+      ${m.status==='approved'?btn('shareMod','Ulashish',id,'ghost'):''}
       ${m.status==='approved'?btn('reportMod',t('report'),id,'ghost'):''}
     </div>
     <div class="note">
@@ -1593,7 +1608,7 @@ async function comments(id){
     </div>`).join(''):blank();
   $('#commentList').dataset.mod=id
 }
-async function toggleTable(table,id){
+async function toggleTable(table,id,detail=true){
   if(!requireUser())return;
   let r=await DB.from(table).select('mod_id')
     .eq('mod_id',id).eq('user_id',S.u.id).maybeSingle();
@@ -1605,7 +1620,36 @@ async function toggleTable(table,id){
       mod_id:id,user_id:S.u.id
     })
   );
-  await openMod(id)
+  if(table==='mod_saves'){
+    if(r.data)S.savedIds?.delete(id);
+    else S.savedIds?.add(id);
+    if(S.page==='home')filterMods();
+  }
+  if(detail)await openMod(id);
+  else toast(r.data?'Saqlanganlardan olib tashlandi':'Mod saqlandi');
+}
+function modShareUrl(id){
+  const url=new URL(location.href);
+  url.search='';
+  url.hash='';
+  url.searchParams.set('mod',id);
+  return url.href;
+}
+async function shareMod(id){
+  const link=modShareUrl(id);
+  if(navigator.share){
+    try{
+      await navigator.share({title:'Minecraft World — mod',url:link});
+      return;
+    }catch(err){if(err.name==='AbortError')return}
+  }
+  try{
+    await navigator.clipboard.writeText(link);
+    toast('Mod havolasi nusxalandi');
+  }catch{
+    dialog('Mod havolasi',`<p>Ushbu havolani nusxalang:</p>
+      <input class="field" readonly value="${e(link)}">`);
+  }
 }
 async function download(id){
   const mod=check(await DB.from('mods').select('status')
@@ -2169,6 +2213,8 @@ window.addEventListener('click',async event=>{
     else if(act==='removeMod')await removeMod(id);
     else if(act==='like')await toggleTable('mod_likes',id);
     else if(act==='saveMod')await toggleTable('mod_saves',id);
+    else if(act==='quickSave')await toggleTable('mod_saves',id,false);
+    else if(act==='shareMod')await shareMod(id);
     else if(act==='download')await download(id);
     else if(act==='reportMod')report('mod',id);
     else if(act==='reportUser')report('profile',id);
@@ -2382,6 +2428,10 @@ function leaves(){
     x=>x.textContent=t(x.dataset.tr)
   );
   await Promise.allSettled([go('home'),refreshUser()]);
+  const deepId=new URLSearchParams(location.search).get('mod');
+  if(deepId&&/^[0-9a-f-]{36}$/i.test(deepId)){
+    openMod(deepId).catch(err=>console.warn('Mod havolasi:',err));
+  }
   // Supabase may emit SIGNED_IN again when the browser tab regains focus.
   // Update account data without forcing the user back to the home screen.
   DB.auth.onAuthStateChange((event,session)=>{
