@@ -798,7 +798,7 @@ async function go(page='home',id=null){
   document.querySelectorAll('[data-go]').forEach(
     x=>x.classList.toggle('on',x.dataset.go===page)
   );
-  $('#app').innerHTML='<div class="empty">🍁 ...</div>';
+  $('#app').innerHTML='<div class="empty">'+ico('package',30)+'</div>';
   try{
     if(page==='home')await home();
     else if(page==='profile')await profile(id||S.u?.id);
@@ -822,16 +822,16 @@ async function home(){
   S.cache=await users(S.feed.map(m=>m.author_id));
   $('#app').innerHTML=`
     <section class="hero">
-      <span class="eyebrow">✦ THE AUTUMN EDITION</span>
+      <span class="eyebrow">${ico('sparkles',15)} MINECRAFT CREATOR HUB</span>
       <h1>${t('welcome')}<br><span>Minecraft World.</span></h1>
       <p>${t('intro')}</p>
       <div class="buttons">
-        <button class="btn" data-go="create">＋ ${t('addMod')}</button>
+        <button class="btn" data-go="create">${ico('upload',18)} ${t('addMod')}</button>
         <button class="btn ghost" data-go="community">
-          🎮 ${t('community')}
+          ${ico('users',19)} ${t('community')}
         </button>
       </div>
-      <span class="autumn">🍁</span>
+      <span class="autumn">${ico('pickaxe',118)}</span>
     </section>
     <div class="bar">
       <h2>${t('mods')}</h2>
@@ -897,7 +897,7 @@ async function profile(id){
       </div>
     </div>
     <p class="wrap">${e(banned(p)?'Akkaunt cheklangan':
-      p.bio||'🍁 Minecraft World')}</p>
+      p.bio||'Minecraft World jamoasi a’zosi')}</p>
     <div class="counters">
       <button class="count" data-act="posts">
         <b>${count(pc.count)}</b><span>${t('posts')}</span>
@@ -1162,7 +1162,7 @@ function create(){
   }
   $('#app').innerHTML=`
     <div class="banner">
-      <h2>➕ ${t('addMod')}</h2>
+      <h2>${ico('upload',26)} ${t('addMod')}</h2>
       ${modFields()}
     </div>`
 }
@@ -1207,7 +1207,7 @@ async function saveMod(f){
   }else{
     check(await DB.from('mods').insert({...data,author_id:S.u.id}));
   }
-  toast(adminEdit?'✅ Mod tahrirlandi':t('pending'));
+  toast(adminEdit?'Mod tahrirlandi':t('pending'));
   close();
   if(adminEdit)await adminModDetail(id);
   else await go('profile',S.u.id)
@@ -1251,7 +1251,7 @@ async function openMod(id){
     <div class="row">${avatar(p)}${miniUser(p)}</div>
     ${m.status!=='approved'?`
       <div class="note mod-review-message" role="status">
-        🕒 ${m.status==='pending'?
+        ${ico('clock',18)} ${m.status==='pending'?
           'Mod tekshiruvda. Admin tasdiqlagach like, saqlash, izoh yozish va yuklab olish ishlaydi.':
           'Mod tasdiqlanmagan. Like va yuklab olish hozircha mavjud emas.'}
       </div>`:''}
@@ -1260,20 +1260,20 @@ async function openMod(id){
         btn('download','⬇ '+t('downloads')+' · '+count(m.downloads_count),id):
         `<button class="btn" disabled title="Mod hali tasdiqlanmagan">⬇ Yuklab olish · ${count(m.downloads_count)}</button>`}
       ${m.status==='approved'?
-        btn('like',(l.data?'❤️':'🤍')+' Like · '+count(m.likes_count),id,'ghost'):
-        `<button class="btn ghost" disabled title="Mod tekshiruvda">🤍 Like · ${count(m.likes_count)}</button>`}
+        btn('like','Like · '+count(m.likes_count),id,'ghost'):
+        `<button class="btn ghost" disabled title="Mod tekshiruvda">${ico('heart',18)} Like · ${count(m.likes_count)}</button>`}
       ${m.status==='approved'?
-        btn('saveMod',(s.data?'🔖':'📑')+' Saqlash · '+count(m.saves_count),id,'ghost'):
-        `<button class="btn ghost" disabled title="Mod tekshiruvda">🔖 Saqlash · ${count(m.saves_count)}</button>`}
+        btn('saveMod','Saqlash · '+count(m.saves_count),id,'ghost'):
+        `<button class="btn ghost" disabled title="Mod tekshiruvda">${ico('bookmark',18)} Saqlash · ${count(m.saves_count)}</button>`}
       ${m.status==='approved'?btn('reportMod','⚑ '+t('report'),id,'ghost'):''}
     </div>
     <div class="note">
       Fayllarni faqat ishonchli manbadan yuklab oling.
     </div>
-    <h3>💬 ${t('comments')} (${count(m.comments_count)})</h3>
+    <h3>${ico('chat',21)} ${t('comments')} (${count(m.comments_count)})</h3>
     <div id="commentList"></div>
     ${m.status!=='approved'?
-      '<p class="muted">💬 Izoh yozish mod tasdiqlangach ochiladi.</p>':
+      '<p class="muted">Izoh yozish mod tasdiqlangach ochiladi.</p>':
       S.u?`<form id="commentForm" data-id="${id}" class="row">
       <input class="field" style="flex:1" name="body"
         maxlength="1000" placeholder="${t('message')}" required>
@@ -1331,7 +1331,7 @@ async function download(id){
   document.body.appendChild(link);
   link.click();
   link.remove();
-  toast('⬇ Yuklab olish boshlandi');
+  toast('Yuklab olish boshlandi');
 }
 async function community(){
   if(S.tab==='play'){
@@ -1344,7 +1344,7 @@ async function community(){
         .eq('user_id',S.u.id)).map(x=>x.play_id):[];
     $('#app').innerHTML=`
       <div class="hero" style="padding:30px">
-        <h1>🎮 ${t('community')}</h1>
+        <h1>${ico('users',34)} ${t('community')}</h1>
         <p>${t('intro')}</p>
       </div>
       <div class="tabs">
@@ -1383,7 +1383,7 @@ async function community(){
     check(r);
     S.accounts=r.data;
     $('#app').innerHTML=`
-      <h2>🌍 ${t('community')}</h2>
+      <h2>${ico('globe',25)} ${t('community')}</h2>
       <div class="tabs">
         <button data-act="tab" data-tab="play">${t('play')}</button>
         <button class="on" data-act="tab"
@@ -1458,7 +1458,7 @@ async function chats(){
   if(!ids.includes(S.chatId))S.chatId=ids[0]||null;
   $('#app').innerHTML=`
     <div class="bar">
-      <h2>✉ ${t('chat')}</h2>
+      <h2>${ico('chat',25)} ${t('chat')}</h2>
       ${btn('chooseChat','＋')}
     </div>
     <div class="chatlayout">
@@ -1496,7 +1496,7 @@ async function conversation(id){
           <small>
             ${when(m.created_at)}
             <button class="linkbtn" data-act="reportMsg"
-              data-id="${m.id}">⚑</button>
+              data-id="${m.id}">${ico('flag',15)}</button>
           </small>
         </div>`).join('')||blank()}
     </div>
@@ -1505,7 +1505,7 @@ async function conversation(id){
         data-act="chooseChat">＋</button>
       <input class="field" style="flex:1" name="body"
         maxlength="2000" placeholder="${t('message')}" required>
-      <button class="btn">➤</button>
+      <button class="btn" aria-label="Yuborish">${ico('send',20)}</button>
     </form>`;
   $('#msgs').scrollTop=$('#msgs').scrollHeight
 }
@@ -1546,7 +1546,7 @@ function listen(){
       table:'notifications',filter:`user_id=eq.${S.u.id}`
     },p=>{
       notificationCount();
-      toast('🔔 '+p.new.title);
+      toast(p.new.title);
       if(document.visibilityState==='hidden'&&
         'Notification'in window&&
         Notification.permission==='granted')
@@ -1589,7 +1589,7 @@ async function settings(){
       new Date(S.me.verified_until)>new Date());
   dialog(t('settings'),`
     <div class="item">
-      <label>🌐 ${t('language')}</label>
+      <label>${ico('globe',18)} ${t('language')}</label>
       <select class="field" id="language">
         <option value="uz" ${S.lang==='uz'?'selected':''}>
           🇺🇿 O‘zbekcha
@@ -1603,7 +1603,7 @@ async function settings(){
       </select>
     </div>
     <div class="item">
-      <b>🔵 ${t('request')}</b>
+      <b>${ico('badge',18)} ${t('request')}</b>
       <p class="muted mini">
         ${badgeActive?
           t('verified')+' · '+
@@ -1615,7 +1615,7 @@ async function settings(){
         btn('badgeRequest',t('request')):''}
     </div>
     <div class="item">
-      <b>🔔 Brauzer bildirishnomalari</b>
+      <b>${ico('bell',18)} Brauzer bildirishnomalari</b>
       <div class="buttons">
         ${btn('permit','Yoqish','', 'ghost')}
       </div>
@@ -1677,13 +1677,13 @@ async function admin(){
     people.data.map(p=>[p.id,p])
   );
   dialog(t('admin'),`
-    <h3>📦 ${t('pending')} (${mods.data.length})</h3>
+    <h3>${ico('package',21)} ${t('pending')} (${mods.data.length})</h3>
     ${mods.data.map(m=>`
       <button class="admin-mod-row" data-act="adminModDetail" data-id="${e(m.id)}">
-        <span class="mod-name">📦 ${e(m.title)}</span>
+        <span class="mod-name">${ico('package',19)} ${e(m.title)}</span>
         <span class="mod-open">Ochish ›</span>
       </button>`).join('')||blank()}
-    <h3>🔵 ${t('badge')} (${badges.data.length})</h3>
+    <h3>${ico('badge',21)} ${t('badge')} (${badges.data.length})</h3>
     ${badges.data.map(v=>`
       <div class="item">
         ${e(mp[v.user_id]?.username||v.user_id)}
@@ -1693,7 +1693,7 @@ async function admin(){
           ${adminBtn('reject_verification',t('reject'),v.id,'danger')}
         </div>
       </div>`).join('')||blank()}
-    <h3>⚑ ${t('report')} (${reports.data.length})</h3>
+    <h3>${ico('flag',21)} ${t('report')} (${reports.data.length})</h3>
     ${reports.data.map(r=>`
       <div class="item">
         <b>${e(r.target_kind)}</b>
@@ -1706,7 +1706,7 @@ async function admin(){
             adminBtn('ban',t('ban'),r.target_id,'danger'):''}
         </div>
       </div>`).join('')||blank()}
-    <h3>📂 Barcha modlar (${all.data.length})</h3>
+    <h3>${ico('folder',21)} Barcha modlar (${all.data.length})</h3>
     ${all.data.map(m=>`
       <div class="item">
         ${e(m.title)}
@@ -1716,7 +1716,7 @@ async function admin(){
           ${adminBtn('delete_mod',t('delete'),m.id,'danger')}
         </div>
       </div>`).join('')||blank()}
-    <h3>👥 ${t('accounts')}</h3>
+    <h3>${ico('users',21)} ${t('accounts')}</h3>
     ${people.data.map(p=>`
       <div class="item row">
         <span class="status">#${p.public_id}</span>
@@ -1763,7 +1763,7 @@ async function adminEditMod(id){
     throw Error('Faqat @admin');
   const m=check(await DB.from('mods').select('*').eq('id',id).single());
   if(m.status!=='pending')throw Error('Mod tekshiruvda emas');
-  dialog('✏️ '+m.title,modFields(m,true));
+  dialog(m.title,modFields(m,true));
 }
 function adminBtn(action,text,id,extra=''){
   return `<button class="btn small ${extra}"
@@ -1793,7 +1793,7 @@ async function adminAction(cmd,id){
   check(await DB.rpc('admin_action',{
     p_action:cmd,p_id:id,p_days:days,p_note:note
   }));
-  toast('✅ Bajarildi');
+  toast('Bajarildi');
   await admin()
 }
 
@@ -2025,13 +2025,15 @@ function leaves(){
     x.style.left=(i*59.3%100)+'%';
     x.style.animationDuration=(12+i%7*3)+'s';
     x.style.animationDelay=(-i*2.2)+'s';
-    x.style.fontSize=(14+i%6*4)+'px';
+    x.style.width=(14+i%6*4)+'px';
+    x.style.height=(14+i%6*4)+'px';
     $('#leaves').append(x)
   }
 }
 
 // SAYTNI ISHGA TUSHIRISH
 (async()=>{
+  hydrateIcons();
   leaves();
   document.documentElement.lang=S.lang;
   document.querySelectorAll('[data-tr]').forEach(
