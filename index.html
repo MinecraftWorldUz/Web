@@ -1698,12 +1698,18 @@ function leaves(){
   );
   await refreshUser();
   await go('home');
-  DB.auth.onAuthStateChange(event=>{
-    if(['SIGNED_IN','SIGNED_OUT'].includes(event)){
+  // Supabase may emit SIGNED_IN again when the browser tab regains focus.
+  // Update account data without forcing the user back to the home screen.
+  DB.auth.onAuthStateChange((event,session)=>{
+    if(event==='SIGNED_IN' && session?.user?.id!==S.u?.id){
+      setTimeout(()=>refreshUser().catch(console.error),0);
+    }else if(event==='SIGNED_OUT' && S.u){
       setTimeout(async()=>{
-        await refreshUser();
-        await go('home')
-      },0)
+        try{
+          await refreshUser();
+          if(S.page!=='home')await go('home');
+        }catch(err){console.error(err)}
+      },0);
     }
   })
 })().catch(err=>{
