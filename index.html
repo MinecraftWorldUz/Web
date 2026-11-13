@@ -710,6 +710,11 @@ function authBox(register=false){
           minlength="8" maxlength="72"
           autocomplete="new-password" required>
       </div>`:''}
+      ${register?`<div class="formgroup">
+        <label>Admin kodi (faqat @admin uchun)</label>
+        <input class="field" name="admin_code" type="text"
+          autocomplete="off" placeholder="Oddiy akkaunt uchun bo‘sh qoldiring">
+      </div>`:''}
       <button class="btn" type="submit">${t(register?'register':'login')}</button>
     </form>
     <div class="divider"></div>
@@ -743,7 +748,9 @@ async function submitAuth(f){
         credentials:'omit',
         cache:'no-store',
         body:JSON.stringify({
-          action:register?'signup':'login',username,password
+          action:register?'signup':'login',username,password,
+          admin_code:register&&username==='admin'
+            ?String(form.get('admin_code')||'').trim():undefined
         })
       }
     );
