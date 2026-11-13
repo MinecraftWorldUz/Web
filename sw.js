@@ -2,7 +2,7 @@ const CACHE='mw-public-shell-v1';
 const SCOPE=self.registration.scope;
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>
-    cache.addAll([new URL('./favicon.svg',SCOPE),new URL('./manifest.webmanifest',SCOPE)]))
+    cache.addAll([new URL('./favicon.svg',SCOPE).href,new URL('./manifest.webmanifest',SCOPE).href]))
     .then(()=>self.skipWaiting()));
 });
 self.addEventListener('activate',event=>{
@@ -22,12 +22,12 @@ self.addEventListener('fetch',event=>{
         const online=await fetch(req);
         if(online.ok){
           const cache=await caches.open(CACHE);
-          cache.put(new URL('./index.html',SCOPE),online.clone()).catch(()=>{});
+          cache.put(new URL('./index.html',SCOPE).href,online.clone()).catch(()=>{});
         }
         return online;
       }catch{
         const cache=await caches.open(CACHE);
-        return (await cache.match(new URL('./index.html',SCOPE)))||
+        return (await cache.match(new URL('./index.html',SCOPE).href))||
           Response.error();
       }
     })());
