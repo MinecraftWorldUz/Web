@@ -850,9 +850,9 @@ function card(m,p,own=false){
       ${cover(m.cover_path)?`<img loading="lazy"
         src="${e(cover(m.cover_path))}" alt="">`:ico('package',58)}
       <span class="chip">${e(m.category)}</span>
-      <button class="quick-save ${S.savedIds?.has(m.id)?'saved':''}"
+      ${m.status==='approved'?`<button class="quick-save ${S.savedIds?.has(m.id)?'saved':''}"
         data-act="quickSave" data-id="${e(m.id)}" title="Saqlash"
-        aria-label="Modni saqlash">${ico('bookmark',21)}</button>
+        aria-label="Modni saqlash">${ico('bookmark',21)}</button>`:''}
     </div>
     <div class="cardbody">
       <h3><button class="linkbtn" data-act="mod"
