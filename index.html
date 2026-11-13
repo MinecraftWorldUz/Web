@@ -7,6 +7,9 @@
 <meta name="theme-color" content="#16211b">
 <title>Minecraft World | Mods & Community</title>
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 :root{
   --bg:#101914;--panel:#1c2920;--panel2:#273429;
@@ -909,7 +912,8 @@ async function users(ids){
 function readFeedCache(){
   try{
     const cached=JSON.parse(localStorage.getItem(FEED_CACHE_KEY)||'null');
-    if(cached&&Array.isArray(cached.items)&&Date.now()-cached.at<FEED_TTL)
+    if(cached&&Array.isArray(cached.items)&&
+      Date.now()-cached.at<(navigator.onLine?FEED_TTL:7*24*60*60*1000))
       return cached;
   }catch{}
   return null;
@@ -931,6 +935,7 @@ function homeShell(){
       <div class="buttons">
         <button class="btn" data-go="create">${ico('upload',19)} Mod joylash</button>
         <button class="btn ghost" data-go="community">${ico('users',19)} Hamjamiyat</button>
+        <button class="btn ghost" data-act="installApp">${ico('download',19)} Ilova sifatida</button>
       </div>
       <span class="autumn">${ico('pickaxe',112)}</span>
     </section>
@@ -1966,6 +1971,11 @@ async function settings(){
         ${btn('admin',t('admin'))}
       </div>`:''}
     <div class="item">
+      <b>${ico('download',18)} Minecraft World ilovasi</b>
+      <p class="muted smalltext">Saytni telefon yoki kompyuter bosh ekraniga o‘rnating.</p>
+      <div class="buttons">${btn('installApp','Ilova sifatida o‘rnatish')}</div>
+    </div>
+    <div class="item">
       ${btn('logout',t('logout'),'','danger')}
     </div>`)
 }
@@ -2267,6 +2277,7 @@ window.addEventListener('click',async event=>{
       await notificationCount();
       await notifications()
     }
+    else if(act==='installApp')await installApp();
     else if(act==='admin')await admin();
     else if(act==='adminAction')
       await adminAction(a.dataset.cmd,id);
@@ -2417,6 +2428,27 @@ function leaves(){
     x.style.height=(14+i%6*4)+'px';
     $('#leaves').append(x)
   }
+}
+
+// PWA - only public website shell is cached by the service worker.
+let pendingInstall=null;
+window.addEventListener('beforeinstallprompt',event=>{
+  event.preventDefault();
+  pendingInstall=event;
+});
+async function installApp(){
+  if(!pendingInstall){
+    toast('Brauzer menyusidan "Ilovani o‘rnatish" yoki "Bosh ekranga qo‘shish" ni tanlang.');
+    return;
+  }
+  await pendingInstall.prompt();
+  await pendingInstall.userChoice;
+  pendingInstall=null;
+}
+if('serviceWorker'in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(console.warn);
+  });
 }
 
 // SAYTNI ISHGA TUSHIRISH
