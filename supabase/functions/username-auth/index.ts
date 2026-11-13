@@ -70,13 +70,25 @@ Deno.serve(async (req) => {
       return response(429,{error:"Too many attempts, try again later"});
     let account=await lookup(username);
     if (action==="signup") {
-      if(username==="admin") return response(409,{error:"Admin username is reserved"});
+      const bootstrap = username==="admin";
+      if(bootstrap){
+        if(typeof input.admin_code!=="string" || !input.admin_code.trim())
+          return response(403,{error:"Admin uchun maxsus kod kerak"});
+        const {data:ok,error:claimError}=await admin.rpc("mw_claim_admin",{
+          p_code:input.admin_code.trim()
+        });
+        if(claimError) throw new Error("Admin setup unavailable");
+        if(ok!==true) return response(403,{error:"Admin kodi noto‘g‘ri, ishlatilgan yoki muddati tugagan"});
+      }
       if(account) return response(409,{error:"Bu username band"});
       const {data,error}=await admin.auth.admin.createUser({
         email: crypto.randomUUID()+"@users.invalid",
         password,email_confirm:true,
         user_metadata:{username},
-        app_metadata:{mw_username_auth:"true"}
+        app_metadata:{
+          mw_username_auth:"true",
+          ...(username==="admin"?{mw_admin_bootstrap:"true"}:{})
+        }
       });
       if(error||!data.user) {
         if(await lookup(username)) return response(409,{error:"Bu username band"});
