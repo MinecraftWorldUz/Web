@@ -513,7 +513,7 @@ h2{font-size:clamp(21px,2.4vw,28px)}
         <span data-icon="bell" data-size="21"></span><span id="alertCount" class="dot" hidden></span>
       </button>
       <button class="iconbtn" data-act="settings" aria-label="Sozlamalar"><span data-icon="settings" data-size="21"></span></button>
-      <button class="iconbtn" data-act="self" id="accountTop">Kirish</button>
+      <button class="iconbtn account-trigger" data-act="accounts" id="accountTop" aria-label="Akkauntlarni almashtirish">Kirish</button>
     </div>
   </header>
   <main id="app"></main>
@@ -1066,9 +1066,9 @@ async function switchAccount(id){
   await go('home');
   toast('@'+target.username+' akkauntiga o‘tildi');
 }
-function authBox(register=false){
+function authBox(register=false,adding=false){
   dialog(register?t('register'):t('login'),`
-    <form id="authForm" data-register="${register}">
+    <form id="authForm" data-register="${register}" data-adding="${adding}">
       <div class="formgroup">
         <label>Username</label>
         <input class="field" name="username"
@@ -1092,7 +1092,7 @@ function authBox(register=false){
     </form>
     <div class="divider"></div>
     <button class="btn ghost" type="button" data-act="authSwitch"
-      data-register="${!register}">${t(register?'login':'register')}</button>
+      data-register="${!register}" data-adding="${adding}">${t(register?'login':'register')}</button>
   `);
 }
 
@@ -1101,6 +1101,10 @@ async function submitAuth(f){
   const username=String(form.get('username')||'').trim().toLowerCase();
   const password=String(form.get('password')||'');
   const register=f.dataset.register==='true';
+  const adding=f.dataset.adding==='true';
+  if(adding&&savedAccounts().length>=ACCOUNT_MAX &&
+      !savedAccounts().some(a=>a.username===username))
+    throw Error('5 ta akkaunt limiti tugadi');
   if(!/^[a-z0-9_]{3,20}$/.test(username))
     throw Error('Username 3–20 ta: a–z, 0–9 yoki _');
   if(!password || new TextEncoder().encode(password).length>72)
@@ -1133,11 +1137,20 @@ async function submitAuth(f){
     throw Error(result.error||'Login serveri javob bermadi');
   if(!result.access_token||!result.refresh_token)
     throw Error('Server sessiya qaytarmadi');
-  const {error}=await DB.auth.setSession({
+  const {data:previous}=await DB.auth.getSession();
+  if(previous?.session)rememberAccount(previous.session);
+  const {data:authResult,error}=await DB.auth.setSession({
     access_token:result.access_token,
     refresh_token:result.refresh_token
   });
   if(error)throw error;
+  if(!rememberAccount(authResult.session,username)){
+    if(previous?.session)await DB.auth.setSession({
+      access_token:previous.session.access_token,
+      refresh_token:previous.session.refresh_token
+    });
+    throw Error('5 ta akkaunt limiti tugadi');
+  }
   close();
   toast('Xush kelibsiz, @'+username);
   await refreshUser();
@@ -1150,7 +1163,12 @@ async function refreshUser(){
   S.me=S.u?
     check(await DB.from('profiles').select('*')
       .eq('id',S.u.id).maybeSingle()):null;
-  $('#accountTop').innerHTML=ico('user',18)+'<span>'+e(S.me?'@'+nick(S.me):t('login'))+'</span>';
+  if(S.u){
+    const {data:current}=await DB.auth.getSession();
+    if(current?.session?.user?.id===S.u.id)
+      rememberAccount(current.session,S.me?.username);
+  }
+  $('#accountTop').innerHTML=ico('users',19)+'<span>'+e(S.me?'@'+nick(S.me):t('login'))+'</span>'+ico('arrow',14);
   listen();
   await notificationCount()
 }
@@ -1925,7 +1943,23 @@ window.addEventListener('click',async event=>{
       S.u?await go('profile',S.u.id):authBox();
     else if(act==='auth')authBox();
     else if(act==='authSwitch')
-      authBox(a.dataset.register==='true');
+      authBox(a.dataset.register==='true',a.dataset.adding==='true');
+    else if(act==='accounts')accountMenu();
+    else if(act==='accountAdd'){
+      if(savedAccounts().length>=ACCOUNT_MAX)
+        throw Error('5 ta akkaunt limiti tugadi');
+      authBox(false,true);
+    }
+    else if(act==='accountSwitch')await switchAccount(id);
+    else if(act==='accountRemove'){
+      forgetAccount(id);
+      accountMenu();
+    }
+    else if(act==='accountProfile'){
+      close();
+      if(S.u)await go('profile',S.u.id);
+      else authBox();
+    }
     else if(act==='user'){
       close();
       await go('profile',id)
@@ -2006,7 +2040,9 @@ window.addEventListener('click',async event=>{
     else if(act==='adminAction')
       await adminAction(a.dataset.cmd,id);
     else if(act==='logout'){
-      check(await DB.auth.signOut());
+      const leaving=S.u?.id;
+      check(await DB.auth.signOut({scope:'local'}));
+      if(leaving)forgetAccount(leaving);
       close();
       await refreshUser();
       await go('home')
@@ -2156,6 +2192,8 @@ function leaves(){
   // Supabase may emit SIGNED_IN again when the browser tab regains focus.
   // Update account data without forcing the user back to the home screen.
   DB.auth.onAuthStateChange((event,session)=>{
+    if((event==='TOKEN_REFRESHED'||event==='SIGNED_IN')&&session)
+      rememberAccount(session);
     if(event==='SIGNED_IN' && session?.user?.id!==S.u?.id){
       setTimeout(()=>refreshUser().catch(console.error),0);
     }else if(event==='SIGNED_OUT' && S.u){
