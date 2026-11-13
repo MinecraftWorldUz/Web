@@ -1053,8 +1053,9 @@ async function profile(id){
     .select('*').eq('id',id).single());
   let mine=S.u?.id===id;
   let [mods,pc,fc,gc,f]=await Promise.all([
-    DB.from('mods').select('*').eq('author_id',id)
-      .order('created_at',{ascending:false}),
+    DB.from('mods').select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,comments_count,created_at')
+      .eq('author_id',id)
+      .order('created_at',{ascending:false}).limit(36),
     DB.from('mods').select('id',{count:'exact',head:true})
       .eq('author_id',id).eq('status','approved'),
     DB.from('follows').select('follower_id',{count:'exact',head:true})
@@ -1328,8 +1329,11 @@ async function refreshUser(){
       rememberAccount(current.session,S.me?.username);
   }
   $('#accountTop').innerHTML=ico('users',19)+'<span>'+e(S.me?'@'+nick(S.me):t('login'))+'</span>'+ico('arrow',14);
-  listen();
-  await notificationCount()
+  if(S.listenUserId!==S.u?.id){
+    S.listenUserId=S.u?.id||null;
+    listen();
+  }
+  notificationCount().catch(console.warn);
 }
 async function upload(bucket,file,max,types=null){
   if(!file||!file.size)throw Error('Fayl tanlanmagan');
@@ -1625,7 +1629,7 @@ async function download(id){
 async function community(){
   if(S.tab==='play'){
     let r=await DB.from('play_posts').select('*')
-      .order('play_at',{ascending:true}).limit(100);
+      .order('play_at',{ascending:true}).limit(50);
     check(r);
     let mp=await users(r.data.map(x=>x.author_id));
     let joins=S.u?
@@ -1668,7 +1672,7 @@ async function community(){
       </div>`
   }else{
     let r=await DB.from('profiles').select('*')
-      .order('public_id',{ascending:false}).limit(300);
+      .order('public_id',{ascending:false}).limit(80);
     check(r);
     S.accounts=r.data;
     $('#app').innerHTML=`
@@ -1735,7 +1739,7 @@ async function chats(){
       .eq('follower_id',S.u.id),
     DB.from('messages').select('sender_id,recipient_id')
       .or(`sender_id.eq.${S.u.id},recipient_id.eq.${S.u.id}`)
-      .order('created_at',{ascending:false}).limit(300)
+      .order('created_at',{ascending:false}).limit(80)
   ]);
   check(f);check(m);
   let ids=[...new Set([
@@ -1771,7 +1775,7 @@ async function conversation(id){
   let p=(S.chatUsers||{})[id]||(await users([id]))[id];
   let r=await DB.from('messages').select('*')
     .or(`and(sender_id.eq.${S.u.id},recipient_id.eq.${id}),and(sender_id.eq.${id},recipient_id.eq.${S.u.id})`)
-    .order('created_at',{ascending:true}).limit(300);
+    .order('created_at',{ascending:false}).limit(80);
   check(r);
   let area=$('#conversation');
   if(!area)return;
@@ -1779,7 +1783,7 @@ async function conversation(id){
     <div class="row">${avatar(p)}${miniUser(p)}</div>
     <div class="divider"></div>
     <div class="messages" id="msgs">
-      ${r.data.map(m=>`
+      ${r.data.slice().reverse().map(m=>`
         <div class="bubble ${m.sender_id===S.u.id?'mine':''}">
           ${e(m.body)}
           <small>
@@ -1853,7 +1857,7 @@ async function notifications(){
   if(!requireUser())return;
   let r=await DB.from('notifications').select('*')
     .eq('user_id',S.u.id)
-    .order('created_at',{ascending:false}).limit(100);
+    .order('created_at',{ascending:false}).limit(35);
   check(r);
   dialog(t('notifications'),`
     ${btn('markRead',t('mark'))}
@@ -2377,8 +2381,7 @@ function leaves(){
   document.querySelectorAll('[data-tr]').forEach(
     x=>x.textContent=t(x.dataset.tr)
   );
-  await refreshUser();
-  await go('home');
+  await Promise.allSettled([go('home'),refreshUser()]);
   // Supabase may emit SIGNED_IN again when the browser tab regains focus.
   // Update account data without forcing the user back to the home screen.
   DB.auth.onAuthStateChange((event,session)=>{
