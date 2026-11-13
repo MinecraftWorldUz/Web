@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#16211b">
 <title>Minecraft World | Mods & Community</title>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <style>
 :root{
   --bg:#101914;--panel:#1c2920;--panel2:#273429;
@@ -912,9 +913,9 @@ async function profile(id){
     <div class="buttons">
       ${mine?
         btn('editProfile',t('editProfile'))+
-        btn('settings','⚙ '+t('settings'),'','ghost'):
+        btn('settings',t('settings'),'','ghost'):
         btn('follow',f.data?t('unfollow'):t('follow'),id)+
-        btn('startChat','✉ '+t('chat'),id,'ghost')+
+        btn('startChat',t('chat'),id,'ghost')+
         btn('reportUser',t('report'),id,'ghost')}
     </div>
   </section>
@@ -1265,7 +1266,7 @@ async function openMod(id){
       ${m.status==='approved'?
         btn('saveMod','Saqlash · '+count(m.saves_count),id,'ghost'):
         `<button class="btn ghost" disabled title="Mod tekshiruvda">${ico('bookmark',18)} Saqlash · ${count(m.saves_count)}</button>`}
-      ${m.status==='approved'?btn('reportMod','⚑ '+t('report'),id,'ghost'):''}
+      ${m.status==='approved'?btn('reportMod',t('report'),id,'ghost'):''}
     </div>
     <div class="note">
       Fayllarni faqat ishonchli manbadan yuklab oling.
@@ -1296,7 +1297,7 @@ async function comments(id){
       </div>
       <p class="wrap">${e(c.body)}</p>
       ${S.u?.id===c.author_id||S.me?.is_admin?
-        btn('removeComment','✕',c.id,'danger'):''}
+        btn('removeComment','O‘chirish',c.id,'danger'):''}
     </div>`).join(''):blank();
   $('#commentList').dataset.mod=id
 }
@@ -1373,7 +1374,7 @@ async function community(){
             ${S.u?.id===x.author_id?
               btn('removeInvite',t('delete'),x.id,'danger'):
               btn('join',joins.includes(x.id)?
-                '✓ '+t('applied'):t('join'),x.id,'ghost')}
+                t('applied'):t('join'),x.id,'ghost')}
           </div>
         </div>`).join(''):blank()}
       </div>`
@@ -1519,7 +1520,7 @@ async function chooseChat(){
     r.data.map(x=>`<div class="item row">
       ${avatar(mp[x.following_id])}
       ${miniUser(mp[x.following_id])}
-      ${btn('chatStart','✉',x.following_id)}
+      ${btn('chatStart','Chat',x.following_id)}
     </div>`).join(''):blank())
 }
 async function notificationCount(){
@@ -1726,7 +1727,7 @@ async function admin(){
             banned(p)?t('unban'):t('ban'),
             p.id,banned(p)?'ghost':'danger')}
         ${p.verified?
-          adminBtn('remove_verification','✓✕',p.id,'ghost'):''}
+          adminBtn('remove_verification','Belgini olib tashlash',p.id,'ghost'):''}
       </div>`).join('')}`)
 }
 async function adminModDetail(id,preview=false){
