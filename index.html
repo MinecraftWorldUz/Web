@@ -1626,7 +1626,7 @@ async function settings(){
     </div>
     ${S.me?.is_admin&&S.me.username==='admin'?
       `<div class="item">
-        ${btn('admin','🛡 '+t('admin'))}
+        ${btn('admin',t('admin'))}
       </div>`:''}
     <div class="item">
       ${btn('logout',t('logout'),'','danger')}
@@ -1735,11 +1735,11 @@ async function adminModDetail(id,preview=false){
   const m=check(await DB.from('mods').select('*').eq('id',id).single());
   const profile=(await users([m.author_id]))[m.author_id];
   const actions=`<div class="admin-review-actions">
-    ${btn('adminModDetail',preview?'← Orqaga':'👁 Ko‘rish',id,'ghost')}
-    ${m.status==='pending'?btn('adminEditMod','✏️ Tahrirlash',id,'ghost'):''}
-    ${m.status==='pending'?adminBtn('approve_mod','✅ Tasdiqlash',id):''}
-    ${m.status==='pending'?adminBtn('reject_mod','❌ Rad etish',id,'danger'):''}
-    ${btn('admin','📋 Ro‘yxat', '', 'ghost')}
+    ${btn('adminModDetail',preview?'Orqaga':'Ko‘rish',id,'ghost')}
+    ${m.status==='pending'?btn('adminEditMod','Tahrirlash',id,'ghost'):''}
+    ${m.status==='pending'?adminBtn('approve_mod','Tasdiqlash',id):''}
+    ${m.status==='pending'?adminBtn('reject_mod','Rad etish',id,'danger'):''}
+    ${btn('admin','Ro‘yxat', '', 'ghost')}
   </div>`;
   const previewBody=preview?`
     ${m.cover_path?`<img class="admin-preview-image"
