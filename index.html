@@ -1015,6 +1015,8 @@ async function home(){
   const cached=readFeedCache();
   if(cached){
     S.feed=cached.items;
+    S.hasMore=S.feed.length>=60;
+    S.feedOffset=S.feed.length;
     setCachedProfiles(cached.profiles);
     S.cache=Object.fromEntries(cached.profiles.map(p=>[p.id,p]));
     filterMods();
@@ -1033,6 +1035,9 @@ async function home(){
   }
   if(savedResult.status==='rejected')toast('Saqlangan modlarni olishda xato');
   S.feed=res.value.data||[];
+  S.hasMore=S.feed.length===60;
+  S.feedOffset=S.feed.length;
+  if(S.homeView==='saved')await loadExtraSavedMods();
   filterMods();
   saveFeedCache();
   try{
@@ -1040,6 +1045,45 @@ async function home(){
     if(S.page==='home'&&request===homeRequest)filterMods();
     saveFeedCache();
   }catch(err){console.warn('Author profiles:',err)}
+}
+
+async function loadExtraSavedMods(){
+  if(!S.u||!S.savedIds?.size)return;
+  const existing=new Set(S.feed.map(m=>m.id));
+  const missing=[...S.savedIds].filter(id=>!existing.has(id)).slice(0,80);
+  if(!missing.length)return;
+  const r=await DB.from('mods')
+    .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,created_at')
+    .in('id',missing).eq('status','approved').limit(80);
+  check(r);
+  S.feed.push(...r.data);
+  const profiles=await users(r.data.map(m=>m.author_id));
+  Object.assign(S.cache,profiles);
+}
+async function fetchMoreFeed(){
+  if(S.loadingMore||!S.hasMore)return;
+  S.loadingMore=true;
+  const request=homeRequest;
+  const from=S.feedOffset||0;
+  try{
+    const r=await DB.from('mods')
+      .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,created_at')
+      .eq('status','approved')
+      .order(S.sort==='popular'?'likes_count':'created_at',{ascending:false})
+      .range(from,from+59);
+    check(r);
+    if(S.page!=='home'||request!==homeRequest)return;
+    const existing=new Set(S.feed.map(m=>m.id));
+    S.feed.push(...r.data.filter(m=>!existing.has(m.id)));
+    S.feedOffset=from+r.data.length;
+    S.hasMore=r.data.length===60;
+    S.visibleMods+=12;
+    filterMods();
+    const mp=await users(r.data.map(m=>m.author_id));
+    Object.assign(S.cache,mp);
+    if(S.page==='home'&&request===homeRequest)filterMods();
+    saveFeedCache();
+  }finally{S.loadingMore=false}
 }
 function filterMods(){
   if(!$('#modGrid'))return;
@@ -1062,9 +1106,13 @@ function filterMods(){
     <b>${view==='saved'?'Hozircha saqlangan mod yo‘q':'Hech narsa topilmadi'}</b>
     <span>${view==='saved'?'Mod sahifasida Saqlash tugmasini bosing.':'Boshqa so‘z yoki kategoriya bilan qidiring.'}</span></div>`;
   const more=$('#moreModsWrap');
-  more.hidden=result.length<=shown.length;
+  const canFetchMore=S.homeView!=='saved'&&S.hasMore;
+  more.hidden=result.length<=shown.length&&!canFetchMore;
+  const label=result.length>shown.length?
+    'Yana modlar ('+(result.length-shown.length)+')':
+    'Keyingi modlarni yuklash';
   more.innerHTML=more.hidden?'':`<button class="btn ghost" data-act="moreMods">
-    ${ico('plus',18)} Yana modlar (${result.length-shown.length})</button>`;
+    ${ico('plus',18)} ${label}</button>`;
 }
 async function profile(id){
   if(!id){
@@ -2191,9 +2239,8 @@ window.addEventListener('click',async event=>{
     else if(act==='notifications')await notifications();
     else if(act==='sort'){
       S.sort=a.dataset.sort;
-      document.querySelectorAll('[data-sort]').forEach(x=>
-        x.classList.toggle('on',x.dataset.sort===S.sort));
-      filterMods();
+      S.visibleMods=12;
+      await home();
     }
     else if(act==='homeView'){
       if(a.dataset.view==='saved'&&!S.u){authBox();return}
@@ -2201,7 +2248,10 @@ window.addEventListener('click',async event=>{
       S.visibleMods=12;
       document.querySelectorAll('[data-view]').forEach(x=>
         x.classList.toggle('on',x.dataset.view===S.homeView));
-      if(S.homeView==='saved')await loadSavedIds();
+      if(S.homeView==='saved'){
+        await loadSavedIds();
+        await loadExtraSavedMods();
+      }
       filterMods();
     }
     else if(act==='quickCategory'){
@@ -2212,8 +2262,13 @@ window.addEventListener('click',async event=>{
       filterMods();
     }
     else if(act==='moreMods'){
-      S.visibleMods+=12;
-      filterMods();
+      const total=S.feed.filter(m=>
+        (S.category==='all'||m.category===S.category)&&
+        (!S.gameVersion||S.gameVersion==='all'||m.game_version===S.gameVersion)&&
+        (!S.query||`${m.title} ${m.description}`.toLowerCase().includes(S.query.toLowerCase()))
+      ).length;
+      if(S.visibleMods>=total&&S.hasMore)await fetchMoreFeed();
+      else{S.visibleMods+=12;filterMods()}
     }
     else if(act==='follow')await toggleFollow(id);
     else if(act==='posts')
