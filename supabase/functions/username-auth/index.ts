@@ -63,8 +63,8 @@ Deno.serve(async (req) => {
       return response(400,{error:"Username 3–20: a–z, 0–9, _"});
     if (typeof password !== "string" || !password || new TextEncoder().encode(password).length>72 || password.includes("\0"))
       return response(400,{error:"Invalid password"});
-    if (action==="signup" && [...password].length<12)
-      return response(400,{error:"Password must have at least 12 characters"});
+    if (action==="signup" && [...password].length<8)
+      return response(400,{error:"Password must have at least 8 characters"});
     if (!(await rate(action+":global",action==="signup"?20:120,action==="signup"?3600:60)) ||
         !(await rate(action+":"+username,action==="signup"?3:8,action==="signup"?3600:300)))
       return response(429,{error:"Too many attempts, try again later"});
