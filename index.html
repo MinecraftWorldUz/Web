@@ -687,27 +687,46 @@ async function toggleFollow(id){
   );
   await go('profile',id)
 }
+
 function authBox(register=false){
   dialog(register?t('register'):t('login'),`
-  <form id="authForm" data-register="${register}">
-    ${register?formField('Username (a-z, 0-9, _)','username'):''}
-    ${formField('Email','email','email')}
-    ${formField('Parol','password','password')}
-    ${register?formField('Parolni takrorlang',
-      'password2','password'):''}
-    <button class="btn" type="submit">
-      ${t(register?'register':'login')}
+    <form id="authForm" data-register="${register}">
+
+      ${formField(
+        'Username',
+        'username',
+        'text'
+      )}
+
+      ${formField(
+        'Parol',
+        'password',
+        'password'
+      )}
+
+      ${register?formField(
+        'Parolni takrorlang',
+        'password2',
+        'password'
+      ):''}
+
+      <button class="btn" type="submit">
+        ${t(register?'register':'login')}
+      </button>
+
+    </form>
+
+    <div class="divider"></div>
+
+    <button
+      class="btn ghost"
+      data-act="authSwitch"
+      data-register="${!register}">
+      ${t(register?'login':'register')}
     </button>
-  </form>
-  <div class="divider"></div>
-  <button class="btn ghost" data-act="authSwitch"
-    data-register="${!register}">
-    ${t(register?'login':'register')}
-  </button>
-  <p class="mini muted">
-    Email tasdiqlashni o‘chirish email maydonini olib tashlamaydi.
-  </p>`)
+  `);
 }
+
 async function submitAuth(f){
   let x=new FormData(f);
   let email=String(x.get('email')).trim();
