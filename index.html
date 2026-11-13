@@ -82,6 +82,13 @@ a{color:var(--gold)}
 }
 .btn.danger{background:#b34940;color:white}
 .btn.small{font-size:12px;padding:7px 10px}
+/* Mod detail actions: full labels, readable targets and clear pending state. */
+.mod-actions{gap:10px;align-items:stretch}
+.mod-actions .btn{font-size:15px;padding:12px 15px;min-height:46px;line-height:1.3}
+.mod-actions .btn:disabled{opacity:.65;cursor:not-allowed;filter:none}
+.mod-review-message{font-size:14px;line-height:1.5;margin:12px 0}
+@media(max-width:560px){.mod-actions .btn{flex:1 1 calc(50% - 10px);font-size:14px}}
+
 .buttons{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:12px 0}
 .bar{
   display:flex;align-items:center;justify-content:space-between;
@@ -965,21 +972,32 @@ async function openMod(id){
     </div>
     <p class="wrap">${e(m.description)}</p>
     <div class="row">${avatar(p)}${miniUser(p)}</div>
-    <div class="buttons">
-      ${btn('download','⬇ '+t('downloads')+' '+
-        count(m.downloads_count),id)}
-      ${btn('like',(l.data?'♥':'♡')+' '+
-        count(m.likes_count),id,'ghost')}
-      ${btn('saveMod',(s.data?'▣':'▢')+' '+
-        count(m.saves_count),id,'ghost')}
-      ${btn('reportMod','⚑ '+t('report'),id,'ghost')}
+    ${m.status!=='approved'?`
+      <div class="note mod-review-message" role="status">
+        🕒 ${m.status==='pending'?
+          'Mod tekshiruvda. Admin tasdiqlagach like, saqlash, izoh yozish va yuklab olish ishlaydi.':
+          'Mod tasdiqlanmagan. Like va yuklab olish hozircha mavjud emas.'}
+      </div>`:''}
+    <div class="buttons mod-actions">
+      ${m.status==='approved'?
+        btn('download','⬇ '+t('downloads')+' · '+count(m.downloads_count),id):
+        `<button class="btn" disabled title="Mod hali tasdiqlanmagan">⬇ Yuklab olish · ${count(m.downloads_count)}</button>`}
+      ${m.status==='approved'?
+        btn('like',(l.data?'❤️':'🤍')+' Like · '+count(m.likes_count),id,'ghost'):
+        `<button class="btn ghost" disabled title="Mod tekshiruvda">🤍 Like · ${count(m.likes_count)}</button>`}
+      ${m.status==='approved'?
+        btn('saveMod',(s.data?'🔖':'📑')+' Saqlash · '+count(m.saves_count),id,'ghost'):
+        `<button class="btn ghost" disabled title="Mod tekshiruvda">🔖 Saqlash · ${count(m.saves_count)}</button>`}
+      ${m.status==='approved'?btn('reportMod','⚑ '+t('report'),id,'ghost'):''}
     </div>
     <div class="note">
       Fayllarni faqat ishonchli manbadan yuklab oling.
     </div>
     <h3>💬 ${t('comments')} (${count(m.comments_count)})</h3>
     <div id="commentList"></div>
-    ${S.u?`<form id="commentForm" data-id="${id}" class="row">
+    ${m.status!=='approved'?
+      '<p class="muted">💬 Izoh yozish mod tasdiqlangach ochiladi.</p>':
+      S.u?`<form id="commentForm" data-id="${id}" class="row">
       <input class="field" style="flex:1" name="body"
         maxlength="1000" placeholder="${t('message')}" required>
       <button class="btn">${t('send')}</button>
@@ -1020,11 +1038,23 @@ async function toggleTable(table,id){
   await openMod(id)
 }
 async function download(id){
-  let path=check(await DB.rpc('register_download',{p_mod:id}));
-  let r=await DB.storage.from('mod-files').createSignedUrl(path,90);
-  check(r);
-  window.open(r.data.signedUrl,'_blank','noopener,noreferrer');
-  toast('⬇ '+t('downloads'))
+  const mod=check(await DB.from('mods').select('status')
+    .eq('id',id).single());
+  if(mod.status!=='approved'){
+    toast('Mod tekshiruvda. Tasdiqlangach yuklab olish mumkin.');
+    return;
+  }
+  const path=check(await DB.rpc('register_download',{p_mod:id}));
+  const signed=check(await DB.storage.from('mod-files').createSignedUrl(path,90));
+  if(!signed?.signedUrl)throw Error('Yuklab olish manzili topilmadi');
+  const link=document.createElement('a');
+  link.href=signed.signedUrl;
+  link.target='_blank';
+  link.rel='noopener noreferrer';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  toast('⬇ Yuklab olish boshlandi');
 }
 async function community(){
   if(S.tab==='play'){
