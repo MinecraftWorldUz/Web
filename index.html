@@ -771,7 +771,7 @@ function card(m,p,own=false){
   return `<article class="card">
     <div class="art" data-act="mod" data-id="${m.id}">
       ${cover(m.cover_path)?`<img loading="lazy"
-        src="${e(cover(m.cover_path))}" alt="">`:'⛏'}
+        src="${e(cover(m.cover_path))}" alt="">`:ico('package',58)}
       <span class="chip">${e(m.category)}</span>
     </div>
     <div class="cardbody">
@@ -779,8 +779,8 @@ function card(m,p,own=false){
         data-id="${m.id}">${e(m.title)}</button></h3>
       <p class="muted smalltext">${e(m.description.slice(0,125))}</p>
       <div class="row mini muted">
-        ♡ ${count(m.likes_count)}
-        · ⬇ ${count(m.downloads_count)}
+        ${ico('heart',14)} ${count(m.likes_count)}
+        · ${ico('download',14)} ${count(m.downloads_count)}
         · ${e(m.game_version)}
       </div>
       <div class="divider"></div>
@@ -1152,7 +1152,7 @@ function modFields(m,adminEdit=false){
         'O‘zgartirishlar saqlanadi. Modni tasdiqlash yoki rad etish alohida bajariladi.':
         'Mod admin tasdig‘idan keyin ko‘rinadi. Tahrirlangan mod qayta tekshiriladi.'}
     </div>
-    <button class="btn" type="submit">${adminEdit?'💾 O‘zgarishlarni saqlash':t('send')}</button>
+    <button class="btn" type="submit">${adminEdit?'O‘zgarishlarni saqlash':t('send')}</button>
   </form>`
 }
 function create(){
@@ -1239,7 +1239,7 @@ async function openMod(id){
   dialog(m.title,`
     <div class="art" style="height:245px">
       ${cover(m.cover_path)?
-        `<img src="${e(cover(m.cover_path))}">`:'⛏'}
+        `<img src="${e(cover(m.cover_path))}">`:ico('package',66)}
     </div>
     <div class="bar">
       <h2>${e(m.title)}</h2>
@@ -1362,9 +1362,9 @@ async function community(){
         <div class="item">
           <h3>${e(x.title)}</h3>
           <div class="muted">
-            🎮 ${e(x.play_mode)} · ${e(x.game_version)}
-            · 🕒 ${when(x.play_at)}
-            · 👥 ${count(x.joins_count)}
+            ${ico('gamepad',16)} ${e(x.play_mode)} · ${e(x.game_version)}
+            · ${ico('clock',16)} ${when(x.play_at)}
+            · ${ico('users',16)} ${count(x.joins_count)}
           </div>
           <p class="wrap">${e(x.details)}</p>
           <div class="row">
@@ -2021,7 +2021,7 @@ function leaves(){
   for(let i=0;i<18;i++){
     let x=document.createElement('span');
     x.className='leaf';
-    x.textContent=['🍂','🍁','🍃'][i%3];
+    x.innerHTML=ico('leaf',24);
     x.style.left=(i*59.3%100)+'%';
     x.style.animationDuration=(12+i%7*3)+'s';
     x.style.animationDelay=(-i*2.2)+'s';
