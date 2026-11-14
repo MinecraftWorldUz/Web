@@ -718,6 +718,17 @@ border-bottom:1px solid #755236}
 .chat-unread-tab{position:absolute;top:2px;right:19%;width:9px;height:9px;border-radius:50%;
 background:#3695df;box-shadow:0 0 0 2px #251a11}
 
+
+.comment-card{padding:13px 15px!important;margin-bottom:9px}
+.comment-card p{margin:10px 0}
+.comment-actions{display:flex;align-items:center;gap:9px}
+.comment-like{border:1px solid #946d45;background:#392b1d;color:#e2c291;
+border-radius:4px;padding:6px 13px;display:inline-flex;align-items:center;gap:8px;
+cursor:pointer;min-height:34px}
+.comment-like.liked,.comment-like[aria-pressed="true"]{background:#a33f3c;
+border-color:#ef9892;color:#fff}
+.comment-like:disabled{opacity:.7;cursor:default}
+
 </style>
 </head>
 <body>
@@ -1886,27 +1897,72 @@ async function openMod(id){
     });
   }
 }
+const commentBusy=new Set();
 async function comments(id){
   const box=$('#commentList');
   if(!box||box.dataset.mod!==id)return;
-  const result=await DB.from('comments')
-    .select('id,author_id,body,created_at')
+  const result=await DB.from('comments').select('id,author_id,body,created_at')
     .eq('mod_id',id).order('created_at',{ascending:false}).limit(35);
   check(result);
   if(activeModId!==id||!$('#commentList')||$('#commentList').dataset.mod!==id)return;
   const rows=result.data.slice().reverse();
-  let names={};
-  if(rows.length)names=await users(rows.map(c=>c.author_id));
+  let names={},likes=[];
+  const [namesData,likesData]=await Promise.all([
+    rows.length?users(rows.map(c=>c.author_id)):Promise.resolve({}),
+    rows.length?DB.from('comment_likes').select('comment_id,user_id')
+      .in('comment_id',rows.map(c=>c.id)).limit(2000):Promise.resolve({data:[]})
+  ]);
+  names=namesData;
+  if(!likesData.error)likes=likesData.data||[];
   if(activeModId!==id||!$('#commentList')||$('#commentList').dataset.mod!==id)return;
-  $('#commentList').innerHTML=rows.length?
-    rows.map(c=>`<div class="item">
+  const counts={};const own=new Set();
+  for(const l of likes){
+    counts[l.comment_id]=(counts[l.comment_id]||0)+1;
+    if(l.user_id===S.u?.id)own.add(l.comment_id);
+  }
+  $('#commentList').innerHTML=rows.length?rows.map(c=>
+    `<article class="item comment-card">
       <div class="row">${avatar(names[c.author_id])}
         ${miniUser(names[c.author_id])}
-        <small class="muted">${when(c.created_at)}</small></div>
+        <small class="muted">${when(c.created_at)}</small>
+      </div>
       <p class="wrap">${e(c.body)}</p>
-      ${S.u?.id===c.author_id||S.me?.is_admin?
-        btn('removeComment','O‘chirish',c.id,'danger'):''}
-    </div>`).join(''):blank();
+      <div class="comment-actions">
+        <button class="comment-like ${own.has(c.id)?'liked':''}"
+          data-act="commentLike" data-id="${e(c.id)}"
+          aria-pressed="${own.has(c.id)}" ${S.u?'':'disabled'}>
+          ${ico('heart',17)}
+          <span>${count(counts[c.id]||0)}</span>
+        </button>
+        ${S.u?.id===c.author_id||S.me?.is_admin?
+          btn('removeComment','O‘chirish',c.id,'danger'):''}
+      </div>
+    </article>`).join(''):blank();
+}
+async function toggleCommentLike(id){
+  if(!requireUser()||commentBusy.has(id))return;
+  const button=document.querySelector('.comment-like[data-id="'+id+'"]');
+  if(!button)return;
+  commentBusy.add(id);button.disabled=true;
+  const was=button.getAttribute('aria-pressed')==='true';
+  const label=button.querySelector('span');
+  const oldCount=Number(label?.textContent||0);
+  button.setAttribute('aria-pressed',String(!was));
+  button.classList.toggle('liked',!was);
+  if(label)label.textContent=String(Math.max(0,oldCount+(was?-1:1)));
+  try{
+    const query=was?DB.from('comment_likes').delete()
+      .eq('comment_id',id).eq('user_id',S.u.id):
+      DB.from('comment_likes').insert({comment_id:id,user_id:S.u.id});
+    check(await query);
+  }catch(err){
+    button.setAttribute('aria-pressed',String(was));
+    button.classList.toggle('liked',was);
+    if(label)label.textContent=String(oldCount);
+    throw err;
+  }finally{
+    commentBusy.delete(id);if(button.isConnected)button.disabled=false;
+  }
 }
 const modToggleLocks=new Set();
 async function toggleTable(table,id,detail=true){
@@ -2744,6 +2800,7 @@ window.addEventListener('click',async event=>{
     else if(act==='adminEditMod')await adminEditMod(id);
     else if(act==='removeMod')await removeMod(id);
     else if(act==='like')await toggleTable('mod_likes',id);
+    else if(act==='commentLike')await toggleCommentLike(id);
     else if(act==='saveMod')await toggleTable('mod_saves',id);
     else if(act==='quickSave')await toggleTable('mod_saves',id,false);
     else if(act==='shareMod')await shareMod(id);
