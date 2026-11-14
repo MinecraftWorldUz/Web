@@ -1563,6 +1563,19 @@ async function refreshUser(){
     listen();
   }
   notificationCount().catch(console.warn);
+  if(S.u){
+    worldPref().then(async pref=>{
+      if(pref.joined&&!pref.muted){
+        const last=await DB.from('world_chat_messages').select('id',{count:'exact',head:true})
+          .gt('created_at',pref.last_seen_at||new Date(0).toISOString());
+        if(!last.error)S.worldUnread=Math.min(99,last.count||0);
+      }
+      updateChatBadge();
+    }).catch(console.warn);
+  }else{
+    S.chatUnread=new Set();S.worldUnread=0;S.worldPref=null;
+    updateChatBadge();
+  }
 }
 async function upload(bucket,file,max,types=null){
   if(!file||!file.size)throw Error('Fayl tanlanmagan');
@@ -2097,11 +2110,17 @@ function markChatSeen(id){
   updateChatBadge();
 }
 function updateChatBadge(){
-  const count=S.chatUnread?.size||0;
+  const count=(S.chatUnread?.size||0)+
+    (S.worldPref?.joined!==false&&!S.worldPref?.muted?(S.worldUnread||0):0);
   const tab=document.querySelector('.bottom [data-go="chat"]');
   if(!tab)return;
-  const dot=tab.querySelector('.chat-unread-tab');
-  if(dot)dot.hidden=!count;
+  let dot=tab.querySelector('.chat-unread-tab');
+  if(!dot){
+    dot=document.createElement('span');
+    dot.className='chat-unread-tab';
+    tab.appendChild(dot);
+  }
+  dot.hidden=!count;
 }
 async function worldPref(){
   const {data,error}=await DB.from('world_chat_settings')
@@ -2310,31 +2329,66 @@ async function notificationCount(){
   $('#alertCount').hidden=!r.count;
   $('#alertCount').textContent=r.count>99?'99+':r.count
 }
-function listen(){
-  if(S.channel){
-    DB.removeChannel(S.channel);
-    S.channel=null
+async function onIncomingDirect(msg){
+  if(!S.u||msg.sender_id===S.u.id)return;
+  const sender=msg.sender_id;
+  if(S.page==='chat'&&S.chatId===sender&&$('#msgs')){
+    $('#msgs').insertAdjacentHTML('beforeend',chatBubble(msg.body,false,when(msg.created_at),
+      `<button class="linkbtn" data-act="reportMsg" data-id="${e(msg.id)}">${ico('flag',12)}</button>`));
+    const container=$('#msgs');container.scrollTop=container.scrollHeight;
+    markChatSeen(sender);
+  }else{
+    S.chatUnread=S.chatUnread||new Set();
+    S.chatUnread.add(sender);
+    updateChatBadge();
   }
+  if(notificationEnabled() && document.visibilityState==='hidden' &&
+    'Notification'in window&&Notification.permission==='granted'){
+    new Notification('Yangi shaxsiy xabar',{body:msg.body.slice(0,120)});
+  }
+}
+async function onIncomingWorld(msg){
+  if(!S.u||msg.author_id===S.u.id)return;
+  if(S.worldPref?.joined===false)return;
+  if(S.page==='chat'&&S.chatId==='world'&&$('#msgs')){
+    const mp=await users([msg.author_id]);
+    if(S.chatId!=='world'||!$('#msgs'))return;
+    const p=mp[msg.author_id];
+    $('#msgs').insertAdjacentHTML('beforeend',`<div class="world-message">
+      <button class="linkbtn" data-act="user" data-id="${e(msg.author_id)}">
+      ${avatar(p)} ${label(p)}</button>
+      ${chatBubble(msg.body,false,when(msg.created_at))}
+    </div>`);
+    const container=$('#msgs');container.scrollTop=container.scrollHeight;
+    S.worldUnread=0;
+    worldUpdate({last_seen_at:new Date().toISOString()}).catch(console.warn);
+  }else if(!S.worldPref?.muted){
+    S.worldUnread=Math.min(99,(S.worldUnread||0)+1);
+    updateChatBadge();
+  }
+  if(!S.worldPref?.muted&&notificationEnabled()&&document.visibilityState==='hidden'&&
+     'Notification'in window&&Notification.permission==='granted')
+    new Notification('Umumiy chat',{body:msg.body.slice(0,120)});
+}
+function listen(){
+  if(S.channel){DB.removeChannel(S.channel);S.channel=null}
   if(!S.u)return;
   S.channel=DB.channel('world-'+S.u.id)
-    .on('postgres_changes',{
-      event:'INSERT',schema:'public',
-      table:'notifications',filter:`user_id=eq.${S.u.id}`
-    },p=>{
+    .on('postgres_changes',{event:'INSERT',schema:'public',
+      table:'notifications',filter:`user_id=eq.${S.u.id}`},p=>{
       notificationCount();
-      toast(p.new.title);
-      if(document.visibilityState==='hidden'&&
-        'Notification'in window&&
-        Notification.permission==='granted')
-        new Notification(p.new.title,{body:p.new.body})
+      if(notificationEnabled())toast(p.new.title);
+      if(notificationEnabled()&&document.visibilityState==='hidden'&&
+        'Notification'in window&&Notification.permission==='granted')
+        new Notification(p.new.title,{body:p.new.body});
     })
-    .on('postgres_changes',{
-      event:'INSERT',schema:'public',
-      table:'messages',filter:`recipient_id=eq.${S.u.id}`
-    },()=>{
-      if(S.page==='chat'&&S.chatId)
-        conversation(S.chatId)
-    }).subscribe()
+    .on('postgres_changes',{event:'INSERT',schema:'public',
+      table:'messages',filter:`recipient_id=eq.${S.u.id}`},
+      p=>{onIncomingDirect(p.new).catch(console.warn)})
+    .on('postgres_changes',{event:'INSERT',schema:'public',
+      table:'world_chat_messages'},
+      p=>{onIncomingWorld(p.new).catch(console.warn)})
+    .subscribe();
 }
 async function notifications(){
   if(!requireUser())return;
@@ -2829,7 +2883,7 @@ window.addEventListener('submit',async ev=>{
   let f=ev.target;
   if(![
     'authForm','editProfileForm','modForm','inviteForm',
-    'msgForm','badgeForm','reportForm','commentForm'
+    'msgForm','worldMsgForm','badgeForm','reportForm','commentForm'
   ].includes(f.id))return;
   ev.preventDefault();
   let button=f.querySelector('button[type="submit"],button.btn');
@@ -2857,13 +2911,40 @@ window.addEventListener('submit',async ev=>{
     }
     else if(f.id==='msgForm'){
       if(!requireUser())return;
-      check(await DB.from('messages').insert({
-        sender_id:S.u.id,
-        recipient_id:f.dataset.id,
-        body:new FormData(f).get('body')
-      }));
+      const text=String(new FormData(f).get('body')||'').trim();
+      if(!text)return;
+      const result=check(await DB.from('messages').insert({
+        sender_id:S.u.id,recipient_id:f.dataset.id,body:text
+      }).select('id,body,created_at').single());
       f.reset();
-      await conversation(f.dataset.id)
+      const msgs=$('#msgs');
+      if(msgs&&S.chatId===f.dataset.id){
+        msgs.insertAdjacentHTML('beforeend',chatBubble(result.body,true,when(result.created_at)));
+        msgs.scrollTop=msgs.scrollHeight;
+      }
+      markChatSeen(f.dataset.id);
+      if(!S.chatPeers?.includes(f.dataset.id)){
+        S.chatPeers=[f.dataset.id,...(S.chatPeers||[])];
+        const mp=await users([f.dataset.id]);
+        S.chatUsers={...S.chatUsers,...mp};
+        chatRows();
+      }
+    }
+    else if(f.id==='worldMsgForm'){
+      if(!requireUser()||S.worldPref?.joined===false)return;
+      const text=String(new FormData(f).get('body')||'').trim();
+      if(!text)return;
+      const result=check(await DB.from('world_chat_messages').insert({
+        author_id:S.u.id,body:text
+      }).select('id,author_id,body,created_at').single());
+      f.reset();
+      const msgs=$('#msgs');
+      if(msgs&&S.chatId==='world'){
+        msgs.insertAdjacentHTML('beforeend',`<div class="world-message">
+          ${chatBubble(result.body,true,when(result.created_at))}</div>`);
+        msgs.scrollTop=msgs.scrollHeight;
+      }
+      worldUpdate({last_seen_at:new Date().toISOString()}).catch(console.warn);
     }
     else if(f.id==='badgeForm'){
       if(!requireUser())return;
