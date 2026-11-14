@@ -599,6 +599,11 @@ border-color:#ef9892;color:#fff}
 .card img{transition:none!important}
 #overlay .dialog{background:#2b211a}
 
+.world-message .linkbtn[data-act="reportUser"]{font-size:11px}
+.world-message .bubble{max-width:75%!important}
+.bubble{display:block!important;width:max-content!important;max-width:75%!important}
+.chat-peer .peer-text b{font-size:14px}
+
 </style>
 </head>
 <body>
@@ -695,10 +700,7 @@ function hydrateIcons(root=document){
  if(root.querySelectorAll)nodes.push(...root.querySelectorAll('[data-icon]:not([data-icon-ready])'));
  for(const node of nodes){node.setAttribute('data-icon-ready','1');node.innerHTML=ico(node.dataset.icon,Number(node.dataset.size)||20);}
 }
-new MutationObserver(records=>{
- for(const record of records)for(const node of record.addedNodes)
-  if(node.nodeType===1)hydrateIcons(node);
-}).observe(document.documentElement,{subtree:true,childList:true});
+// Static navigation icons are hydrated once; dynamic UI uses inline SVGs.
 function btnIcon(action){
  return ({settings:'settings',notifications:'bell',self:'user',auth:'login',like:'heart',saveMod:'bookmark',
  download:'download',reportMod:'flag',reportUser:'flag',reportMsg:'flag',removeMod:'trash',removeInvite:'trash',
@@ -998,7 +1000,7 @@ function homeShell(){
     <section class="explore">
       <div class="bar explore-bar">
         <div><span class="section-kicker">KASHF ETISH</span>
-          <h2>Modlar olami</h2></div>
+          <h2>${S.homeView==='saved'?'Saqlangan modlar':'Modlar olami'}</h2></div>
       </div>
       <div class="filters">
         <label class="search-wrap">${ico('package',19)}
@@ -1424,8 +1426,14 @@ async function submitAuth(f){
 }
 
 async function refreshUser(){
+  const previousId=S.u?.id;
   let s=await DB.auth.getUser();
   S.u=s.data?.user||null;
+  if(previousId!==S.u?.id){
+    S.chatId=null;S.chatUnread=new Set();S.chatPeers=[];
+    S.chatUsers={};S.worldUnread=0;S.worldPref=null;
+    S.savedIds=new Set();
+  }
   S.me=S.u?
     check(await DB.from('profiles').select('*')
       .eq('id',S.u.id).maybeSingle()):null;
@@ -1887,29 +1895,6 @@ async function toggleTable(table,id,detail=true){
   }finally{
     if(btnEl?.isConnected)btnEl.disabled=false;
     modToggleLocks.delete(key);
-  }
-}
-function modShareUrl(id){
-  const url=new URL(location.href);
-  url.search='';
-  url.hash='';
-  url.searchParams.set('mod',id);
-  return url.href;
-}
-async function shareMod(id){
-  const link=modShareUrl(id);
-  if(navigator.share){
-    try{
-      await navigator.share({title:'Minecraft World — mod',url:link});
-      return;
-    }catch(err){if(err.name==='AbortError')return}
-  }
-  try{
-    await navigator.clipboard.writeText(link);
-    toast('Mod havolasi nusxalandi');
-  }catch{
-    dialog('Mod havolasi',`<p>Ushbu havolani nusxalang:</p>
-      <input class="field" readonly value="${e(link)}">`);
   }
 }
 async function download(id){
@@ -2743,7 +2728,6 @@ window.addEventListener('click',async event=>{
     else if(act==='commentLike')await toggleCommentLike(id);
     else if(act==='saveMod')await toggleTable('mod_saves',id);
     else if(act==='quickSave')await toggleTable('mod_saves',id,false);
-    else if(act==='shareMod')await shareMod(id);
     else if(act==='download')await download(id);
     else if(act==='reportMod')report('mod',id);
     else if(act==='reportUser')report('profile',id);
