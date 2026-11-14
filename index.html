@@ -972,6 +972,16 @@ function close(){
   $('#overlay').classList.remove('open');
   $('#overlay').innerHTML=''
 }
+function filePicker(name,accept,required=false){
+  const text=name==='avatar'?'Avatar rasmini tanlash':
+    name==='image'?'Mod rasmini tanlash':'Mod faylini tanlash';
+  return `<label class="file-picker" for="pick-${name}">
+    ${ico(name==='file'?'package':'upload',22)}
+    <span id="pick-label-${name}">${text}</span>
+    <input id="pick-${name}" type="file" name="${name}"
+      accept="${e(accept)}" ${required?'required':''}>
+  </label>`
+}
 function formField(title,name,type='text',val='',req=true){
   return `<div class="formgroup">
     <label>${e(title)}</label>
@@ -1574,8 +1584,7 @@ function editProfile(){
     </div>
     <div class="formgroup">
       <label>Avatar (2 MB)</label>
-      <input class="field" type="file" name="avatar"
-        accept="image/jpeg,image/png,image/webp,image/gif">
+      ${filePicker('avatar','image/jpeg,image/png,image/webp,image/gif')}
     </div>
     <button class="btn">${t('save')}</button>
   </form>`)
@@ -1633,16 +1642,12 @@ function modFields(m,adminEdit=false){
       <label>${t('image')}</label>
       ${m?.cover_path?`<img class="admin-preview-image" src="${e(cover(m.cover_path))}" alt="Mod rasmi">
         <p class="admin-current-file muted">Hozirgi rasm: ${e(m.cover_path.split('/').pop())}</p>`:''}
-      <input class="field" type="file" name="image"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        ${m?'':'required'}>
+      ${filePicker('image','image/jpeg,image/png,image/webp,image/gif',!m)}
     </div>
     <div class="formgroup">
       <label>${t('file')}</label>
       ${m?.file_path?`<p class="admin-current-file muted">Hozirgi fayl: ${e(m.file_path.split('/').pop())}</p>`:''}
-      <input class="field" type="file" name="file"
-        accept=".zip,.jar,.mcpack,.mcaddon,.mcworld,.rar,.7z"
-        ${m?'':'required'}>
+      ${filePicker('file','.zip,.jar,.mcpack,.mcaddon,.mcworld,.rar,.7z',!m)}
     </div>
     <div class="note">
       ${adminEdit?
@@ -2208,65 +2213,64 @@ async function notifications(){
         <small class="muted">${when(n.created_at)}</small>
       </div>`).join('')||blank()}`)
 }
-async function settings(){
+
+function notificationEnabled(){
+  return localStorage.getItem('mw_notifs_ui')!=='off';
+}
+function toggleNotifications(){
+  const next=!notificationEnabled();
+  localStorage.setItem('mw_notifs_ui',next?'on':'off');
+  toast(next?'Saytdagi bildirishnomalar yoqildi':'Saytdagi bildirishnomalar o‘chirildi');
+  settings().catch(console.warn);
+}
+function settings(){
   if(!requireUser())return;
-  let r=await DB.from('verification_requests').select('*')
-    .eq('user_id',S.u.id)
-    .order('created_at',{ascending:false}).limit(1);
-  check(r);
-  let v=r.data[0];
-  let badgeActive=S.me?.verified&&
-    (!S.me.verified_until||
-      new Date(S.me.verified_until)>new Date());
+  const on=notificationEnabled();
   dialog(t('settings'),`
-    <div class="item">
-      <label>${ico('globe',18)} ${t('language')}</label>
-      <select class="field" id="language">
-        <option value="uz" ${S.lang==='uz'?'selected':''}>
-          🇺🇿 O‘zbekcha
-        </option>
-        <option value="ru" ${S.lang==='ru'?'selected':''}>
-          🇷🇺 Русский
-        </option>
-        <option value="en" ${S.lang==='en'?'selected':''}>
-          🇬🇧 English
-        </option>
-      </select>
-    </div>
-    <div class="item">
-      <b>${ico('badge',18)} ${t('request')}</b>
-      <p class="muted mini">
-        ${badgeActive?
-          t('verified')+' · '+
-          (S.me.verified_until?when(S.me.verified_until):'Muddatsiz'):
-          v?.status==='pending'?t('applied'):
-          v?.status==='rejected'?t('rejected'):''}
-      </p>
-      ${!badgeActive&&v?.status!=='pending'?
-        btn('badgeRequest',t('request')):''}
-    </div>
-    <div class="item">
-      <b>${ico('bell',18)} Brauzer bildirishnomalari</b>
-      <div class="buttons">
-        ${btn('permit','Yoqish','', 'ghost')}
+    <div class="settings-stack">
+      <div class="settings-row">
+        <b>${ico('user',19)} ${e(S.me?.username||'Profil')}</b>
+        <div class="buttons">${btn('editProfile','Profilni tahrirlash','','ghost')}</div>
       </div>
-      <p class="mini muted">
-        Sayt yopiq bo‘lganda ham push xabarlar uchun
-        qo‘shimcha xizmat kerak.
-      </p>
-    </div>
-    ${S.me?.is_admin&&S.me.username==='admin'?
-      `<div class="item">
-        ${btn('admin',t('admin'))}
-      </div>`:''}
-    <div class="item">
-      <b>${ico('download',18)} Minecraft World ilovasi</b>
-      <p class="muted smalltext">Saytni telefon yoki kompyuter bosh ekraniga o‘rnating.</p>
-      <div class="buttons">${btn('installApp','Ilova sifatida o‘rnatish')}</div>
-    </div>
-    <div class="item">
-      ${btn('logout',t('logout'),'','danger')}
-    </div>`)
+      <div class="settings-row">
+        <b>${ico('bookmark',19)} Saqlangan modlar</b>
+        <div class="buttons">${btn('savedFromSettings','Saqlanganlarni ko‘rish','','ghost')}</div>
+      </div>
+      <div class="settings-row">
+        <b>${ico('globe',19)} ${t('language')}</b>
+        <select class="field" id="language">
+          <option value="uz" ${S.lang==='uz'?'selected':''}>O‘zbekcha</option>
+          <option value="ru" ${S.lang==='ru'?'selected':''}>Русский</option>
+          <option value="en" ${S.lang==='en'?'selected':''}>English</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <b>${ico('bell',19)} Bildirishnomalar</b>
+        <div class="row">
+          <span class="muted">${on?'Yoqilgan':'O‘chirilgan'}</span>
+          ${btn('notificationToggle',on?'O‘chirish':'Yoqish','','ghost')}
+        </div>
+        <p class="mini muted">Bu sayt ichidagi ogohlantirishlarni boshqaradi.
+          Brauzer ruxsatini o‘chirish uchun uning sayt sozlamalaridan foydalaning.</p>
+      </div>
+      <div class="settings-row">
+        <b>${ico('badge',18)} ${t('request')}</b>
+        ${S.me?.verified?'<span class="status">Tasdiqlangan</span>':
+          btn('badgeRequest','Ko‘k belgi so‘rovi','','ghost')}
+      </div>
+      <div class="settings-row">
+        <b>${ico('download',18)} Ilova sifatida</b>
+        ${btn('installApp','O‘rnatish','','ghost')}
+      </div>
+      <div class="settings-row">
+        ${btn('logout','Chiqish','','danger')}
+      </div>
+      ${S.me?.is_admin&&S.me.username==='admin'?
+        `<div class="settings-row settings-admin">
+           <b>${ico('shield',21)} Admin boshqaruvi</b>
+           ${btn('admin','Admin panelini ochish')}
+         </div>`:''}
+    </div>`);
 }
 function badgeRequest(){
   dialog(t('request'),`
@@ -2459,6 +2463,7 @@ window.addEventListener('click',async event=>{
   try{
     if(a.dataset.go){
       close();
+      if(a.dataset.go==='home')S.homeView='all';
       await go(a.dataset.go);
       return
     }
@@ -2490,7 +2495,15 @@ window.addEventListener('click',async event=>{
       await go('profile',id)
     }
     else if(act==='mod')await openMod(id);
-    else if(act==='settings')await settings();
+    else if(act==='settings')settings();
+    else if(act==='notificationToggle')toggleNotifications();
+    else if(act==='savedFromSettings'){
+      close();
+      if(!requireUser())return;
+      S.homeView='saved';
+      S.visibleMods=12;
+      await go('home');
+    }
     else if(act==='notifications')await notifications();
     else if(act==='sort'){
       S.sort=a.dataset.sort;
@@ -2597,6 +2610,7 @@ window.addEventListener('click',async event=>{
     else if(act==='adminAction')
       await adminAction(a.dataset.cmd,id);
     else if(act==='logout'){
+      if(!confirm('Akkauntdan chiqmoqchimisiz?'))return;
       const leaving=S.u?.id;
       check(await DB.auth.signOut({scope:'local'}));
       if(leaving)forgetAccount(leaving);
@@ -2624,6 +2638,11 @@ window.addEventListener('input',ev=>{
   }
 });
 window.addEventListener('change',async ev=>{
+  if(ev.target.matches('.file-picker input[type="file"]')){
+    const x=ev.target;
+    const label=document.getElementById('pick-label-'+x.name);
+    if(label&&x.files?.[0])label.textContent=x.files[0].name;
+  }
   if(ev.target.id==='category'){
     S.category=ev.target.value;
     S.visibleMods=12;
