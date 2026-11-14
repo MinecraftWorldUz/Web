@@ -1693,7 +1693,6 @@ function renderMod(m){
     <button class="btn small ghost mod-toggle" data-act="saveMod" data-id="${e(m.id)}"
       data-mod-toggle="save" aria-pressed="${S.savedIds?.has(m.id)?'true':'false'}">
       ${ico('bookmark',18)} <span>Saqlash · ${count(m.saves_count)}</span></button>
-    ${btn('shareMod','Ulashish',m.id,'ghost')}
     ${btn('reportMod',t('report'),m.id,'ghost')}`:
     `<div class="note mod-review-message">${ico('clock',19)}
       Mod tekshiruvda. Tasdiqlangach like, saqlash va yuklab olish mumkin.</div>`;
@@ -2371,10 +2370,17 @@ async function notifications(){
 function notificationEnabled(){
   return localStorage.getItem('mw_notifs_ui')!=='off';
 }
-function toggleNotifications(){
+async function toggleNotifications(){
   const next=!notificationEnabled();
+  if(next&&'Notification'in window&&Notification.permission==='default'){
+    try{
+      const permission=await Notification.requestPermission();
+      if(permission!=='granted')
+        toast('Brauzer ruxsati berilmadi. Saytdagi belgilar ishlaydi.');
+    }catch(err){console.warn('Notification permission:',err)}
+  }
   localStorage.setItem('mw_notifs_ui',next?'on':'off');
-  toast(next?'Saytdagi bildirishnomalar yoqildi':'Saytdagi bildirishnomalar o‘chirildi');
+  toast(next?'Bildirishnomalar yoqildi':'Bildirishnomalar o‘chirildi');
   settings();
 }
 function settings(){
