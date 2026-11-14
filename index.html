@@ -583,6 +583,10 @@ border:1px solid #baff8380;color:#caff9b;padding:2px 10px;border-radius:99px}
 .mod-loading .skeleton-art{height:195px;border-radius:14px;margin-bottom:12px}
 @media(max-width:768px){#leaves{display:none}#overlay{backdrop-filter:none}}
 
+.clickable-mod{cursor:pointer;touch-action:manipulation}
+.clickable-mod .cardbody{cursor:pointer}
+.clickable-mod .quick-save,.clickable-mod .linkbtn,.clickable-mod .buttons button{touch-action:manipulation}
+@media(max-width:780px){.leaf{display:none!important}}
 </style>
 </head>
 <body>
@@ -869,7 +873,7 @@ function miniUser(p){
 }
 function card(m,p,own=false){
   cacheMod(m);
-  return `<article class="card">
+  return `<article class="card clickable-mod" data-act="mod" data-id="${e(m.id)}">
     <div class="art" data-act="mod" data-id="${m.id}">
       ${cover(m.cover_path)?`<img loading="lazy"
         src="${e(cover(m.cover_path))}" alt="">`:ico('package',58)}
@@ -2628,7 +2632,7 @@ window.addEventListener('keydown',ev=>{
 
 // KUZGI BARGLAR
 function leaves(){
-  for(let i=0;i<18;i++){
+  for(let i=0;i<6;i++){
     let x=document.createElement('span');
     x.className='leaf';
     x.innerHTML=ico('leaf',24);
