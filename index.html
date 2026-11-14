@@ -703,6 +703,21 @@ border-bottom:1px solid #755236}
 @media(max-width:760px){.chatlayout{grid-template-columns:1fr}
 .chatlist{max-height:200px}.messages{min-height:290px;max-height:380px}}
 
+
+.world-message{display:flex;flex-direction:column;gap:3px;align-items:flex-start;margin:3px 0}
+.world-message>.linkbtn{display:inline-flex;align-items:center;gap:8px;font-size:12px;margin:0 0 1px}
+.world-message .av{width:24px;height:24px;font-size:12px}
+.world-message .bubble{margin-left:8px}
+.world-message:has(.bubble.mine){align-items:flex-end}
+.world-message:has(.bubble.mine)>.linkbtn{display:none}
+.chat-title{margin-top:12px}
+.chat-window .empty{min-height:260px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px}
+.chat-toolbar .linkbtn{flex:1;text-align:left}
+.chatlist .account-avatar .av{width:40px;height:40px}
+.chatlist .account-avatar{background:transparent;padding:0}
+.chat-unread-tab{position:absolute;top:2px;right:19%;width:9px;height:9px;border-radius:50%;
+background:#3695df;box-shadow:0 0 0 2px #251a11}
+
 </style>
 </head>
 <body>
@@ -2072,91 +2087,216 @@ function inviteBox(){
     <button class="btn">${t('send')}</button>
   </form>`)
 }
+const chatSeenKey=id=>'mw_chat_seen_'+(S.u?.id||'guest')+'_'+id;
+function chatSeen(id){
+  try{return localStorage.getItem(chatSeenKey(id))||'1970-01-01T00:00:00Z'}catch{return '1970-01-01T00:00:00Z'}
+}
+function markChatSeen(id){
+  try{localStorage.setItem(chatSeenKey(id),new Date().toISOString())}catch{}
+  S.chatUnread?.delete(id);
+  updateChatBadge();
+}
+function updateChatBadge(){
+  const count=S.chatUnread?.size||0;
+  const tab=document.querySelector('.bottom [data-go="chat"]');
+  if(!tab)return;
+  const dot=tab.querySelector('.chat-unread-tab');
+  if(dot)dot.hidden=!count;
+}
+async function worldPref(){
+  const {data,error}=await DB.from('world_chat_settings')
+    .select('joined,muted,last_seen_at')
+    .eq('user_id',S.u.id).maybeSingle();
+  if(error)throw error;
+  S.worldPref=data||{joined:true,muted:false,last_seen_at:new Date(0).toISOString()};
+  return S.worldPref;
+}
+async function worldUpdate(data){
+  if(!requireUser())return;
+  const current=S.worldPref||await worldPref();
+  const item={user_id:S.u.id,joined:current.joined,muted:current.muted,
+    last_seen_at:current.last_seen_at,...data};
+  const {error}=await DB.from('world_chat_settings').upsert(item);
+  if(error)throw error;
+  S.worldPref={joined:item.joined,muted:item.muted,last_seen_at:item.last_seen_at};
+}
+function chatPeer(id,p,active=false,unread=0){
+  const isWorld=id==='world';
+  return `<button type="button" class="chat-peer ${active?'active':''}"
+    data-act="${isWorld?'worldOpen':'chatSelect'}" data-id="${e(id)}">
+      <span class="account-avatar">${isWorld?ico('globe',24):avatar(p)}</span>
+      <span class="peer-text"><b>${isWorld?'Umumiy chat':label(p)}</b>
+        <small>${isWorld?'Minecraft World jamoasi':(p?.bio?e(p.bio.slice(0,55)):'Shaxsiy suhbat')}</small></span>
+      ${unread?`<span class="chat-unread">${Math.min(99,unread)}</span>`:''}
+    </button>`;
+}
+function chatRows(){
+  const rows=$('#chatRows');
+  if(!rows)return;
+  const joined=S.worldPref?.joined!==false;
+  rows.innerHTML=chatPeer('world',null,S.chatId==='world',
+    joined&&!S.worldPref?.muted?(S.worldUnread||0):0)+
+    (S.chatPeers||[]).map(id=>
+      chatPeer(id,S.chatUsers?.[id],S.chatId===id,S.chatUnread?.has(id)?1:0)
+    ).join('');
+}
 async function chats(){
-  if(!requireUser()){
-    $('#app').innerHTML=blank();
-    return
-  }
-  let [f,m]=await Promise.all([
-    DB.from('follows').select('following_id')
-      .eq('follower_id',S.u.id),
-    DB.from('messages').select('sender_id,recipient_id')
-      .or(`sender_id.eq.${S.u.id},recipient_id.eq.${S.u.id}`)
-      .order('created_at',{ascending:false}).limit(80)
+  if(!requireUser()){$('#app').innerHTML=blank();return}
+  S.chatUnread=S.chatUnread||new Set();
+  const owner=S.u.id;
+  // Use the inbox query only: unrelated follow records are not conversations.
+  const [messages,pref]=await Promise.all([
+    DB.from('messages').select('sender_id,recipient_id,created_at')
+      .or(`sender_id.eq.${owner},recipient_id.eq.${owner}`)
+      .order('created_at',{ascending:false}).limit(70),
+    worldPref()
   ]);
-  check(f);check(m);
-  let ids=[...new Set([
-    ...f.data.map(x=>x.following_id),
-    ...m.data.map(x=>
-      x.sender_id===S.u.id?x.recipient_id:x.sender_id)
-  ])].filter(x=>x!==S.u.id);
-  S.chatUsers=await users(ids);
-  if(!ids.includes(S.chatId))S.chatId=ids[0]||null;
+  check(messages);
+  if(S.u?.id!==owner)return;
+  const peers=[...new Set(messages.data.map(m=>m.sender_id===owner?m.recipient_id:m.sender_id))]
+    .filter(id=>id&&id!==owner);
+  if(S.chatId&&S.chatId!=='world'&&!peers.includes(S.chatId))peers.unshift(S.chatId);
+  S.chatPeers=peers;
+  S.chatUsers=await users(peers);
+  for(const m of messages.data){
+    if(m.recipient_id===owner&&S.chatId!==m.sender_id&&
+      new Date(m.created_at)>new Date(chatSeen(m.sender_id)))S.chatUnread.add(m.sender_id);
+  }
+  S.chatId=S.chatId||'world';
   $('#app').innerHTML=`
-    <div class="bar">
-      <h2>${ico('chat',25)} ${t('chat')}</h2>
-      ${btn('chooseChat','＋')}
+    <div class="bar chat-title">
+      <h2>${ico('chat',24)} Xabarlar</h2>
+      <button class="btn small" data-act="chooseChat">${ico('plus',20)} Yangi chat</button>
     </div>
-    <div class="chatlayout">
-      <div class="list">
-        ${ids.length?ids.map(id=>`
-          <button class="item row"
-            style="color:var(--text);text-align:left"
-            data-act="chatSelect" data-id="${id}">
-            ${avatar(S.chatUsers[id])}
-            ${label(S.chatUsers[id])}
-          </button>`).join(''):blank()}
+    <section class="chatlayout">
+      <aside class="chatlist" id="chatRows"></aside>
+      <div class="chat-window" id="conversation">
+        <div class="empty">Suhbatni tanlang</div>
       </div>
-      <div class="item" id="conversation"></div>
-    </div>`;
-  if(S.chatId)await conversation(S.chatId);
-  else $('#conversation').innerHTML=blank()
+    </section>`;
+  chatRows();
+  updateChatBadge();
+  if(S.chatId==='world')await worldConversation();
+  else await conversation(S.chatId);
+}
+function chatBubble(body,mine,whenText,extra=''){
+  return `<div class="bubble ${mine?'mine':''}">
+    <div class="bubble-body">${e(body)}</div>
+    <small>${whenText} ${extra}</small>
+  </div>`;
 }
 async function conversation(id){
-  if(!S.u)return;
+  if(!S.u||id==='world')return;
   S.chatId=id;
-  let p=(S.chatUsers||{})[id]||(await users([id]))[id];
-  let r=await DB.from('messages').select('*')
-    .or(`and(sender_id.eq.${S.u.id},recipient_id.eq.${id}),and(sender_id.eq.${id},recipient_id.eq.${S.u.id})`)
-    .order('created_at',{ascending:false}).limit(80);
-  check(r);
-  let area=$('#conversation');
+  const area=$('#conversation');
   if(!area)return;
-  area.innerHTML=`
-    <div class="row">${avatar(p)}${miniUser(p)}</div>
-    <div class="divider"></div>
+  chatRows();
+  area.innerHTML='<p class="muted">Suhbat yuklanmoqda...</p>';
+  const uid=S.u.id,requested=id;
+  const [pResult,msgResult]=await Promise.all([
+    users([id]),
+    DB.from('messages').select('id,sender_id,recipient_id,body,created_at')
+      .or(`and(sender_id.eq.${uid},recipient_id.eq.${id}),and(sender_id.eq.${id},recipient_id.eq.${uid})`)
+      .order('created_at',{ascending:false}).limit(65)
+  ]);
+  check(msgResult);
+  if(S.page!=='chat'||S.chatId!==requested||!$('#conversation'))return;
+  const p=pResult[id]||S.chatUsers?.[id];
+  $('#conversation').innerHTML=`
+    <header class="chat-toolbar">
+      ${avatar(p)}
+      <button class="linkbtn" data-act="user" data-id="${e(id)}">${label(p)}</button>
+    </header>
     <div class="messages" id="msgs">
-      ${r.data.slice().reverse().map(m=>`
-        <div class="bubble ${m.sender_id===S.u.id?'mine':''}">
-          ${e(m.body)}
-          <small>
-            ${when(m.created_at)}
-            <button class="linkbtn" data-act="reportMsg"
-              data-id="${m.id}">${ico('flag',15)}</button>
-          </small>
-        </div>`).join('')||blank()}
+      ${msgResult.data.slice().reverse().map(m=>
+        chatBubble(m.body,m.sender_id===uid,when(m.created_at),
+          `<button class="linkbtn" data-act="reportMsg" data-id="${e(m.id)}">${ico('flag',12)}</button>`)
+      ).join('')||'<p class="muted">Birinchi xabarni yuboring.</p>'}
     </div>
-    <form id="msgForm" data-id="${id}" class="row">
-      <button type="button" class="btn ghost"
-        data-act="chooseChat">＋</button>
-      <input class="field" style="flex:1" name="body"
-        maxlength="2000" placeholder="${t('message')}" required>
-      <button class="btn" aria-label="Yuborish">${ico('send',20)}</button>
+    <form id="msgForm" data-id="${e(id)}" class="chat-compose">
+      <input class="field" name="body" maxlength="2000" autocomplete="off"
+        placeholder="Xabar yozing..." required>
+      <button class="btn" type="submit" aria-label="Yuborish">${ico('send',20)}</button>
     </form>`;
-  $('#msgs').scrollTop=$('#msgs').scrollHeight
+  const msgs=$('#msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;
+  markChatSeen(id);chatRows();
 }
-async function chooseChat(){
+async function worldConversation(){
   if(!requireUser())return;
-  let r=await DB.from('follows').select('following_id')
-    .eq('follower_id',S.u.id);
+  S.chatId='world';
+  const pref=S.worldPref||await worldPref();
+  const area=$('#conversation');
+  if(!area)return;
+  chatRows();
+  if(!pref.joined){
+    area.innerHTML=`<div class="chat-toolbar">${ico('globe',24)} <b>Umumiy chat</b></div>
+      <div class="empty">
+        <p>Siz umumiy chatdan chiqqansiz.</p>
+        ${btn('worldJoin','Qayta qo‘shilish')}
+      </div>`;
+    return;
+  }
+  area.innerHTML='<p class="muted">Umumiy chat yuklanmoqda...</p>';
+  const res=await DB.from('world_chat_messages').select('id,author_id,body,created_at')
+    .order('created_at',{ascending:false}).limit(65);
+  check(res);
+  if(S.page!=='chat'||S.chatId!=='world'||!$('#conversation'))return;
+  const rows=res.data.slice().reverse(),names=await users(rows.map(m=>m.author_id));
+  if(S.page!=='chat'||S.chatId!=='world'||!$('#conversation'))return;
+  $('#conversation').innerHTML=`
+    <header class="chat-toolbar">
+      ${ico('globe',24)} <b style="flex:1">Umumiy chat</b>
+      <button data-act="worldMute" title="${pref.muted?'Mute o‘chirish':'Ovozsiz qilish'}">
+        ${ico('bell',19)} ${pref.muted?'Yoqish':'Mute'}</button>
+      <button data-act="worldLeave" title="Chatdan chiqish">${ico('x',19)}</button>
+    </header>
+    <div class="messages" id="msgs">
+      ${rows.map(m=>`<div class="world-message">
+        <button class="linkbtn" data-act="user" data-id="${e(m.author_id)}">
+          ${avatar(names[m.author_id])} ${label(names[m.author_id])}</button>
+        ${chatBubble(m.body,m.author_id===S.u.id,when(m.created_at))}
+      </div>`).join('')||'<p class="muted">Hozircha xabar yo‘q.</p>'}
+    </div>
+    <form id="worldMsgForm" class="chat-compose">
+      <input class="field" name="body" maxlength="2000" autocomplete="off"
+        placeholder="Hamma uchun xabar..." required>
+      <button class="btn" type="submit" aria-label="Yuborish">${ico('send',20)}</button>
+    </form>`;
+  const msgs=$('#msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;
+  S.worldUnread=0;
+  worldUpdate({last_seen_at:new Date().toISOString()}).catch(console.warn);
+  chatRows();updateChatBadge();
+}
+function chooseChat(){
+  if(!requireUser())return;
+  dialog('Yangi chat',`
+    <div class="formgroup">
+      <label>Username orqali odam qidirish</label>
+      <input class="field" id="newChatSearch" autocomplete="off"
+        placeholder="Username yozing..." autofocus>
+    </div>
+    <div id="chatSearchResults"><p class="muted">Kimga yozmoqchisiz?</p></div>
+  `);
+  $('#newChatSearch')?.focus();
+}
+let chatSearchTimer=null;
+async function findChatUsers(term){
+  const el=$('#chatSearchResults');
+  if(!el)return;
+  if(!term||term.trim().length<2){
+    el.innerHTML='<p class="muted">Kamida 2 ta harf yozing.</p>';
+    return;
+  }
+  const safe=term.trim().replace(/[^a-z0-9_]/gi,'').slice(0,20);
+  if(!safe)return;
+  const r=await DB.from('profiles').select('id,username,avatar_url,verified,verified_until')
+    .ilike('username','%'+safe+'%').limit(20);
   check(r);
-  let mp=await users(r.data.map(x=>x.following_id));
-  dialog(t('chat'),r.data.length?
-    r.data.map(x=>`<div class="item row">
-      ${avatar(mp[x.following_id])}
-      ${miniUser(mp[x.following_id])}
-      ${btn('chatStart','Chat',x.following_id)}
-    </div>`).join(''):blank())
+  if(!$('#chatSearchResults')||$('#newChatSearch')?.value!==term)return;
+  $('#chatSearchResults').innerHTML=r.data.filter(p=>p.id!==S.u.id).map(p=>
+    `<button class="chat-peer" data-act="chatStart" data-id="${e(p.id)}">
+      ${avatar(p)} <span class="peer-text">@${e(p.username)}</span> ${ico('chat',18)}</button>`
+  ).join('')||'<p class="muted">Foydalanuvchi topilmadi.</p>';
 }
 async function notificationCount(){
   if(!S.u){
@@ -2581,7 +2721,21 @@ window.addEventListener('click',async event=>{
         await community()
       }
     }
-    else if(act==='chooseChat')await chooseChat();
+    else if(act==='chooseChat')chooseChat();
+    else if(act==='worldOpen')await worldConversation();
+    else if(act==='worldJoin'){
+      await worldUpdate({joined:true});
+      await worldConversation();
+    }
+    else if(act==='worldLeave'){
+      if(!confirm('Umumiy chatdan chiqmoqchimisiz?'))return;
+      await worldUpdate({joined:false});
+      await worldConversation();
+    }
+    else if(act==='worldMute'){
+      await worldUpdate({muted:!S.worldPref.muted});
+      await worldConversation();
+    }
     else if(act==='chatStart'){
       close();
       S.chatId=id;
@@ -2635,6 +2789,13 @@ window.addEventListener('input',ev=>{
     },130);
   }else if(ev.target.id==='accountSearch'){
     filterAccounts()
+  }else if(ev.target.id==='newChatSearch'){
+    const value=ev.target.value;
+    clearTimeout(chatSearchTimer);
+    chatSearchTimer=setTimeout(()=>findChatUsers(value).catch(err=>{
+      const row=$('#chatSearchResults');
+      if(row)row.textContent=err.message;
+    }),180);
   }
 });
 window.addEventListener('change',async ev=>{
