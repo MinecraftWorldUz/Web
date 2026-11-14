@@ -587,6 +587,122 @@ border:1px solid #baff8380;color:#caff9b;padding:2px 10px;border-radius:99px}
 .clickable-mod .cardbody{cursor:pointer}
 .clickable-mod .quick-save,.clickable-mod .linkbtn,.clickable-mod .buttons button{touch-action:manipulation}
 @media(max-width:780px){.leaf{display:none!important}}
+
+/* AUTUMN CRAFT — lightweight Minecraft GUI */
+:root{--bg:#17120f;--panel:#2a201a;--panel2:#33271e;--text:#f4e8d6;
+--muted:#bea990;--gold:#eac16b;--orange:#c99649;--green:#d4ab65;--red:#cb6f62;--edge:#7555378c}
+html{background:#17120f}
+body{background:#17120f!important;color:var(--text)!important;
+font-family:system-ui,-apple-system,'Segoe UI',sans-serif!important;letter-spacing:0!important}
+body:before,.hero:after{display:none!important}
+*{scroll-behavior:auto}
+.top,.bottom,.dialog,.banner,.card,.item,.admin-section,.hero{
+box-shadow:none!important;backdrop-filter:none!important}
+.top{background:#261c16!important;border:2px solid #624832!important;border-radius:8px!important}
+.logo{font-weight:900;letter-spacing:.035em;font-family:ui-monospace,Consolas,monospace}
+.logo b{color:#f1cd79!important;text-shadow:none!important}
+.brand-icon{background:#9b713b!important;color:#fff0bf!important;
+border:2px solid #edca81!important;border-radius:3px!important;box-shadow:3px 3px 0 #100c09!important}
+.hero,.compact-hero{background:linear-gradient(135deg,#2b2119,#422f1e)!important;
+border:2px solid #84623b!important;border-radius:8px!important;
+min-height:170px!important;padding:26px 28px!important}
+.hero h1,.hero h1 span{color:#f5dc9c!important;text-shadow:none!important}
+.hero h1{font-size:clamp(30px,4.8vw,48px)!important}
+.hero p{color:#d1baa0!important;line-height:1.5!important}
+.hero .autumn{opacity:.17!important;color:#ecc06e!important;filter:none!important}
+.eyebrow{background:#3d291c!important;border:1px solid #a98752!important;
+color:#dfb875!important;border-radius:3px!important}
+.version-block{display:inline-flex;padding:7px 13px;margin-top:10px;
+border:2px solid #b88b50;background:#37271b;color:#f5ce84;
+font-family:ui-monospace,monospace;font-size:12px;font-weight:900;letter-spacing:.1em}
+.btn,.btn.small,.iconbtn{border-radius:4px!important;border:2px solid #e7c27e!important;
+color:#2c1e11!important;background:#c99a52!important;
+box-shadow:inset 0 2px #f4d18b,inset 0 -3px #926330!important;
+filter:none!important;transform:none!important;font-weight:800!important;
+text-shadow:none!important;min-height:41px!important;transition:background .1s ease!important}
+.btn:hover:not(:disabled),.iconbtn:hover{background:#ebbd69!important;
+box-shadow:inset 0 2px #ffe2a1,inset 0 -3px #a16d35!important;
+filter:none!important;transform:none!important}
+.btn:active:not(:disabled){box-shadow:inset 0 3px #885b2f!important;translate:0 1px}
+.btn.ghost{background:#473426!important;color:#f1d9ab!important;
+border-color:#8c6943!important;box-shadow:inset 0 2px #66503b,inset 0 -3px #271a11!important}
+.btn.ghost:hover{background:#5d432c!important}
+.btn.danger{background:#914f43!important;border-color:#d69479!important;color:#fff4e7!important}
+.iconbtn{color:#f3d9a8!important}
+.card,.item,.banner,.dialog,.admin-section{border:1px solid #76563a!important;
+background:#2b211a!important;border-radius:7px!important}
+.card:hover{border-color:#e1b66b!important;transform:none!important}
+.art{background:#3c3020!important}.card:hover .art img{transform:none!important}
+.chip,.status{border-radius:3px!important;background:#493722!important;
+color:#f1ca7c!important;border-color:#9c784a!important}
+.field,.account-entry,.admin-mod-row{background:#211912!important;
+border:1px solid #725236!important;color:#f5e7d0!important;border-radius:5px!important}
+.field:focus{border-color:#d6aa64!important;box-shadow:none!important}
+.bottom{background:#261c16!important;border:2px solid #694c32!important;border-radius:8px!important}
+.bottom button{color:#c3ad8b!important;border-radius:4px!important}
+.bottom button.on{background:#6a4728!important;color:#ffe0a0!important}
+.bottom button.on .navicon{filter:none!important}
+.tabs button,.category-chip{background:#35281b!important;color:#d4b98d!important;
+border:1px solid #775638!important;border-radius:4px!important}
+.tabs button.on,.category-chip.selected{background:#74512f!important;
+color:#f8db9a!important;border-color:#dda967!important}
+.count{border-radius:4px!important;background:#241c16!important;border-color:#76573c!important}
+.count b{color:#ecc272!important}
+.dialog{background:#271d17!important}
+.dialoghead{background:#3b291c!important;border-color:#8b6541!important}
+.note{background:#44301e!important;border-left-color:#deb365!important;color:#f0cfa2!important}
+#overlay{backdrop-filter:none!important;background:#0d0908cf!important}
+.quick-save{background:#362619!important;color:#f5ce82!important;
+border-color:#b68a50!important;backdrop-filter:none!important;border-radius:4px!important}
+.quick-save.saved{background:#fff4e0!important;color:#3e2b18!important}
+.mod-toggle[data-mod-toggle="like"][aria-pressed="true"]{background:#b84646!important;
+color:#fff!important;border-color:#f0a2a2!important}
+.mod-toggle[data-mod-toggle="save"][aria-pressed="true"]{background:#fff4e5!important;
+color:#3d2a16!important;border-color:#fff!important}
+.leaf{color:#d8a84d!important;opacity:.45!important;filter:none!important}
+.skeleton-art,.skeleton-lines{animation:none!important;background:#59432c!important}
+.formgroup{margin-bottom:19px}label{color:#f2d4a0}
+#toast{background:#4a3422!important;border:1px solid #e2ae65!important;
+color:#fff0d1!important;box-shadow:none!important}
+.settings-stack{display:grid;gap:13px}
+.settings-row{padding:15px 17px;background:#34251b;border:1px solid #765234;
+border-radius:7px;display:grid;gap:10px}
+.settings-row b{display:inline-flex;align-items:center;gap:8px}
+.settings-row:last-child{margin-top:8px}
+.settings-admin{border:2px solid #c99a52;background:#49321e}
+.file-picker{display:flex;align-items:center;gap:12px;min-height:55px;padding:12px;
+background:#3c2b1d;border:2px dashed #aa8050;border-radius:6px;cursor:pointer;color:#f4d49a}
+.file-picker .svg-icon{flex:none}.file-picker span{overflow-wrap:anywhere}
+.file-picker:hover{background:#503822}
+.file-picker input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.bubble{background:#4e3827!important;display:table!important;align-self:flex-start!important;
+width:fit-content!important;max-width:76%!important;min-width:0!important;
+border-radius:12px 12px 12px 3px!important;padding:8px 12px!important;
+box-shadow:none!important;white-space:pre-wrap;overflow-wrap:anywhere}
+.bubble.mine{background:#806239!important;align-self:flex-end!important;
+border-radius:12px 12px 3px 12px!important}
+.bubble small{font-size:10px;color:#e3cda9}
+.messages{background:#241b15!important;border-radius:7px;min-height:350px;
+max-height:calc(100vh - 300px);padding:17px;gap:9px;overflow-y:auto}
+.chatlayout{grid-template-columns:minmax(210px,290px) minmax(0,1fr);gap:10px}
+.chatlist{max-height:70vh;overflow-y:auto;background:#2c211a;padding:8px;
+border:1px solid #6b4b2f;border-radius:7px}
+.chat-peer{display:flex!important;gap:11px;align-items:center;width:100%;text-align:left;
+padding:12px;border:0;border-bottom:1px solid #65482d;background:transparent;
+color:#eed4ae;cursor:pointer}
+.chat-peer.active,.chat-peer:hover{background:#5a4027}
+.chat-peer .peer-text{flex:1;min-width:0}.chat-peer small{color:#bfa986;font-size:11px;display:block;margin-top:3px}
+.chat-unread{min-width:21px;height:21px;border-radius:99px;background:#4395d8;
+color:white;font-size:11px;font-weight:800;display:grid;place-items:center}
+.chat-window{background:#281f17;border:1px solid #6a4b2e;border-radius:7px;padding:12px;min-width:0}
+.chat-toolbar{display:flex;gap:9px;align-items:center;padding:9px 6px 13px;
+border-bottom:1px solid #755236}
+.chat-toolbar button{background:transparent;border:0;color:#e8c992;cursor:pointer}
+.chat-compose{display:flex;gap:8px;align-items:center;margin:10px 0 0}
+.chat-compose .field{flex:1;min-width:0}
+@media(max-width:760px){.chatlayout{grid-template-columns:1fr}
+.chatlist{max-height:200px}.messages{min-height:290px;max-height:380px}}
+
 </style>
 </head>
 <body>
@@ -594,7 +710,7 @@ border:1px solid #baff8380;color:#caff9b;padding:2px 10px;border-radius:99px}
 <div class="shell">
   <header class="top">
     <button class="logo" data-go="home">
-      <span class="brand-icon" data-icon="pickaxe" data-size="23"></span><span>MINECRAFT <b>WORLD</b></span>
+      <span class="brand-icon" data-icon="world" data-size="24"></span><span>MINECRAFT <b>WORLD</b></span>
     </button>
     <div class="head-actions">
       <button class="iconbtn" data-act="notifications">
@@ -638,6 +754,7 @@ const DB=window.supabase.createClient(
 const $=s=>document.querySelector(s);
 
 const ICONS={
+world:'<rect x="3" y="5" width="18" height="15" rx="1"/><path d="M3 10h18M8 5v15M16 5v15M3 15h18M8 5l4-3 4 3M9 12h6v5H9z"/>',
 home:'<path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8"/>',
 users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.1a4 4 0 0 1 0 7.8"/>',
 user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
@@ -966,29 +1083,16 @@ function saveFeedCache(){
 function homeShell(){
   $('#app').innerHTML=`
     <section class="hero compact-hero">
-      <span class="eyebrow">${ico('sparkles',15)} MINECRAFT WORLD 2.0</span>
+      <span class="eyebrow">${ico('sparkles',15)} MINECRAFT WORLD 1.0</span>
       <h1>O‘yin dunyongni<br><span>kengaytir.</span></h1>
       <p>Eng qiziqarli Minecraft modlarini kashf et, saqla va do‘stlaring bilan bo‘lish.</p>
-      <div class="buttons">
-        <button class="btn" data-go="create">${ico('upload',19)} Mod joylash</button>
-        <button class="btn ghost" data-go="community">${ico('users',19)} Hamjamiyat</button>
-        <button class="btn ghost" data-act="installApp">${ico('download',19)} Ilova sifatida</button>
-      </div>
+      <span class="version-block">VERSION 1.0</span>
       <span class="autumn">${ico('pickaxe',112)}</span>
-    </section>
-    <section class="discover-stats">
-      <div class="stat-tile">${ico('package',23)} <b id="feedTotal">—</b><span>Modlar</span></div>
-      <div class="stat-tile">${ico('heart',23)} <b id="feedLikes">—</b><span>Layklar</span></div>
-      <div class="stat-tile">${ico('download',23)} <b id="feedDownloads">—</b><span>Yuklashlar</span></div>
     </section>
     <section class="explore">
       <div class="bar explore-bar">
         <div><span class="section-kicker">KASHF ETISH</span>
           <h2>Modlar olami</h2></div>
-        <div class="tabs discover-tabs">
-          <button data-act="homeView" data-view="all" class="${S.homeView==='all'?'on':''}">${ico('globe',17)} Barchasi</button>
-          <button data-act="homeView" data-view="saved" class="${S.homeView==='saved'?'on':''}">${ico('bookmark',17)} Saqlanganlar</button>
-        </div>
       </div>
       <div class="filters">
         <label class="search-wrap">${ico('package',19)}
@@ -1020,12 +1124,8 @@ function homeShell(){
 }
 function refreshFeedCounters(){
   if(!$('#feedTotal'))return;
-  $('#feedTotal').textContent=count(S.feed.length);
-  $('#feedLikes').textContent=count(S.feed.reduce((sum,m)=>sum+(m.likes_count||0),0));
-  $('#feedDownloads').textContent=count(S.feed.reduce((sum,m)=>sum+(m.downloads_count||0),0));
+  // Counters removed from homepage.
   $('#quickCategories').innerHTML=
-    `<button class="category-chip ${S.category==='all'?'selected':''}"
-      data-act="quickCategory" data-category="all">Hammasi</button>`+
     [...new Set(S.feed.map(m=>m.category).filter(Boolean))].slice(0,6).map(c=>
       `<button class="category-chip ${S.category===c?'selected':''}"
         data-act="quickCategory" data-category="${e(c)}">${e(c)}</button>`).join('');
@@ -2632,7 +2732,7 @@ window.addEventListener('keydown',ev=>{
 
 // KUZGI BARGLAR
 function leaves(){
-  for(let i=0;i<6;i++){
+  for(let i=0;i<3;i++){
     let x=document.createElement('span');
     x.className='leaf';
     x.innerHTML=ico('leaf',24);
