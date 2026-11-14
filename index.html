@@ -733,6 +733,10 @@ border-color:#ef9892;color:#fff}
 .play-buttons .btn{min-height:39px!important}
 .play-buttons .btn small{font-size:11px}
 
+
+.profile-display-name{margin:0 0 5px!important;color:#f4d38e;font-size:clamp(20px,2.4vw,30px)}
+.avatar-edit-preview{display:flex;justify-content:flex-start;padding:8px 0 13px}
+.avatar-thumb{width:90px;height:90px;object-fit:cover;border:2px solid #d8a763;border-radius:7px}
 </style>
 </head>
 <body>
@@ -1095,7 +1099,7 @@ async function users(ids){
   }
   if(missing.length){
     const r=await DB.from('profiles')
-      .select('id,username,avatar_url,verified,verified_until,banned_permanently,banned_until,public_id')
+      .select('id,username,display_name,avatar_url,verified,verified_until,banned_permanently,banned_until,public_id')
       .in('id',missing.slice(0,200));
     check(r);
     setCachedProfiles(r.data);
@@ -1163,7 +1167,7 @@ function homeShell(){
   $('#gameVersion').value=S.gameVersion||'all';
 }
 function refreshFeedCounters(){
-  if(!$('#feedTotal'))return;
+  if(!$('#quickCategories'))return;
   // Counters removed from homepage.
   $('#quickCategories').innerHTML=
     [...new Set(S.feed.map(m=>m.category).filter(Boolean))].slice(0,6).map(c=>
@@ -1311,7 +1315,8 @@ async function profile(id){
     <div class="row">
       ${avatar(p,true)}
       <div>
-        <h2 style="margin:0">${label(p)}</h2>
+        ${p.display_name?`<h2 class="profile-display-name">${e(p.display_name)}</h2>`:''}
+        <h3 style="margin:0">${label(p)}</h3>
         <span class="status">ID #${p.public_id}</span>
         ${p.is_admin?'<span class="status">ADMIN</span>':''}
       </div>
@@ -1619,14 +1624,20 @@ function editProfile(){
   if(!requireUser())return;
   dialog(t('editProfile'),`
   <form id="editProfileForm">
-    ${formField('Username','username','text',S.me.username)}
+    <div class="formgroup">
+      <label>Ko‘rinadigan ism</label>
+      <input class="field" name="display_name" maxlength="60"
+        placeholder="Masalan: Ismingiz" value="${e(S.me.display_name||'')}">
+    </div>
+    ${formField('Username (nik)','username','text',S.me.username)}
     <div class="formgroup">
       <label>${t('bio')}</label>
       <textarea class="field" name="bio"
         maxlength="350">${e(S.me.bio)}</textarea>
     </div>
     <div class="formgroup">
-      <label>Avatar (2 MB)</label>
+      <label>Profil rasmi (2 MB)</label>
+      <div class="avatar-edit-preview" id="avatarPreview">${avatar(S.me,true)}</div>
       ${filePicker('avatar','image/jpeg,image/png,image/webp,image/gif')}
     </div>
     <button class="btn">${t('save')}</button>
@@ -1635,6 +1646,7 @@ function editProfile(){
 async function saveProfile(f){
   let x=new FormData(f);
   let username=String(x.get('username')).trim().toLowerCase();
+  const display_name=String(x.get('display_name')||'').trim().slice(0,60)||null;
   let bio=String(x.get('bio')).trim();
   if(!/^[a-z0-9_]{3,20}$/.test(username))
     throw Error('Username noto‘g‘ri');
@@ -1649,7 +1661,7 @@ async function saveProfile(f){
       .getPublicUrl(path).data.publicUrl
   }
   let r=await DB.from('profiles')
-    .update({username,bio,avatar_url}).eq('id',S.u.id);
+    .update({username,display_name,bio,avatar_url}).eq('id',S.u.id);
   if(r.error?.code==='23505')throw Error('Bu username band');
   check(r);
   await refreshUser();
@@ -2209,7 +2221,7 @@ async function worldPref(){
     .select('joined,muted,last_seen_at')
     .eq('user_id',S.u.id).maybeSingle();
   if(error)throw error;
-  S.worldPref=data||{joined:true,muted:false,last_seen_at:new Date(0).toISOString()};
+  S.worldPref=data||{joined:true,muted:false,last_seen_at:S.me?.created_at||new Date().toISOString()};
   return S.worldPref;
 }
 async function worldUpdate(data){
@@ -2414,6 +2426,13 @@ async function notificationCount(){
 async function onIncomingDirect(msg){
   if(!S.u||msg.sender_id===S.u.id)return;
   const sender=msg.sender_id;
+  if(S.page==='chat'&&!S.chatPeers?.includes(sender)){
+    S.chatPeers=[sender,...(S.chatPeers||[])];
+    users([sender]).then(mp=>{
+      S.chatUsers={...(S.chatUsers||{}),...mp};
+      chatRows();
+    }).catch(console.warn);
+  }
   if(S.page==='chat'&&S.chatId===sender&&$('#msgs')){
     $('#msgs').insertAdjacentHTML('beforeend',chatBubble(msg.body,false,when(msg.created_at),
       `<button class="linkbtn" data-act="reportMsg" data-id="${e(msg.id)}">${ico('flag',12)}</button>`));
@@ -2948,6 +2967,15 @@ window.addEventListener('change',async ev=>{
     const x=ev.target;
     const label=document.getElementById('pick-label-'+x.name);
     if(label&&x.files?.[0])label.textContent=x.files[0].name;
+    if(x.name==='avatar'&&x.files?.[0]?.type.startsWith('image/')){
+      const preview=$('#avatarPreview');
+      if(preview){
+        const reader=new FileReader();
+        reader.onload=()=>{if(preview.isConnected)
+          preview.innerHTML='<img src="'+reader.result+'" alt="Avatar" class="avatar-thumb">';};
+        reader.readAsDataURL(x.files[0]);
+      }
+    }
   }
   if(ev.target.id==='category'){
     S.category=ev.target.value;
