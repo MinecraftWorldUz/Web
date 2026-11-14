@@ -562,6 +562,27 @@ align-items:center;gap:10px;font-weight:830;color:#e9fff2;list-style:none}
 border:1px solid #baff8380;color:#caff9b;padding:2px 10px;border-radius:99px}
 .admin-section[open]>summary{background:#baff8314;border-bottom:1px solid #baff8330}
 .admin-section>.item{margin:10px}
+
+/* Lightweight mod detail modal; avoid entire DOM replacement on reactions */
+#overlay{backdrop-filter:blur(3px)}
+#overlay .dialog{overscroll-behavior:contain}
+.mod-detail{display:grid;gap:15px}
+.mod-hero-art{height:205px;overflow:hidden;display:grid;place-items:center;
+  background:#152a32;border-radius:16px;color:#baff83}
+.mod-hero-art img{width:100%;height:100%;object-fit:cover}
+.mod-headline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mod-headline h2{font-size:clamp(20px,3vw,29px);margin:0}
+.mod-description{line-height:1.65;margin:0}
+.mod-author{display:flex;align-items:center;gap:9px;min-height:32px}
+.mod-comment-list{min-height:48px}
+.mod-comments-head h3{margin:0}
+.mod-toggle[aria-pressed="true"]{border-color:#baff83!important;
+  color:#d7ffb7!important;background:#baff8329!important}
+.mod-toggle:disabled{opacity:.8;cursor:wait}
+.mod-loading{padding:15px;text-align:center}
+.mod-loading .skeleton-art{height:195px;border-radius:14px;margin-bottom:12px}
+@media(max-width:768px){#leaves{display:none}#overlay{backdrop-filter:none}}
+
 </style>
 </head>
 <body>
@@ -825,6 +846,8 @@ function dialog(title,html){
   $('#overlay').classList.add('open')
 }
 function close(){
+  modalGeneration++;
+  activeModId=null;
   $('#overlay').classList.remove('open');
   $('#overlay').innerHTML=''
 }
@@ -845,6 +868,7 @@ function miniUser(p){
     data-id="${e(p?.id)}">${label(p)}</button>`
 }
 function card(m,p,own=false){
+  cacheMod(m);
   return `<article class="card">
     <div class="art" data-act="mod" data-id="${m.id}">
       ${cover(m.cover_path)?`<img loading="lazy"
@@ -1593,102 +1617,206 @@ async function removeMod(id){
     .eq('id',id).eq('author_id',S.u.id));
   await go('profile',S.u.id)
 }
-async function openMod(id){
-  let m=check(await DB.from('mods').select('*')
-    .eq('id',id).single());
-  let p=(await users([m.author_id]))[m.author_id];
-  let [l,s]=await Promise.all([
-    S.u?DB.from('mod_likes').select('mod_id')
-      .eq('user_id',S.u.id).eq('mod_id',id).maybeSingle():
-      Promise.resolve({data:null}),
-    S.u?DB.from('mod_saves').select('mod_id')
-      .eq('user_id',S.u.id).eq('mod_id',id).maybeSingle():
-      Promise.resolve({data:null})
-  ]);
+
+const modCache=new Map();
+const modOpenPending=new Map();
+let activeModId=null,modalGeneration=0;
+function getCachedMod(id){
+  const item=modCache.get(id)||S.feed?.find(m=>m.id===id);
+  return item||null;
+}
+function cacheMod(m){
+  if(m?.id)modCache.set(m.id,m);
+  return m;
+}
+function modSkeleton(id){
+  dialog('Mod ochilmoqda',`<div class="mod-loading">
+    <div class="skeleton-art"></div>
+    <p>Mod yuklanmoqda...</p>
+  </div>`);
+  activeModId=id;
+}
+async function getMod(id){
+  const cached=getCachedMod(id);
+  if(cached?.title&&cached?.description&&cached?.status)return cached;
+  if(modOpenPending.has(id))return modOpenPending.get(id);
+  const load=(async()=>{
+    const result=await DB.from('mods')
+      .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,created_at')
+      .eq('id',id).single();
+    return cacheMod(check(result));
+  })().finally(()=>modOpenPending.delete(id));
+  modOpenPending.set(id,load);
+  return load;
+}
+function renderMod(m){
+  const isApproved=m.status==='approved';
+  const actions=isApproved?`
+    ${btn('download',t('downloads')+' · '+count(m.downloads_count),m.id)}
+    <button class="btn small ghost mod-toggle" data-act="like" data-id="${e(m.id)}"
+      data-mod-toggle="like" aria-pressed="false">
+      ${ico('heart',18)} <span>Like · ${count(m.likes_count)}</span></button>
+    <button class="btn small ghost mod-toggle" data-act="saveMod" data-id="${e(m.id)}"
+      data-mod-toggle="save" aria-pressed="${S.savedIds?.has(m.id)?'true':'false'}">
+      ${ico('bookmark',18)} <span>Saqlash · ${count(m.saves_count)}</span></button>
+    ${btn('shareMod','Ulashish',m.id,'ghost')}
+    ${btn('reportMod',t('report'),m.id,'ghost')}`:
+    `<div class="note mod-review-message">${ico('clock',19)}
+      Mod tekshiruvda. Tasdiqlangach like, saqlash va yuklab olish mumkin.</div>`;
   dialog(m.title,`
-    <div class="art" style="height:245px">
-      ${cover(m.cover_path)?
-        `<img src="${e(cover(m.cover_path))}">`:ico('package',66)}
-    </div>
-    <div class="bar">
-      <h2>${e(m.title)}</h2>
-      <span class="status">
-        ${e(m.game_version)} · ${e(m.category)}
-      </span>
-    </div>
-    <p class="wrap">${e(m.description)}</p>
-    <div class="row">${avatar(p)}${miniUser(p)}</div>
-    ${m.status!=='approved'?`
-      <div class="note mod-review-message" role="status">
-        ${ico('clock',18)} ${m.status==='pending'?
-          'Mod tekshiruvda. Admin tasdiqlagach like, saqlash, izoh yozish va yuklab olish ishlaydi.':
-          'Mod tasdiqlanmagan. Like va yuklab olish hozircha mavjud emas.'}
-      </div>`:''}
-    <div class="buttons mod-actions">
-      ${m.status==='approved'?
-        btn('download','⬇ '+t('downloads')+' · '+count(m.downloads_count),id):
-        `<button class="btn" disabled title="Mod hali tasdiqlanmagan">⬇ Yuklab olish · ${count(m.downloads_count)}</button>`}
-      ${m.status==='approved'?
-        btn('like','Like · '+count(m.likes_count),id,'ghost'):
-        `<button class="btn ghost" disabled title="Mod tekshiruvda">${ico('heart',18)} Like · ${count(m.likes_count)}</button>`}
-      ${m.status==='approved'?
-        btn('saveMod','Saqlash · '+count(m.saves_count),id,'ghost'):
-        `<button class="btn ghost" disabled title="Mod tekshiruvda">${ico('bookmark',18)} Saqlash · ${count(m.saves_count)}</button>`}
-      ${m.status==='approved'?btn('shareMod','Ulashish',id,'ghost'):''}
-      ${m.status==='approved'?btn('reportMod',t('report'),id,'ghost'):''}
-    </div>
-    <div class="note">
-      Fayllarni faqat ishonchli manbadan yuklab oling.
-    </div>
-    <h3>${ico('chat',21)} ${t('comments')} (${count(m.comments_count)})</h3>
-    <div id="commentList"></div>
-    ${m.status!=='approved'?
-      '<p class="muted">Izoh yozish mod tasdiqlangach ochiladi.</p>':
-      S.u?`<form id="commentForm" data-id="${id}" class="row">
-      <input class="field" style="flex:1" name="body"
-        maxlength="1000" placeholder="${t('message')}" required>
-      <button class="btn">${t('send')}</button>
-    </form>`:btn('auth',t('login'))}`);
-  await comments(id)
+    <section class="mod-detail" data-mod-id="${e(m.id)}">
+      <div class="mod-hero-art">
+        ${cover(m.cover_path)?`<img loading="eager" decoding="async" src="${e(cover(m.cover_path))}" alt="">`:ico('package',66)}
+      </div>
+      <div class="mod-headline">
+        <h2>${e(m.title)}</h2>
+        <span class="status">${e(m.game_version)} · ${e(m.category)}</span>
+      </div>
+      <p class="wrap mod-description">${e(m.description)}</p>
+      <div id="modAuthor" class="mod-author"></div>
+      <div class="buttons mod-actions">${actions}</div>
+      ${isApproved?`
+        <div class="mod-comments-head">
+          <h3>${ico('chat',20)} ${t('comments')} (${count(m.comments_count)})</h3>
+        </div>
+        <div id="commentList" data-mod="${e(m.id)}" class="mod-comment-list">
+          <p class="muted">Izohlar yuklanmoqda...</p></div>
+        ${S.u?`<form id="commentForm" data-id="${e(m.id)}" class="row">
+          <input class="field" style="flex:1" name="body" maxlength="1000"
+            placeholder="${t('message')}" required>
+          <button class="btn">${t('send')}</button>
+        </form>`:btn('auth',t('login'))}
+      `:''}
+      <p class="mini muted">Fayllarni faqat ishonchli manbadan yuklab oling.</p>
+    </section>`);
+  activeModId=m.id;
+  const known=knownProfiles.get(m.author_id)?.p||S.cache?.[m.author_id];
+  if(known){
+    const author=$('#modAuthor');
+    if(author)author.innerHTML=avatar(known)+miniUser(known);
+  }
+}
+async function updateModToggleStates(id){
+  if(activeModId!==id||!S.u)return;
+  const [likes,saves]=await Promise.all([
+    DB.from('mod_likes').select('mod_id').eq('mod_id',id)
+      .eq('user_id',S.u.id).maybeSingle(),
+    DB.from('mod_saves').select('mod_id').eq('mod_id',id)
+      .eq('user_id',S.u.id).maybeSingle()
+  ]);
+  if(activeModId!==id||!$('#overlay .mod-detail'))return;
+  if(!likes.error){
+    const button=$('#overlay [data-mod-toggle="like"]');
+    if(button)button.setAttribute('aria-pressed',String(!!likes.data));
+  }
+  if(!saves.error){
+    const button=$('#overlay [data-mod-toggle="save"]');
+    if(button)button.setAttribute('aria-pressed',String(!!saves.data));
+  }
+}
+async function openMod(id){
+  const cached=getCachedMod(id);
+  const generation=++modalGeneration;
+  if(cached?.title&&cached?.description)renderMod(cached);
+  else modSkeleton(id);
+  let m;
+  try{
+    m=await getMod(id);
+  }catch(err){
+    if(generation===modalGeneration && activeModId===id)
+      dialog('Modni ochib bo‘lmadi',`<p>${e(err.message)}</p>
+        <button class="btn" data-act="mod" data-id="${e(id)}">Qayta urinish</button>`);
+    return;
+  }
+  if(generation!==modalGeneration||activeModId!==id||!$('#overlay').classList.contains('open'))return;
+  if(!cached||!cached.description)renderMod(m);
+  const author=$('#modAuthor');
+  if(author&&!author.hasChildNodes()){
+    users([m.author_id]).then(mp=>{
+      if(activeModId===id&&$('#modAuthor')){
+        const p=mp[m.author_id];
+        if(p)$('#modAuthor').innerHTML=avatar(p)+miniUser(p);
+      }
+    }).catch(console.warn);
+  }
+  if(m.status==='approved'){
+    updateModToggleStates(id).catch(console.warn);
+    comments(id).catch(err=>{
+      const box=$('#commentList');
+      if(activeModId===id&&box?.dataset.mod===id)
+        box.innerHTML='<p class="muted">Izohlarni yuklab bo‘lmadi.</p>';
+      console.warn(err);
+    });
+  }
 }
 async function comments(id){
-  let r=await DB.from('comments').select('*')
-    .eq('mod_id',id).order('created_at',{ascending:true}).limit(100);
-  check(r);
-  let mp=await users(r.data.map(c=>c.author_id));
-  if(!$('#commentList'))return;
-  $('#commentList').innerHTML=r.data.length?
-    r.data.map(c=>`<div class="item">
-      <div class="row">
-        ${avatar(mp[c.author_id])}
-        ${miniUser(mp[c.author_id])}
-        <small class="muted">${when(c.created_at)}</small>
-      </div>
+  const box=$('#commentList');
+  if(!box||box.dataset.mod!==id)return;
+  const result=await DB.from('comments')
+    .select('id,author_id,body,created_at')
+    .eq('mod_id',id).order('created_at',{ascending:false}).limit(35);
+  check(result);
+  if(activeModId!==id||!$('#commentList')||$('#commentList').dataset.mod!==id)return;
+  const rows=result.data.slice().reverse();
+  let names={};
+  if(rows.length)names=await users(rows.map(c=>c.author_id));
+  if(activeModId!==id||!$('#commentList')||$('#commentList').dataset.mod!==id)return;
+  $('#commentList').innerHTML=rows.length?
+    rows.map(c=>`<div class="item">
+      <div class="row">${avatar(names[c.author_id])}
+        ${miniUser(names[c.author_id])}
+        <small class="muted">${when(c.created_at)}</small></div>
       <p class="wrap">${e(c.body)}</p>
       ${S.u?.id===c.author_id||S.me?.is_admin?
         btn('removeComment','O‘chirish',c.id,'danger'):''}
     </div>`).join(''):blank();
-  $('#commentList').dataset.mod=id
 }
+const modToggleLocks=new Set();
 async function toggleTable(table,id,detail=true){
   if(!requireUser())return;
-  let r=await DB.from(table).select('mod_id')
-    .eq('mod_id',id).eq('user_id',S.u.id).maybeSingle();
-  check(r);
-  check(r.data?
-    await DB.from(table).delete()
-      .eq('mod_id',id).eq('user_id',S.u.id):
-    await DB.from(table).insert({
-      mod_id:id,user_id:S.u.id
-    })
-  );
-  if(table==='mod_saves'){
-    if(r.data)S.savedIds?.delete(id);
-    else S.savedIds?.add(id);
-    if(S.page==='home')filterMods();
+  const key=table+':'+id;
+  if(modToggleLocks.has(key))return;
+  modToggleLocks.add(key);
+  const type=table==='mod_likes'?'like':'save';
+  const btnEl=detail?document.querySelector('#overlay [data-mod-toggle="'+type+'"]'):null;
+  const former=btnEl?.getAttribute('aria-pressed')==='true';
+  if(btnEl){
+    btnEl.disabled=true;
+    btnEl.setAttribute('aria-pressed',String(!former));
   }
-  if(detail)await openMod(id);
-  else toast(r.data?'Saqlanganlardan olib tashlandi':'Mod saqlandi');
+  try{
+    const r=await DB.from(table).select('mod_id')
+      .eq('mod_id',id).eq('user_id',S.u.id).maybeSingle();
+    check(r);
+    const current=!!r.data;
+    check(current?
+      await DB.from(table).delete().eq('mod_id',id).eq('user_id',S.u.id):
+      await DB.from(table).insert({mod_id:id,user_id:S.u.id})
+    );
+    const m=getCachedMod(id);
+    if(m){
+      const field=type==='like'?'likes_count':'saves_count';
+      m[field]=Math.max(0,(m[field]||0)+(current?-1:1));
+      if(btnEl?.isConnected){
+        const label=btnEl.querySelector('span');
+        if(label)label.textContent=(type==='like'?'Like':'Saqlash')+' · '+count(m[field]);
+      }
+    }
+    if(table==='mod_saves'){
+      if(current)S.savedIds?.delete(id);else S.savedIds?.add(id);
+      // Do not rerender the grid while the modal is open.
+      const quick=document.querySelector('.quick-save[data-id="'+CSS.escape(id)+'"]');
+      quick?.classList.toggle('saved',!current);
+    }
+    if(btnEl?.isConnected)btnEl.setAttribute('aria-pressed',String(!current));
+    if(!detail)toast(current?'Saqlanganlardan olib tashlandi':'Mod saqlandi');
+  }catch(err){
+    if(btnEl?.isConnected)btnEl.setAttribute('aria-pressed',String(former));
+    throw err;
+  }finally{
+    if(btnEl?.isConnected)btnEl.disabled=false;
+    modToggleLocks.delete(key);
+  }
 }
 function modShareUrl(id){
   const url=new URL(location.href);
