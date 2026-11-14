@@ -729,6 +729,10 @@ cursor:pointer;min-height:34px}
 border-color:#ef9892;color:#fff}
 .comment-like:disabled{opacity:.7;cursor:default}
 
+.play-buttons{margin-top:13px}
+.play-buttons .btn{min-height:39px!important}
+.play-buttons .btn small{font-size:11px}
+
 </style>
 </head>
 <body>
@@ -2075,7 +2079,7 @@ async function community(){
       </div>
       <div class="bar">
         <h2>${t('play')}</h2>
-        ${btn('invite','＋ '+t('invite'))}
+        ${btn('invite',t('invite'))}
       </div>
       <div class="list">
       ${r.data.length?r.data.map(x=>`
@@ -2090,10 +2094,14 @@ async function community(){
           <div class="row">
             ${avatar(mp[x.author_id])}
             ${miniUser(mp[x.author_id])}
+          </div>
+          <div class="buttons play-buttons">
             ${S.u?.id===x.author_id?
               btn('removeInvite',t('delete'),x.id,'danger'):
-              btn('join',joins.includes(x.id)?
-                t('applied'):t('join'),x.id,'ghost')}
+              btn('startChat','Yozish',x.author_id,'ghost')+
+              (joins.includes(x.id)?btn('leavePlay','Chiqish',x.id,'ghost'):
+              btn('join','Qo‘shilish',x.id))}
+            ${btn('playMembers','Qatnashchilar · '+count(x.joins_count),x.id,'ghost')}
           </div>
         </div>`).join(''):blank()}
       </div>`
@@ -2127,6 +2135,24 @@ function filterAccounts(){
       </div>
       ${btn('user',t('profile'),p.id,'ghost')}
     </div>`).join(''):blank()
+}
+async function playMembers(id){
+  if(!requireUser())return;
+  const [post,joins]=await Promise.all([
+    DB.from('play_posts').select('author_id,title').eq('id',id).single(),
+    DB.from('play_joins').select('user_id,created_at').eq('play_id',id)
+      .order('created_at',{ascending:true}).limit(80)
+  ]);
+  check(post);check(joins);
+  const ids=[post.data.author_id,...joins.data.map(x=>x.user_id)];
+  const profiles=await users(ids);
+  dialog('Qatnashchilar · '+post.data.title,
+    ids.map((uid,i)=>`<div class="item row">
+       ${avatar(profiles[uid])}
+       <span style="flex:1">${miniUser(profiles[uid])}
+         <small class="muted">${i===0?'Taklif egasi':'Qatnashchi'}</small></span>
+       ${uid!==S.u.id?btn('chatStart','Yozish',uid,'ghost'):''}
+     </div>`).join('')||blank());
 }
 function inviteBox(){
   if(!requireUser())return;
@@ -2824,8 +2850,16 @@ window.addEventListener('click',async event=>{
       check(await DB.from('play_joins').insert({
         play_id:id,user_id:S.u.id
       }));
-      await community()
+      toast('Taklifga qo‘shildingiz. Qatnashchilarga xabar yuborildi.');
+      await community();
     }
+    else if(act==='leavePlay'){
+      if(!requireUser())return;
+      check(await DB.from('play_joins').delete()
+        .eq('play_id',id).eq('user_id',S.u.id));
+      await community();
+    }
+    else if(act==='playMembers')await playMembers(id);
     else if(act==='removeInvite'){
       if(confirm('Taklif o‘chirilsinmi?')){
         check(await DB.from('play_posts').delete().eq('id',id));
