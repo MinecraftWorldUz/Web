@@ -2063,13 +2063,23 @@ function updateChatBadge(){
   }
   dot.hidden=!count;
 }
+let pendingWorldPref=null;
 async function worldPref(){
-  const {data,error}=await DB.from('world_chat_settings')
-    .select('joined,muted,last_seen_at')
-    .eq('user_id',S.u.id).maybeSingle();
-  if(error)throw error;
-  S.worldPref=data||{joined:true,muted:false,last_seen_at:S.me?.created_at||new Date().toISOString()};
-  return S.worldPref;
+  if(S.worldPref)return S.worldPref;
+  const uid=S.u?.id;
+  if(!uid)return {joined:false,muted:true,last_seen_at:new Date().toISOString()};
+  if(pendingWorldPref?.id===uid)return pendingWorldPref.promise;
+  const request=(async()=>{
+    const {data,error}=await DB.from('world_chat_settings')
+      .select('joined,muted,last_seen_at').eq('user_id',uid).maybeSingle();
+    if(error)throw error;
+    const pref=data||{joined:true,muted:false,
+      last_seen_at:S.me?.created_at||new Date().toISOString()};
+    if(S.u?.id===uid)S.worldPref=pref;
+    return pref;
+  })().finally(()=>{if(pendingWorldPref?.id===uid)pendingWorldPref=null});
+  pendingWorldPref={id:uid,promise:request};
+  return request;
 }
 async function worldUpdate(data){
   if(!requireUser())return;
@@ -2214,7 +2224,9 @@ async function worldConversation(){
       ${rows.map(m=>`<div class="world-message">
         <button class="linkbtn" data-act="user" data-id="${e(m.author_id)}">
           ${avatar(names[m.author_id])} ${label(names[m.author_id])}</button>
-        ${chatBubble(m.body,m.author_id===S.u.id,when(m.created_at))}
+        ${chatBubble(m.body,m.author_id===S.u.id,when(m.created_at),
+          m.author_id!==S.u.id?`<button class="linkbtn" data-act="reportUser"
+            data-id="${e(m.author_id)}" title="Shikoyat">${ico('flag',12)}</button>`:'')}
       </div>`).join('')||'<p class="muted">Hozircha xabar yo‘q.</p>'}
     </div>
     <form id="worldMsgForm" class="chat-compose">
@@ -2290,10 +2302,8 @@ async function onIncomingDirect(msg){
     S.chatUnread.add(sender);
     updateChatBadge();
   }
-  if(notificationEnabled() && document.visibilityState==='hidden' &&
-    'Notification'in window&&Notification.permission==='granted'){
-    new Notification('Yangi shaxsiy xabar',{body:msg.body.slice(0,120)});
-  }
+  // Personal-message notifications come from the notifications trigger;
+  // avoid displaying the same browser notification twice.
 }
 async function onIncomingWorld(msg){
   if(!S.u||msg.author_id===S.u.id)return;
@@ -2305,7 +2315,9 @@ async function onIncomingWorld(msg){
     $('#msgs').insertAdjacentHTML('beforeend',`<div class="world-message">
       <button class="linkbtn" data-act="user" data-id="${e(msg.author_id)}">
       ${avatar(p)} ${label(p)}</button>
-      ${chatBubble(msg.body,false,when(msg.created_at))}
+      ${chatBubble(msg.body,false,when(msg.created_at),
+        `<button class="linkbtn" data-act="reportUser" data-id="${e(msg.author_id)}"
+        title="Shikoyat">${ico('flag',12)}</button>`)}
     </div>`);
     const container=$('#msgs');container.scrollTop=container.scrollHeight;
     S.worldUnread=0;
