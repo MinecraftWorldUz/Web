@@ -2192,7 +2192,7 @@ function report(kind,id){
 async function admin(){
   if(!S.me?.is_admin||S.me.username!=='admin')throw Error('Faqat @admin');
   const [mods,badges,people,reports,all]=await Promise.all([
-    DB.from('mods').select('id,title,game_version,status,created_at').eq('status','pending')
+    DB.from('mods').select('id,author_id,title,description,category,game_version,cover_path,file_path,status,created_at').eq('status','pending')
       .order('created_at',{ascending:true}).limit(60),
     DB.from('verification_requests').select('id,user_id,reason,status')
       .eq('status','pending').limit(35),
@@ -2205,6 +2205,8 @@ async function admin(){
   ]);
   for(const r of [mods,badges,people,reports,all])check(r);
   const mp=Object.fromEntries(people.data.map(p=>[p.id,p]));
+  mods.data.forEach(cacheMod);
+  setCachedProfiles(people.data);
   dialog(t('admin'),`
     <h3>${ico('package',21)} Tekshiruvdagi modlar (${mods.data.length})</h3>
     ${mods.data.map(m=>`
@@ -2257,34 +2259,55 @@ async function admin(){
       </div>`).join('')||blank()}
     </details>`);
 }
-async function adminModDetail(id,preview=false){
+
+async function adminModDetail(id,preview=true){
   if(!S.me?.is_admin||S.me.username!=='admin')
     throw Error('Faqat @admin');
-  const m=check(await DB.from('mods').select('*').eq('id',id).single());
-  const profile=(await users([m.author_id]))[m.author_id];
+  const generation=++modalGeneration;
+  let m=getCachedMod(id);
+  if(!m?.description||!m?.file_path){
+    dialog('Mod tekshirilmoqda',`<div class="mod-loading">
+      <div class="skeleton-art"></div><p>Mod ma’lumotlari ochilmoqda...</p>
+      </div>`);
+    try{
+      const result=await DB.from('mods').select('id,author_id,title,description,category,game_version,cover_path,file_path,status,created_at')
+        .eq('id',id).single();
+      m=cacheMod(check(result));
+    }catch(err){
+      if(generation===modalGeneration)
+        dialog('Ko‘rib bo‘lmadi',`<p>${e(err.message)}</p>
+          ${btn('adminModDetail','Qayta sinash',id,'ghost')}`);
+      return;
+    }
+    if(generation!==modalGeneration||!$('#overlay').classList.contains('open'))return;
+  }
   const actions=`<div class="admin-review-actions">
-    ${btn('adminModDetail',preview?'Orqaga':'Ko‘rish',id,'ghost')}
     ${m.status==='pending'?btn('adminEditMod','Tahrirlash',id,'ghost'):''}
     ${m.status==='pending'?adminBtn('approve_mod','Tasdiqlash',id):''}
     ${m.status==='pending'?adminBtn('reject_mod','Rad etish',id,'danger'):''}
-    ${btn('admin','Ro‘yxat', '', 'ghost')}
+    ${btn('admin','Ro‘yxatga qaytish', '', 'ghost')}
   </div>`;
-  const previewBody=preview?`
-    ${m.cover_path?`<img class="admin-preview-image"
-      src="${e(cover(m.cover_path))}" alt="Mod rasmi">`:''}
-    <p><b>Muallif:</b> ${profile?'@'+e(profile.username):'—'}</p>
-    <p><b>Versiya:</b> ${e(m.game_version)} · <b>Tur:</b> ${e(m.category)}</p>
-    <p class="wrap">${e(m.description)}</p>
-    <p class="admin-current-file"><b>Mod fayli:</b> ${e(m.file_path?.split('/').pop()||'—')}</p>
-    `:`<p class="muted">Ko‘rish orqali rasm, tavsif va fayl nomini tekshiring.</p>`;
   dialog(m.title,`
-    <span class="status">${e(m.status)}</span>
-    ${previewBody}
-    ${actions.replace(
-      `data-act="adminModDetail" data-id="${e(id)}"`,
-      `data-act="adminModDetail" data-id="${e(id)}" data-preview="${!preview}"`
-    )}
-  `);
+    <section class="admin-mod-preview">
+      ${m.cover_path?`<img class="admin-preview-image" loading="eager"
+        decoding="async" src="${e(cover(m.cover_path))}" alt="Mod rasmi">`:''}
+      <span class="status">${e(m.status)}</span>
+      <p><b>Muallif:</b> <span id="adminPreviewAuthor">Yuklanmoqda...</span></p>
+      <p><b>Versiya:</b> ${e(m.game_version)} · <b>Tur:</b> ${e(m.category)}</p>
+      <p class="wrap">${e(m.description)}</p>
+      <p class="admin-current-file"><b>Fayl:</b> ${e(m.file_path?.split('/').pop()||'—')}</p>
+      ${actions}
+    </section>`);
+  const p=knownProfiles.get(m.author_id)?.p||S.cache?.[m.author_id];
+  const label=$('#adminPreviewAuthor');
+  if(p&&label)label.textContent='@'+p.username;
+  else if(label){
+    users([m.author_id]).then(mp=>{
+      const slot=$('#adminPreviewAuthor');
+      if(slot&&generation===modalGeneration)slot.textContent=
+        mp[m.author_id]?'@'+mp[m.author_id].username:'—';
+    }).catch(()=>{const slot=$('#adminPreviewAuthor');if(slot)slot.textContent='—'});
+  }
 }
 async function adminEditMod(id){
   if(!S.me?.is_admin||S.me.username!=='admin')
@@ -2406,7 +2429,7 @@ window.addEventListener('click',async event=>{
     else if(act==='editProfile')editProfile();
     else if(act==='editMod')await editMod(id);
     else if(act==='adminModDetail')
-      await adminModDetail(id,a.dataset.preview==='true');
+      await adminModDetail(id,true);
     else if(act==='adminEditMod')await adminEditMod(id);
     else if(act==='removeMod')await removeMod(id);
     else if(act==='like')await toggleTable('mod_likes',id);
