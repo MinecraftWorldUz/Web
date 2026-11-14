@@ -2375,7 +2375,7 @@ function toggleNotifications(){
   const next=!notificationEnabled();
   localStorage.setItem('mw_notifs_ui',next?'on':'off');
   toast(next?'Saytdagi bildirishnomalar yoqildi':'Saytdagi bildirishnomalar o‘chirildi');
-  settings().catch(console.warn);
+  settings();
 }
 function settings(){
   if(!requireUser())return;
