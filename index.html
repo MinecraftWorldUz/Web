@@ -2886,29 +2886,38 @@ function chatRows(){
       chatPeer(id,S.chatUsers?.[id],S.chatId===id,S.chatUnread?.has(id)?1:0)
     ).join('');
 }
+let chatListRequest=0, chatThreadRequest=0;
+const recentThreads=new Map();
+function chatWindowShell(id){
+  const isWorld=id==='world';
+  const p=!isWorld?(S.chatUsers?.[id]||knownProfiles.get(id)?.p):null;
+  return `<header class="chat-toolbar">
+    ${isWorld?ico('globe',24):avatar(p)}
+    ${isWorld?'<b style="flex:1">Umumiy chat</b>':
+      `<button class="linkbtn" data-act="user" data-id="${e(id)}">
+        ${p?label(p):'@...'}
+      </button>`}
+    ${isWorld?`<button data-act="worldMute" title="Ovozsiz qilish">
+        ${ico('bell',19)} ${S.worldPref?.muted?'Yoqish':'Mute'}</button>
+      <button data-act="worldLeave" title="Chatdan chiqish">${ico('x',19)}</button>`:''}
+  </header>
+  <div class="messages" id="msgs">
+    <p class="muted">Xabarlar yuklanmoqda...</p>
+  </div>
+  <form id="${isWorld?'worldMsgForm':'msgForm'}" ${isWorld?'':`data-id="${e(id)}"`}
+    class="chat-compose">
+    <input class="field" name="body" maxlength="2000" autocomplete="off"
+      placeholder="${isWorld?'Hamma uchun xabar...':'Xabar yozing...'}" required>
+    <button class="btn" type="submit" aria-label="Yuborish">${ico('send',20)}</button>
+  </form>`;
+}
 async function chats(){
   if(!requireUser()){$('#app').innerHTML=blank();return}
-  S.chatUnread=S.chatUnread||new Set();
+  const request=++chatListRequest;
   const owner=S.u.id;
-  // Use the inbox query only: unrelated follow records are not conversations.
-  const [messages,pref]=await Promise.all([
-    DB.from('messages').select('sender_id,recipient_id,created_at')
-      .or(`sender_id.eq.${owner},recipient_id.eq.${owner}`)
-      .order('created_at',{ascending:false}).limit(70),
-    worldPref()
-  ]);
-  check(messages);
-  if(S.u?.id!==owner)return;
-  const peers=[...new Set(messages.data.map(m=>m.sender_id===owner?m.recipient_id:m.sender_id))]
-    .filter(id=>id&&id!==owner);
-  if(S.chatId&&S.chatId!=='world'&&!peers.includes(S.chatId))peers.unshift(S.chatId);
-  S.chatPeers=peers;
-  S.chatUsers=await users(peers);
-  for(const m of messages.data){
-    if(m.recipient_id===owner&&S.chatId!==m.sender_id&&
-      new Date(m.created_at)>new Date(chatSeen(m.sender_id)))S.chatUnread.add(m.sender_id);
-  }
+  S.chatUnread=S.chatUnread||new Set();
   S.chatId=S.chatId||'world';
+  // Paint the inbox and active thread without waiting for the database.
   $('#app').innerHTML=`
     <div class="bar chat-title">
       <h2>${ico('chat',24)} Xabarlar</h2>
@@ -2916,14 +2925,36 @@ async function chats(){
     </div>
     <section class="chatlayout">
       <aside class="chatlist" id="chatRows"></aside>
-      <div class="chat-window" id="conversation">
-        <div class="empty">Suhbatni tanlang</div>
-      </div>
+      <div class="chat-window" id="conversation"></div>
     </section>`;
   chatRows();
   updateChatBadge();
-  if(S.chatId==='world')await worldConversation();
-  else await conversation(S.chatId);
+  const selected=S.chatId;
+  const thread=selected==='world'?worldConversation():conversation(selected);
+  const [messages,pref]=await Promise.all([
+    DB.from('messages').select('sender_id,recipient_id,created_at')
+      .or(`sender_id.eq.${owner},recipient_id.eq.${owner}`)
+      .order('created_at',{ascending:false}).limit(55),
+    worldPref()
+  ]);
+  check(messages);
+  if(S.page!=='chat'||S.u?.id!==owner||request!==chatListRequest)return;
+  const peers=[...new Set(messages.data.map(m=>m.sender_id===owner?m.recipient_id:m.sender_id))]
+    .filter(id=>id&&id!==owner);
+  if(S.chatId&&S.chatId!=='world'&&!peers.includes(S.chatId))peers.unshift(S.chatId);
+  S.chatPeers=peers;
+  for(const m of messages.data){
+    if(m.recipient_id===owner&&S.chatId!==m.sender_id&&
+      new Date(m.created_at)>new Date(chatSeen(m.sender_id)))S.chatUnread.add(m.sender_id);
+  }
+  chatRows();
+  updateChatBadge();
+  users(peers).then(mp=>{
+    if(S.page!=='chat'||request!==chatListRequest)return;
+    S.chatUsers={...(S.chatUsers||{}),...mp};
+    chatRows();
+  }).catch(console.warn);
+  await thread;
 }
 function chatTime(date){
   const d=new Date(date);
@@ -2938,86 +2969,114 @@ function chatBubble(body,mine,whenText,extra=''){
 async function conversation(id){
   if(!S.u||id==='world')return;
   S.chatId=id;
+  const seq=++chatThreadRequest;
   const area=$('#conversation');
   if(!area)return;
   chatRows();
-  area.innerHTML='<p class="muted">Suhbat yuklanmoqda...</p>';
-  const uid=S.u.id,requested=id;
+  area.innerHTML=chatWindowShell(id);
+  const key=S.u.id+'|'+id;
+  const recent=recentThreads.get(key);
+  if(recent?.rows?.length){
+    const msgs=$('#msgs');
+    if(msgs){
+      msgs.innerHTML=recent.rows.map(m=>
+        chatBubble(m.body,m.sender_id===S.u.id,chatTime(m.created_at),
+          `<button class="linkbtn" data-act="reportMsg" data-id="${e(m.id)}">${ico('flag',12)}</button>`)
+      ).join('');
+      msgs.scrollTop=msgs.scrollHeight;
+    }
+  }
+  const uid=S.u.id;
   const [pResult,msgResult]=await Promise.all([
     users([id]),
     DB.from('messages').select('id,sender_id,recipient_id,body,created_at')
       .or(`and(sender_id.eq.${uid},recipient_id.eq.${id}),and(sender_id.eq.${id},recipient_id.eq.${uid})`)
-      .order('created_at',{ascending:false}).limit(65)
+      .order('created_at',{ascending:false}).limit(55)
   ]);
   check(msgResult);
-  if(S.page!=='chat'||S.chatId!==requested||!$('#conversation'))return;
+  if(S.page!=='chat'||S.chatId!==id||seq!==chatThreadRequest||!$('#conversation'))return;
   const p=pResult[id]||S.chatUsers?.[id];
-  $('#conversation').innerHTML=`
-    <header class="chat-toolbar">
-      ${avatar(p)}
-      <button class="linkbtn" data-act="user" data-id="${e(id)}">${label(p)}</button>
-    </header>
-    <div class="messages" id="msgs">
-      ${msgResult.data.slice().reverse().map(m=>
-        chatBubble(m.body,m.sender_id===uid,chatTime(m.created_at),
-          `<button class="linkbtn" data-act="reportMsg" data-id="${e(m.id)}">${ico('flag',12)}</button>`)
-      ).join('')||'<p class="muted">Birinchi xabarni yuboring.</p>'}
-    </div>
-    <form id="msgForm" data-id="${e(id)}" class="chat-compose">
-      <input class="field" name="body" maxlength="2000" autocomplete="off"
-        placeholder="Xabar yozing..." required>
-      <button class="btn" type="submit" aria-label="Yuborish">${ico('send',20)}</button>
-    </form>`;
-  const msgs=$('#msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;
-  markChatSeen(id);chatRows();
+  const title=$('#conversation .chat-toolbar .linkbtn');
+  if(title)title.innerHTML=label(p);
+  const rows=msgResult.data.slice().reverse();
+  recentThreads.set(key,{rows,at:Date.now()});
+  const msgs=$('#msgs');
+  if(msgs){
+    msgs.innerHTML=rows.map(m=>
+      chatBubble(m.body,m.sender_id===uid,chatTime(m.created_at),
+        `<button class="linkbtn" data-act="reportMsg" data-id="${e(m.id)}">${ico('flag',12)}</button>`)
+    ).join('')||'<p class="muted">Birinchi xabarni yuboring.</p>';
+    msgs.scrollTop=msgs.scrollHeight;
+  }
+  markChatSeen(id);
+  chatRows();
 }
 async function worldConversation(){
   if(!requireUser())return;
   S.chatId='world';
-  const pref=S.worldPref||await worldPref();
+  const seq=++chatThreadRequest;
   const area=$('#conversation');
   if(!area)return;
   chatRows();
-  if(!pref.joined){
+  const prefPromise=worldPref();
+  area.innerHTML=chatWindowShell('world');
+  const uid=S.u.id;
+  const pref=S.worldPref;
+  const recent=recentThreads.get(uid+'|world');
+  if(pref?.joined!==false&&recent?.rows?.length){
+    const names=cachedPeople(recent.rows.map(m=>m.author_id));
+    const msgs=$('#msgs');
+    if(msgs){
+      msgs.innerHTML=renderWorldMessages(recent.rows,names);
+      msgs.scrollTop=msgs.scrollHeight;
+    }
+  }
+  // Start both requests simultaneously instead of waiting for room settings first.
+  const [prefResult,rowsResult]=await Promise.all([
+    prefPromise,
+    DB.from('world_chat_messages').select('id,author_id,body,created_at')
+      .order('created_at',{ascending:false}).limit(55)
+  ]);
+  if(S.page!=='chat'||S.chatId!=='world'||seq!==chatThreadRequest||!$('#conversation'))return;
+  if(!prefResult.joined){
     area.innerHTML=`<div class="chat-toolbar">${ico('globe',24)} <b>Umumiy chat</b></div>
-      <div class="empty">
-        <p>Siz umumiy chatdan chiqqansiz.</p>
-        ${btn('worldJoin','Qayta qo‘shilish')}
-      </div>`;
+      <div class="empty"><p>Siz umumiy chatdan chiqqansiz.</p>
+        ${btn('worldJoin','Qayta qo‘shilish')}</div>`;
     return;
   }
-  area.innerHTML='<p class="muted">Umumiy chat yuklanmoqda...</p>';
-  const res=await DB.from('world_chat_messages').select('id,author_id,body,created_at')
-    .order('created_at',{ascending:false}).limit(65);
-  check(res);
-  if(S.page!=='chat'||S.chatId!=='world'||!$('#conversation'))return;
-  const rows=res.data.slice().reverse(),names=await users(rows.map(m=>m.author_id));
-  if(S.page!=='chat'||S.chatId!=='world'||!$('#conversation'))return;
-  $('#conversation').innerHTML=`
-    <header class="chat-toolbar">
-      ${ico('globe',24)} <b style="flex:1">Umumiy chat</b>
-      <button data-act="worldMute" title="${pref.muted?'Mute o‘chirish':'Ovozsiz qilish'}">
-        ${ico('bell',19)} ${pref.muted?'Yoqish':'Mute'}</button>
-      <button data-act="worldLeave" title="Chatdan chiqish">${ico('x',19)}</button>
-    </header>
-    <div class="messages" id="msgs">
-      ${rows.map(m=>`<div class="world-message">
-        <button class="linkbtn" data-act="user" data-id="${e(m.author_id)}">
-          ${avatar(names[m.author_id])} ${label(names[m.author_id])}</button>
-        ${chatBubble(m.body,m.author_id===S.u.id,chatTime(m.created_at),
-          m.author_id!==S.u.id?`<button class="linkbtn" data-act="reportUser"
-            data-id="${e(m.author_id)}" title="Shikoyat">${ico('flag',12)}</button>`:'')}
-      </div>`).join('')||'<p class="muted">Hozircha xabar yo‘q.</p>'}
-    </div>
-    <form id="worldMsgForm" class="chat-compose">
-      <input class="field" name="body" maxlength="2000" autocomplete="off"
-        placeholder="Hamma uchun xabar..." required>
-      <button class="btn" type="submit" aria-label="Yuborish">${ico('send',20)}</button>
-    </form>`;
-  const msgs=$('#msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;
+  check(rowsResult);
+  const rows=rowsResult.data.slice().reverse();
+  recentThreads.set(uid+'|world',{rows,at:Date.now()});
+  const controls=$('#conversation .chat-toolbar [data-act="worldMute"]');
+  if(controls)controls.innerHTML=ico('bell',19)+' '+(prefResult.muted?'Yoqish':'Mute');
+  const names=cachedPeople(rows.map(m=>m.author_id));
+  const msgs=$('#msgs');
+  if(msgs){
+    msgs.innerHTML=renderWorldMessages(rows,names);
+    msgs.scrollTop=msgs.scrollHeight;
+  }
   S.worldUnread=0;
   worldUpdate({last_seen_at:new Date().toISOString()}).catch(console.warn);
   chatRows();updateChatBadge();
+  // Names can be requested afterwards, without blocking the messages.
+  if(rows.length){
+    users(rows.map(m=>m.author_id)).then(mp=>{
+      if(S.page!=='chat'||S.chatId!=='world'||seq!==chatThreadRequest||!$('#msgs'))return;
+      const existingScroll=$('#msgs').scrollTop;
+      $('#msgs').innerHTML=renderWorldMessages(rows,mp);
+      $('#msgs').scrollTop=existingScroll;
+    }).catch(console.warn);
+  }
+}
+function renderWorldMessages(rows,names){
+  return rows.map(m=>`<div class="world-message">
+    <button class="linkbtn" data-act="user" data-id="${e(m.author_id)}">
+      ${avatar(names[m.author_id])} ${label(names[m.author_id])}
+    </button>
+    ${chatBubble(m.body,m.author_id===S.u?.id,chatTime(m.created_at),
+      m.author_id!==S.u?.id?`<button class="linkbtn" data-act="reportUser"
+        data-id="${e(m.author_id)}" title="Shikoyat">${ico('flag',12)}</button>`:'')}
+  </div>`).join('')||'<p class="muted">Hozircha xabar yo‘q.</p>';
 }
 function chooseChat(){
   if(!requireUser())return;
