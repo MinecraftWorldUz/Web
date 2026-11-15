@@ -1660,54 +1660,81 @@ function saveFeedCache(){
   }catch{}
 }
 function homeShell(){
+  const saved=S.homeView==='saved';
   $('#app').innerHTML=`
-    <section class="hero compact-hero">
-      <h1>O‘yin dunyongni<br><span>kengaytir.</span></h1>
-      <p>Eng qiziqarli Minecraft modlarini kashf et, saqla va do‘stlaring bilan bo‘lish.</p>
-      <span class="autumn">${ico('pickaxe',112)}</span>
-    </section>
-    <section class="explore">
-      <div class="bar explore-bar">
-        <div><span class="section-kicker">KASHF ETISH</span>
-          <h2>${S.homeView==='saved'?'Saqlangan modlar':'Modlar olami'}</h2></div>
-      </div>
-      <div class="filters">
-        <label class="search-wrap">${ico('package',19)}
-          <input class="field" id="search" autocomplete="off"
-            placeholder="Mod nomi yoki tavsifini qidiring..." value="${e(S.query)}">
-        </label>
-        <select class="field" id="category">
-          <option value="all">Barcha kategoriyalar</option>${categoryOptions(S.category)}
-        </select>
-        <select class="field" id="gameVersion">
-          <option value="all">Barcha versiyalar</option>
-          ${versionOptions(S.gameVersion||'all')}
-        </select>
-      </div>
-      <div id="quickCategories" class="quick-categories"></div>
-      <div class="results-heading"><span id="resultsCount">Yuklanmoqda...</span>
-        <div class="tabs sort-tabs">
-          <button data-act="sort" data-sort="new" class="${S.sort==='new'?'on':''}">${ico('clock',15)} Yangi</button>
-          <button data-act="sort" data-sort="popular" class="${S.sort==='popular'?'on':''}">${ico('heart',15)} Mashhur</button>
+    <section class="hero compact-hero autumn-world-hero" aria-label="Minecraft World kuzgi manzarasi">
+      <div class="hero-copy">
+        <h1>${ux('O‘yin dunyongni')}<br><span>${ux('kengaytir.')}</span></h1>
+        <p>${ux('Eng qiziqarli Minecraft modlarini kashf et, saqla va do‘stlaring bilan bo‘lish.')}</p>
+        <div class="hero-cta">
+          <button class="btn hero-primary" type="button" data-act="focusMods">
+            ${ico('download',19)} ${ux('Modlarni ko‘rish')}</button>
+          <button class="btn ghost hero-secondary" type="button" data-go="community">
+            ${ico('users',19)} ${ux('Hamjamiyatga qo‘shilish')}</button>
         </div>
       </div>
-      <div id="modGrid" class="grid">
-        ${Array.from({length:6},()=>'<div class="skeleton-card"><div class="skeleton-art"></div><div class="skeleton-lines"></div></div>').join('')}
+    </section>
+    <section class="autumn-categories">
+      <div class="autumn-heading">
+        <h2>${ico('package',25)} ${ux('Kategoriyalar')}</h2>
+        <button class="autumn-see-all" data-act="allCategories" type="button">
+          ${S.categoriesExpanded?ux('Kamroq ko‘rsatish'):ux('Barchasini ko‘rish')} ${ico('arrow',17)}
+        </button>
+      </div>
+      <div id="quickCategories" class="quick-categories"></div>
+    </section>
+    <section class="explore" id="exploreMods">
+      <div class="autumn-heading autumn-mod-heading">
+        <h2>${ico('package',25)} ${saved?ux('Saqlangan modlar'):ux('Modlar')}</h2>
+        <div class="tabs sort-tabs">
+          <button data-act="sort" data-sort="new" class="${S.sort==='new'?'on':''}">${ico('clock',17)} ${ux('Yangi')}</button>
+          <button data-act="sort" data-sort="popular" class="${S.sort==='popular'?'on':''}">${ico('heart',17)} ${ux('Mashhur')}</button>
+          <button data-act="sort" data-sort="views" class="${S.sort==='views'?'on':''}">${ico('eye',17)} ${ux('Eng ko‘p ko‘rilgan')}</button>
+        </div>
+      </div>
+      <div class="autumn-filter-shell">
+        <div class="filters">
+          <label class="search-wrap">${ico('package',19)}
+            <input class="field" id="search" autocomplete="off"
+              placeholder="${ux('Mod nomi yoki tavsifini qidiring...')}" value="${e(S.query)}">
+          </label>
+          <select class="field" id="category" aria-label="Kategoriya">
+            <option value="all">${ux('Barcha kategoriyalar')}</option>${categoryOptions(S.category)}
+          </select>
+          <select class="field" id="gameVersion" aria-label="Minecraft versiyasi">
+            <option value="all">${ux('Barcha versiyalar')}</option>
+            ${versionOptions(S.gameVersion||'all')}
+          </select>
+        </div>
+        <span id="resultsCount" class="results-label">${ux('Yuklanmoqda...')}</span>
+      </div>
+      <div id="modGrid" class="grid autumn-mod-list">
+        ${Array.from({length:3},()=>'<div class="skeleton-card"><div class="skeleton-art"></div><div class="skeleton-lines"></div></div>').join('')}
       </div>
       <div id="moreModsWrap" class="load-more" hidden></div>
     </section>`;
   $('#category').value=S.category;
   $('#gameVersion').value=S.gameVersion||'all';
 }
+const FEATURED_CATEGORIES=['all','addon','mod','map','texture','shader'];
+const CATEGORY_ICONS={all:'world',addon:'plus-square',mod:'package',map:'globe',
+  texture:'sparkles',shader:'sparkles',world:'globe',skin:'user',
+  furniture:'package',mobs:'users',survival:'shield',performance:'clock',
+  setting:'settings',ui:'package',tools:'pickaxe',other:'folder'};
 function refreshFeedCounters(){
   const el=$('#quickCategories');
   if(!el)return;
-  const key=S.lang+'|'+S.category;
+  const key=S.lang+'|'+S.category+'|'+!!S.categoriesExpanded;
   if(el.dataset.renderKey===key)return;
-  el.innerHTML=C.map(c=>
-    `<button class="category-chip ${S.category===c?'selected':''}"
+  const cats=S.categoriesExpanded?['all',...C]:FEATURED_CATEGORIES;
+  el.innerHTML=cats.map(c=>{
+    const title=c==='all'?ux('Barchasi'):categoryName(c);
+    const icon=CATEGORY_ICONS[c]||'package';
+    return `<button class="category-tile ${S.category===c?'selected':''}"
       data-act="quickCategory" data-category="${e(c)}"
-      title="${e(categoryName(c))}">${e(categoryName(c))}</button>`).join('');
+      title="${e(title)}">
+      ${ico(icon,26)} <span>${e(title)}</span></button>`;
+  }).join('');
   el.dataset.renderKey=key;
 }
 async function loadSavedIds(){
@@ -1739,7 +1766,7 @@ async function home(){
   const query=DB.from('mods')
     .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
     .eq('status','approved')
-    .order(S.sort==='popular'?'likes_count':'created_at',{ascending:false}).limit(60);
+    .order(S.sort==='popular'?'likes_count':S.sort==='views'?'views_count':'created_at',{ascending:false}).limit(60);
   const savedPromise=S.homeView==='saved'?loadSavedIds():Promise.resolve();
   const [res,savedResult]=await Promise.allSettled([query,savedPromise]);
   if(S.page!=='home'||request!==homeRequest)return;
@@ -1787,7 +1814,7 @@ async function fetchMoreFeed(){
     const r=await DB.from('mods')
       .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
       .eq('status','approved')
-      .order(S.sort==='popular'?'likes_count':'created_at',{ascending:false})
+      .order(S.sort==='popular'?'likes_count':S.sort==='views'?'views_count':'created_at',{ascending:false})
       .range(from,from+59);
     check(r);
     if(S.page!=='home'||request!==homeRequest)return;
@@ -1815,6 +1842,7 @@ function filterMods(){
     (!q||`${localModTitle(m)} ${localModDesc(m)} ${m.category}`.toLocaleLowerCase().includes(q))
   );
   if(S.sort==='popular')result.sort((a,b)=>(b.likes_count||0)-(a.likes_count||0));
+  else if(S.sort==='views')result.sort((a,b)=>(b.views_count||0)-(a.views_count||0));
   else result.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   const shown=result.slice(0,S.visibleMods||12);
   $('#resultsCount').textContent=result.length+' ta mod topildi';
@@ -3651,6 +3679,15 @@ window.addEventListener('click',async event=>{
         await loadExtraSavedMods();
       }
       filterMods();
+    }
+    else if(act==='focusMods'){
+      document.getElementById('exploreMods')?.scrollIntoView({behavior:'smooth',block:'start'});
+    }
+    else if(act==='allCategories'){
+      S.categoriesExpanded=!S.categoriesExpanded;
+      const action=document.querySelector('[data-act="allCategories"]');
+      if(action)action.innerHTML=(S.categoriesExpanded?ux('Kamroq ko‘rsatish'):ux('Barchasini ko‘rish'))+' '+ico('arrow',17);
+      refreshFeedCounters();
     }
     else if(act==='quickCategory'){
       S.category=a.dataset.category;
