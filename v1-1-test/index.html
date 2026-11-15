@@ -448,6 +448,7 @@ function addNotice(userId,text,groupId){demo.notifications.unshift({id:'notice_'
 function profileKey(id){return pData(id).nick}
 function modal(content){document.getElementById('overlay').classList.remove('hidden');document.getElementById('overlay').innerHTML='<div class="modal"><div class="row between"><span class="small muted">Minecraft World · TEST</span><button class="icon-btn" data-action="close" aria-label="'+F(t('back'))+'">'+ic('back')+'</button></div>'+content+'</div>'}
 function photoPick(field,avatar,name){return '<label class="circle-photo" title="'+F(W('typePhoto'))+'">'+(avatar?'<img src="'+F(avatar)+'" class="avatar large" alt="">':'<span class="avatar large">'+F((name||'G')[0].toUpperCase())+'</span>')+'<span class="circle-plus">'+ic('plus',16)+'</span><input type="file" name="'+field+'" accept="image/png,image/jpeg,image/webp" aria-label="'+F(W('typePhoto'))+'"></label>'}
+function renderHeader(){document.getElementById('logo').innerHTML=ic('world',31);const unread=demo.invites.filter(x=>x.to===me()).length+demo.notifications.filter(x=>x.to===me()&&!x.read).length;document.getElementById('bell').innerHTML=ic('bell')+(unread?'<span class="count">'+unread+'</span>':'');document.getElementById('settingsTop').innerHTML=ic('settings');document.getElementById('profileTop').innerHTML=avatarUI(pData(me()));document.getElementById('testlabel').textContent='V1.1 TEST • '+t('testing')}
 function renderBottom(){
  document.getElementById('bottom').innerHTML=['home','community','add','chat','profile'].map(n=>'<button type="button" data-nav="'+n+'" class="'+(state.section===n?'active':'')+'">'+ic(n==='add'?'plus':n)+'<span>'+t(n)+'</span></button>').join('');
  const fab=document.getElementById('fab');fab.classList.toggle('hidden',state.section!=='chat'||!!state.thread);fab.innerHTML=ic('plus',28);fab.dataset.action='newChat';fab.setAttribute('aria-label',W('newMsg'));
@@ -484,7 +485,7 @@ function chatRow(p){
 function chatContacts(query=''){
  const q=query.trim().toLowerCase().replace(/^@/,'');
  let rows=chatIds().filter(p=>(p.name+' '+p.nick).toLowerCase().includes(q));
- if(q){state.groups.filter(g=>!rows.some(r=>r.id===g.id)&&g.visibility!=='private'&&(g.name+' '+g.username).toLowerCase().includes(q)).forEach(g=>rows.push({...groupIdentity(g),kind:'group'}));}
+ if(q){if(demo.globalOut.includes(me())&&(t('general')+' minecraftworld').toLowerCase().includes(q))rows.push({id:'global',kind:'global',name:t('general'),nick:'minecraftworld'});state.groups.filter(g=>!rows.some(r=>r.id===g.id)&&g.visibility!=='private'&&(g.name+' '+g.username).toLowerCase().includes(q)).forEach(g=>rows.push({...groupIdentity(g),kind:'group'}));}
  rows=rows.filter(p=>demo.filter==='archived'?meta(p.id).archived:!meta(p.id).archived);
  if(demo.filter==='unread')rows=rows.filter(p=>meta(p.id).unread>0);
  rows.sort((a,b)=>Number(!!meta(b.id).pinned)-Number(!!meta(a.id).pinned)||lastTime(b.id)-lastTime(a.id)||a.name.localeCompare(b.name));
@@ -579,7 +580,7 @@ function newChatUI(){
  const found=allPeople().filter(p=>p.id!==me()&&(!isPrivate(p.id)||items(p.id).length)&&(p.name+' '+p.nick).toLowerCase().includes(q.toLowerCase().replace(/^@/,'')));
  return '<h2>'+W('newMsg')+'</h2><label class="chat-search">'+ic('search',19)+'<input class="field" id="newChatFind" placeholder="'+W('searchAll')+'" value="'+F(q)+'" autofocus></label>'+
  '<button class="chat-contact new-group" data-action="newGroup">'+ic('community',28)+'<span class="contact-body"><strong>'+W('createGroup')+'</strong></span></button>'+
- '<div id="newChatPeople">'+found.map(p=>'<button class="chat-contact" data-chat="'+F(p.id)+'">'+avatarUI(p)+'<span class="contact-body"><strong>'+F(p.name)+'</strong><small>@'+F(p.nick)+'</small></span></button>').join('')+'</div><p class="privacy-info">'+W('privateSearch')+'</p>';
+ '<div id="newChatPeople">'+(demo.globalOut.includes(me())?'<button class="chat-contact" data-action="chatInfo" data-id="global">'+ic('globe',30)+' <strong>'+t('general')+'</strong></button>':'')+found.map(p=>'<button class="chat-contact" data-chat="'+F(p.id)+'">'+avatarUI(p)+'<span class="contact-body"><strong>'+F(p.name)+'</strong><small>@'+F(p.nick)+'</small></span></button>').join('')+'</div><p class="privacy-info">'+W('privateSearch')+'</p>';
 }
 function settingsUI(){
  const p=pData(me());
@@ -783,13 +784,12 @@ document.body.addEventListener('change',e=>{
  if(x.id==='attachChat'&&x.files?.[0]){imgReader(x.files[0],src=>{let box=document.getElementById('attachmentPreview');if(box&&src)box.innerHTML='<img class="upload-preview" src="'+F(src)+'" alt="">'});return}
  if(x.name==='image'&&x.closest('#postForm')&&x.files?.[0])imgReader(x.files[0],src=>{let box=document.getElementById('postImagePreview');if(box&&src)box.innerHTML='<img class="upload-preview" src="'+F(src)+'" alt="">'});
 },true);
-state.groups.forEach(g=>{g.owner??='world';g.members??=[];if(!g.members.includes(g.owner))g.members.unshift(g.owner);g.visibility??='public';});
+state.groups.forEach(g=>{g.owner??='world';g.members??=[];if(!g.members.includes(g.owner))g.members.unshift(g.owner);g.visibility??='public';if(g.username&&allPeople().some(p=>p.nick.toLowerCase()===g.username.toLowerCase())){g.username='guruh_'+String(g.id).replace(/[^a-z0-9]/gi,'').slice(-8).toLowerCase();g.visibility='private'}});
 persistGroups();
 const initHash=location.hash.match(/^#(home|chat|profile|community|add)(?:\/([^/]+))?/);
 if(initHash){state.section=initHash[1];state.thread=initHash[2]||null}
 state.viewed=me();
 render();
 
-
-init();
+/* Enhanced test UI starts directly; the legacy init would reset account and page state. */
 </script></body></html>
