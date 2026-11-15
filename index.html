@@ -2417,19 +2417,35 @@ async function toggleFollow(id){
 
 const ACCOUNT_STORE_KEY='mw_saved_accounts_v1';
 const ACCOUNT_MAX=5;
+// Saved accounts belong to this browser profile only. Never sync sessions
+// to the public database or expose them to other users.
 function savedAccounts(){
   try{
     const items=JSON.parse(localStorage.getItem(ACCOUNT_STORE_KEY)||'[]');
     if(!Array.isArray(items))return [];
-    return items.filter(a=>a&&typeof a.id==='string'&&
-      /^[0-9a-f-]{36}$/i.test(a.id)&&typeof a.username==='string'&&
-      typeof a.access_token==='string'&&typeof a.refresh_token==='string'
-    ).slice(0,ACCOUNT_MAX);
+    const seen=new Set();
+    return items.filter(a=>{
+      if(!a||typeof a.id!=='string'||!/^[0-9a-f-]{36}$/i.test(a.id)||
+          typeof a.username!=='string'||typeof a.access_token!=='string'||
+          typeof a.refresh_token!=='string'||seen.has(a.id))return false;
+      seen.add(a.id);return true;
+    }).slice(0,ACCOUNT_MAX);
   }catch{return []}
 }
 function writeAccounts(items){
-  try{localStorage.setItem(ACCOUNT_STORE_KEY,JSON.stringify(items.slice(0,ACCOUNT_MAX)))}
-  catch{toast('Brauzer akkauntlarni saqlay olmadi')}
+  const clean=items.slice(0,ACCOUNT_MAX);
+  try{
+    const serialized=JSON.stringify(clean);
+    localStorage.setItem(ACCOUNT_STORE_KEY,serialized);
+    // Important for Telegram in-app browsers: a failed write must not
+    // silently look like a successfully saved account.
+    const reread=localStorage.getItem(ACCOUNT_STORE_KEY);
+    if(reread!==serialized)throw Error('Storage did not persist account list');
+    return true;
+  }catch(error){
+    console.warn('Saved accounts storage failed:',error);
+    throw Error('Brauzer akkauntlarni saqlamadi. Brauzer xotirasi yoki maxfiy rejimni tekshiring.');
+  }
 }
 function rememberAccount(session,username=''){
   const user=session?.user;
@@ -2443,20 +2459,25 @@ function rememberAccount(session,username=''){
   const item={id:user.id,username:String(name).toLowerCase(),
     access_token:session.access_token,refresh_token:session.refresh_token};
   if(index>=0)entries[index]=item;else entries.push(item);
-  writeAccounts(entries);
-  return true;
+  return writeAccounts(entries);
 }
 function forgetAccount(id){
   writeAccounts(savedAccounts().filter(a=>a.id!==id));
 }
 function accountMenu(){
   const items=savedAccounts(),active=S.u?.id;
+  const currentSaved=active&&items.some(a=>a.id===active);
+  if(active&&!currentSaved&&S.me){
+    items.push({id:active,username:S.me.username||'user',
+      access_token:'',refresh_token:'',notSaved:true});
+  }
   const rows=items.map(a=>{
     const name=e(a.username);
     const row='<button class="account-switch" type="button" data-act="accountSwitch" data-id="'+e(a.id)+'">'+
       '<span class="account-avatar">'+ico('user',22)+'</span>'+
       '<span class="account-label"><b>@'+name+'</b><small>'+
-      (a.id===active?'Hozirgi akkaunt':'Bosib almashtiring')+
+      (a.notSaved?'Saqlanmagan — qayta kirish kerak':
+        a.id===active?'Hozirgi akkaunt':'Bosib almashtiring')+
       '</small></span>'+(a.id===active?ico('check',20):ico('arrow',18))+'</button>';
     const remove=a.id!==active?
       '<button class="account-remove" data-act="accountRemove" data-id="'+e(a.id)+
@@ -2485,28 +2506,35 @@ async function switchAccount(id){
   if(!target)throw Error('Bu akkaunt saqlanmagan');
   const {data:prior}=await DB.auth.getSession();
   if(prior?.session)rememberAccount(prior.session);
-  const {data,error}=await DB.auth.setSession({
-    access_token:target.access_token,refresh_token:target.refresh_token
-  });
+  let data=null,error=null;
+  try{
+    const result=await DB.auth.setSession({
+      access_token:target.access_token,refresh_token:target.refresh_token
+    });
+    data=result.data;error=result.error;
+  }catch(err){error=err}
   if(error||!data?.session||data.user?.id!==id){
-    forgetAccount(id);
+    // Keep the username in the account menu; don't silently erase the
+    // saved account because of an expired/rotated refresh token.
     if(prior?.session){
       const restored=await DB.auth.setSession({
         access_token:prior.session.access_token,
         refresh_token:prior.session.refresh_token
       });
-      if(restored.error)console.error(restored.error);
+      if(restored.error)console.warn('Previous session restore:',restored.error);
     }
-    throw Error('Bu akkaunt sessiyasi tugagan. Parol bilan qayta kiring.');
+    toast('@'+target.username+' uchun parol bilan qayta kiring.');
+    authBox(false,true,target.username);
+    return;
   }
-  rememberAccount(data.session,target.username);
+  rememberAccount({...data.session,user:data.user||data.session.user},target.username);
   close();
   await refreshUser();
   await go('home');
   scheduleFastPrefetch();
   toast('@'+target.username+' akkauntiga o‘tildi');
 }
-function authBox(register=false,adding=false){
+function authBox(register=false,adding=false,prefill=''){
   dialog(register?t('register'):t('login'),`
     <form id="authForm" data-register="${register}" data-adding="${adding}">
       <div class="formgroup">
@@ -2514,7 +2542,8 @@ function authBox(register=false,adding=false){
         <input class="field" name="username"
           minlength="3" maxlength="20"
           pattern="[A-Za-z0-9_]{3,20}" autocomplete="username"
-          autocapitalize="off" spellcheck="false" required>
+          autocapitalize="off" spellcheck="false"
+          value="${e(prefill)}" required>
       </div>
       <div class="formgroup">
         <label>Parol</label>
@@ -2584,17 +2613,34 @@ async function submitAuth(f){
     refresh_token:result.refresh_token
   });
   if(error)throw error;
-  if(!rememberAccount(authResult.session,username)){
-    if(previous?.session)await DB.auth.setSession({
-      access_token:previous.session.access_token,
-      refresh_token:previous.session.refresh_token
-    });
-    throw Error('5 ta akkaunt limiti tugadi');
+  try{
+    const session=authResult?.session&&{
+      ...authResult.session,
+      user:authResult.user||authResult.session.user
+    };
+    if(!rememberAccount(session,username))
+      throw Error('5 ta akkaunt limiti tugadi yoki sessiya mavjud emas.');
+    if(!savedAccounts().some(a=>a.id===session.user.id&&a.username===username))
+      throw Error('Yangi akkaunt saqlanmadi. Qayta urinib ko‘ring.');
+  }catch(err){
+    // Don't leave the browser switched to a new account that wasn't saved.
+    if(previous?.session){
+      const restore=await DB.auth.setSession({
+        access_token:previous.session.access_token,
+        refresh_token:previous.session.refresh_token
+      });
+      if(restore.error)console.warn('Session rollback:',restore.error);
+    }
+    throw err;
   }
-  close();
-  toast('Xush kelibsiz, @'+username);
   await refreshUser();
-  await go('home');
+  toast('@'+username+' akkaunti saqlandi!');
+  if(adding){
+    accountMenu(); // Show saved accounts immediately, not only the home page.
+  }else{
+    close();
+    await go('home');
+  }
   scheduleFastPrefetch();
 }
 
@@ -2615,8 +2661,10 @@ async function refreshUser(){
       .eq('id',S.u.id).maybeSingle()):null;
   if(S.u){
     const {data:current}=await DB.auth.getSession();
-    if(current?.session?.user?.id===S.u.id)
-      rememberAccount(current.session,S.me?.username);
+    if(current?.session?.user?.id===S.u.id){
+      try{rememberAccount(current.session,S.me?.username)}
+      catch(error){console.warn('Account persistence:',error)}
+    }
     loadSavedIds().then(()=>{
       if(S.page==='home')filterMods();
     }).catch(console.warn);
@@ -4504,8 +4552,9 @@ if('serviceWorker'in navigator){
   // Supabase may emit SIGNED_IN again when the browser tab regains focus.
   // Update account data without forcing the user back to the home screen.
   DB.auth.onAuthStateChange((event,session)=>{
-    if((event==='TOKEN_REFRESHED'||event==='SIGNED_IN')&&session)
-      rememberAccount(session);
+    if((event==='TOKEN_REFRESHED'||event==='SIGNED_IN')&&session){
+      try{rememberAccount(session)}catch(error){console.warn('Account autosave:',error)}
+    }
     if(event==='SIGNED_IN' && session?.user?.id!==S.u?.id){
       setTimeout(()=>refreshUser().catch(console.error),0);
     }else if(event==='SIGNED_OUT' && S.u){
