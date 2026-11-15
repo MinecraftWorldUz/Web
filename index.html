@@ -1717,8 +1717,28 @@ const MORE_UI_TRANSLATIONS={
   'Izoh yozish mod tasdiqlangach ochiladi.':'Comments open after mod approval.'
  }
 };
+const AUTUMN_UI_TEXT={
+  ru:{
+    'Kategoriyalar':'Категории','Barchasini ko‘rish':'Показать все',
+    'Kamroq ko‘rsatish':'Свернуть','Barchasi':'Все',
+    'Modlarni ko‘rish':'Смотреть моды',
+    'Hamjamiyatga qo‘shilish':'В сообщество',
+    'Eng ko‘p ko‘rilgan':'Популярные просмотры',
+    'Modlar':'Моды',
+  },
+  en:{
+    'Kategoriyalar':'Categories','Barchasini ko‘rish':'See all',
+    'Kamroq ko‘rsatish':'Show fewer','Barchasi':'All',
+    'Modlarni ko‘rish':'Explore mods',
+    'Hamjamiyatga qo‘shilish':'Join community',
+    'Eng ko‘p ko‘rilgan':'Most viewed',
+    'Modlar':'Mods',
+  }
+};
 function ux(text){
-  return EXTRA_WORDS[S.lang]?.[text]||MORE_UI_TRANSLATIONS[S.lang]?.[text]||text;
+  return EXTRA_WORDS[S.lang]?.[text]||
+    MORE_UI_TRANSLATIONS[S.lang]?.[text]||
+    AUTUMN_UI_TEXT[S.lang]?.[text]||text;
 }
 const uiObserver = new MutationObserver(records=>{
   if(S.lang==='uz')return;
@@ -2095,11 +2115,12 @@ async function home(){
   homeShell();
   // Switching tabs should not trigger a full network refresh every time.
   const hasMemory=feedLoaded&&feedLoadedOrder===S.sort;
+  let cached=null;
   if(hasMemory){
     filterMods();
     if(Date.now()-feedLoadedAt<30000)return;
   }else{
-    const cached=readFeedCache();
+    cached=readFeedCache();
     if(cached){
       S.feed=cached.items;
       S.hasMore=S.feed.length>=60;
@@ -2117,7 +2138,7 @@ async function home(){
   const [res,savedResult]=await Promise.allSettled([query,savedPromise]);
   if(S.page!=='home'||request!==homeRequest)return;
   if(res.status==='rejected'||res.value.error){
-    if(!cached)throw (res.status==='rejected'?res.reason:res.value.error);
+    if(!cached&&!hasMemory)throw (res.status==='rejected'?res.reason:res.value.error);
     toast('Ulanish sust. Oldingi modlar ko‘rsatildi.');
     return;
   }
