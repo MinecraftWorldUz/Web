@@ -80,6 +80,72 @@
 .danger-link{background:transparent;color:#ffa18a;border:0;padding:12px 0;font-weight:700}
 .group-leave{background:#60402b}
 .privacy-info{font-size:12px;color:var(--muted)}
+
+/* Messenger/social beta layout */
+.chat-list{display:block}.chat-tabs{display:flex;gap:6px;margin:5px 0 13px;overflow:auto;scrollbar-width:none}
+.chat-tabs button{white-space:nowrap;color:var(--muted);border:0;background:#4b3726;padding:9px 13px;border-radius:24px}
+.chat-tabs button.active{background:var(--gold);color:#382819;font-weight:800}
+.chat-entry{position:relative;border-bottom:1px solid #79563866}
+.chat-entry .chat-contact{width:100%;padding-right:45px;border:0;border-radius:0;background:transparent;min-height:76px}
+.chat-entry .chat-contact:hover{background:#4e382b}
+.chat-picture{width:49px;display:grid;place-items:center;flex:none}
+.chat-side{display:grid;gap:6px;justify-items:end;align-items:center;flex:none;color:var(--muted);font-size:12px}
+.chat-side b{background:var(--gold);color:#382719;border-radius:50px;padding:0 7px;font-size:11px}
+.chat-more{position:absolute;right:5px;top:26px;width:28px;height:28px;border:0;background:transparent;color:var(--muted)}
+.chat-contact .contact-body{min-width:0}.chat-contact .contact-body small{max-width:100%;display:block;text-overflow:ellipsis}
+.circle-photo{position:relative;display:flex;flex:none;align-items:center;justify-content:center;cursor:pointer;width:85px;height:85px;border-radius:50%;border:2px solid #cfaa74}
+.circle-photo .avatar,.circle-photo .avatar.large{width:81px!important;height:81px!important;min-width:81px!important;object-fit:cover;border-radius:50%!important}
+.circle-photo input{opacity:0;position:absolute;width:1px;height:1px;pointer-events:none}
+.circle-plus{position:absolute;right:-2px;bottom:0;width:27px;height:27px;background:#efbd73;color:#342719;border-radius:50%;display:grid;place-items:center;border:2px solid #30241b}
+.inline-profile-editor{display:flex;align-items:center;gap:17px;margin:12px 0 20px}
+.inline-profile-editor>div{flex:1;min-width:0}
+.inline-profile-editor .field{margin:0}
+.form-save{width:100%;justify-content:center;margin-top:16px}
+.radio-flex{display:flex;gap:10px;margin:12px 0 20px;flex-wrap:wrap}
+.radio-flex label{flex:1;min-width:120px;padding:13px;border-radius:12px;background:#493424;display:block;border:1px solid #80603e}
+.radio-flex label input{accent-color:#f3bd64}.radio-flex small{display:block;font-size:11px;color:var(--muted)}
+.username-status{display:block;font-size:12px;min-height:23px;margin-top:5px}.username-status.ok{color:#9cd4a0}.username-status.bad{color:#ffa28d}
+#visibilityUsername[hidden]{display:none}
+.group-member-picks{display:grid;gap:7px}.member-pick{display:flex;align-items:center;min-height:57px;padding:10px;gap:10px}
+.member-pick .avatar,.member-row .avatar{width:44px!important;height:44px!important;min-width:44px!important;border-radius:50%!important;aspect-ratio:1/1!important;object-fit:cover!important;flex:none!important}
+.member-pick input{margin-left:auto;order:3;width:18px;height:18px}.member-pick span{min-width:0}
+.info-actions{display:grid;gap:8px;margin-top:20px}.info-actions .btn{justify-content:center}
+.danger-text{color:#ffc4a9!important}
+.setting-line{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid #ffffff22;padding:15px 0}
+.setting-line small{display:block;color:var(--muted)}.setting-line span{flex:1}.privacy-info{font-size:12px;color:var(--muted);margin:12px 0}
+.demo-accounts{display:grid;gap:7px}.demo-accounts .member-row.selected{border-color:var(--gold)}
+.chat-screen .messages{min-height:250px;max-height:55dvh;gap:9px;padding:13px 5px}
+.chat-screen .bubble{position:relative;max-width:86%;padding:11px 29px 10px 12px;border-radius:14px;overflow:visible;min-width:80px;word-break:break-word}
+.chat-screen .bubble.mine{background:#8e683f}
+.bubble-more{position:absolute;top:6px;right:5px;background:transparent;border:0;color:#e3c49c;padding:4px}
+.sender-name{font-size:11px;display:block;color:#fbd088}.quoted{border-left:3px solid var(--gold);padding:4px 8px;background:#ffffff18;font-size:12px;margin:4px 0 7px}
+.chat-photo{max-width:100%;max-height:270px;border-radius:10px;object-fit:contain;display:block;margin:6px 0}
+.reaction-strip{display:flex;flex-wrap:wrap;gap:4px}.reaction-strip button{border:1px solid #ffffff33;color:var(--text);background:#ffffff17;border-radius:18px}
+.bubble small{font-size:10px}.composer-line{display:flex;align-items:center;gap:7px;width:100%}.composer-line input{min-width:0;flex:1}.composer-line .btn{padding:11px}
+.compose{display:block;padding:9px 0}.composer-attach,.icon-emoji{display:grid;place-items:center;background:#ffffff12;color:var(--gold);padding:8px;flex:none;border-radius:10px;cursor:pointer}
+.composer-attach{position:relative}.composer-attach input{position:absolute;opacity:0;width:1px;height:1px}
+.reply-preview{display:flex;gap:8px;align-items:center;border-left:3px solid #eab36c;padding:7px;margin:4px 0 8px;background:#ffffff10}
+.reply-preview span{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.reply-preview button{background:none;color:var(--text);border:0}
+.pinned-msg{width:100%;background:#4b3421;color:var(--gold);border:0;text-align:left;padding:9px}
+.upload-preview{display:block;max-width:130px;max-height:110px;object-fit:contain;border-radius:12px;margin:8px 0}
+.action-list{display:grid;gap:5px;margin:15px 0}.action-list button{background:#483326;color:var(--text);border-radius:11px;padding:12px;display:flex;align-items:center;gap:12px;text-align:left}
+.reaction-options{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.reaction-options button{font-size:23px;border:0;background:#513927;border-radius:10px;padding:9px}
+.social-profile{padding:18px!important}
+.insta-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;font-size:19px}
+.insta-summary{display:flex;align-items:center;gap:16px}.insta-summary>.avatar{width:89px!important;height:89px!important;min-width:89px!important;font-size:36px!important;object-fit:cover;border-radius:50%!important;flex:none!important}
+.insta-stats{display:flex;justify-content:space-between;flex:1;gap:5px}.insta-stats button{display:grid;gap:3px;justify-items:center;background:transparent;border:0;color:var(--text);font-size:20px;font-weight:750;padding:4px}
+.insta-stats small{font-size:11px;font-weight:400}
+.social-buttons{display:flex;gap:7px;margin:20px 0 3px;flex-wrap:wrap}.social-buttons .btn{font-size:12px;padding:9px;flex:1}
+.social-tabs{text-align:center;padding:6px 0 13px;border-bottom:1px solid #ffffff33}
+.post-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:8px}
+.post-tile{width:100%;aspect-ratio:1;display:grid;place-items:center;padding:0;color:var(--text);background:#533b2b;border:0;overflow:hidden}
+.post-tile img{width:100%;height:100%;object-fit:cover}.post-add{background:#ffffff10}
+.file-tile{display:grid;place-items:center;height:120px;border:2px dashed #ac834a;border-radius:14px;position:relative;cursor:pointer;margin-bottom:14px}
+.file-tile input{opacity:0;position:absolute;width:1px;height:1px}
+.post-full-image{display:block;width:100%;max-height:430px;object-fit:contain;border-radius:12px}
+.comment-row{padding:7px;border-bottom:1px solid #ffffff21}.notification-row{display:grid;justify-content:initial;text-align:left;color:var(--text)}
+@media(max-width:560px){.chat-inbox{padding:13px!important}.chat-contact .avatar{width:46px!important;height:46px!important;min-width:46px!important}.chat-screen{padding:12px!important}.composer-line{gap:4px}.composer-line .field{padding:9px}.modal{max-height:94dvh;overflow:auto}.social-buttons .btn{flex:1 1 40%}}
 </style></head><body class="has-fall"><div id="scene" class="scene" aria-hidden="true"></div><div class="wrap"><header><div class="brand"><div class="brandmark" id="logo"></div><span>MINECRAFT <b>WORLD</b></span><span class="ver">V1.1</span></div><div class="header-actions"><button class="icon-btn" data-action="notifications" title="Bildirishnomalar" id="bell"></button><button class="icon-btn" data-action="settings" title="Sozlamalar" id="settingsTop"></button><button class="icon-btn" data-action="profile" title="Profil" id="profileTop"></button></div></header><div class="ribbon"><span class="dot"></span><span id="testlabel">V1.1 TEST • Sinov rejimi • Asosiy sayt ma’lumotlariga ulanmagan</span></div><main id="main"></main></div><button id="fab" class="fab hidden" data-action="newChat" aria-label="Yangi chat"></button><nav id="bottom" class="bottom"></nav><div id="overlay" class="overlay hidden"></div><div id="toast"></div>
 <script>
 'use strict';
@@ -333,165 +399,397 @@ document.getElementById('overlay').addEventListener('click',ev=>{
 });
 function init(){document.getElementById('fab').innerHTML=ic('plus');state.viewed='world';history.replaceState({section:'home',viewed:'world'},'',location.pathname+'#home');render();}
 
-/* Isolated test-only UX improvements; no real accounts, messages or backend operations. */
+
+/* V1.1 unified private staging messenger and Instagram-style social demo */
 icons.leave='<path d="M9 3H4v18h5M14 7l5 5-5 5M19 12H8"/>';
 icons.camera='<path d="M4 7h4l2-3h4l2 3h4v13H4z"/><circle cx="12" cy="13" r="3"/>';
 icons.search='<circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/>';
-icons.trash='<path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v7m4-7v7"/>';
-const extraTrans={
-uz:{privacy:'Chat maxfiyligi',public:'Ommaviy',private:'Maxfiy',publicInfo:'Barcha akkauntlar qidiruvda topiladi',privateInfo:'Faqat mavjud suhbatlar va sizga yozayotganlar orqali bog‘lanish mumkin',groupPrivacy:'Guruh turi',allowInvites:'Guruhlarga qo‘shishni tasdiqlash',allowInfo:'Taklif kelganda roziligingiz so‘raladi',inviteSent:'Qo‘shilish uchun ruxsat so‘rovi yuborildi',approve:'Rozilik berish',reject:'Rad etish',leave:'Guruhdan chiqish',deleteGroup:'Guruhni o‘chirish',available:'Username bo‘sh',taken:'Username band',newMessage:'Yangi xabar',create:'Guruh yaratish',selectPerson:'Kontaktlarni qidirish',onlyOwner:'Faqat guruh egasi tahrirlay oladi',chooseAvatar:'Avatarni o‘zgartirish',pending:'Guruhga qo‘shilish taklifi',groupDetails:'Guruh ma’lumotlari',searchUsername:'Ism yoki @username orqali qidiring',requestJoin:'Guruhga qo‘shilish uchun taklif'},
-ru:{privacy:'Приватность чата',public:'Публичный',private:'Приватный',publicInfo:'Все аккаунты можно найти через поиск',privateInfo:'Общение через существующие переписки',groupPrivacy:'Тип группы',allowInvites:'Подтверждать приглашения в группы',allowInfo:'Приглашения требуют вашего согласия',inviteSent:'Запрос на вступление отправлен',approve:'Принять',reject:'Отклонить',leave:'Покинуть группу',deleteGroup:'Удалить группу',available:'Username свободен',taken:'Username занят',newMessage:'Новое сообщение',create:'Создать группу',selectPerson:'Поиск контактов',onlyOwner:'Только владелец может редактировать',chooseAvatar:'Изменить аватар',pending:'Приглашение в группу',groupDetails:'Информация о группе',searchUsername:'Поиск по имени или @username',requestJoin:'Приглашение в группу'},
-en:{privacy:'Chat privacy',public:'Public',private:'Private',publicInfo:'Everyone can discover public accounts in search',privateInfo:'Reachable through existing conversations',groupPrivacy:'Group privacy',allowInvites:'Approve group invitations',allowInfo:'Invitations require your approval',inviteSent:'Join approval request sent',approve:'Approve',reject:'Decline',leave:'Leave group',deleteGroup:'Delete group',available:'Username available',taken:'Username taken',newMessage:'New message',create:'Create group',selectPerson:'Find contacts',onlyOwner:'Only the owner can edit this group',chooseAvatar:'Change avatar',pending:'Group invitation',groupDetails:'Group information',searchUsername:'Search names or @usernames',requestJoin:'Group invitation'}
+icons.trash='<path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v7m0-7v7"/>';
+icons.pin='<path d="M16 3l5 5-3 2-3 4-5 1-5 6-1-1 6-5 1-5 4-3z"/>';
+icons.archive='<path d="M3 4h18v5H3zM5 9v12h14V9M10 13h4"/>';
+icons.more='<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>';
+icons.reply='<path d="M9 10 4 15l5 5M4 15h10a6 6 0 0 0 0-12"/>';
+icons.copy='<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/>';
+icons.photo='<rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="8" cy="9" r="2"/><path d="m2 18 6-6 4 4 3-3 7 7"/>';
+icons.bookmark='<path d="M5 3h14v19l-7-5-7 5z"/>';
+icons.lock='<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>';
+const featureWords={
+uz:{newMsg:'Yangi xabar',createGroup:'Guruh yaratish',allChats:'Barcha chatlar',unread:'O‘qilmagan',archived:'Arxiv',noChats:'Hozircha suhbat yo‘q',searchAll:'Ism yoki @username orqali qidirish',saved:'Saqlangan xabarlar',groupType:'Guruh turi',public:'Ommaviy',private:'Maxfiy',publicNote:'Qidiruvda ko‘rinadi',privateNote:'Faqat suhbat orqali bog‘lanish mumkin',inviteApproval:'Guruhlarga ruxsatsiz qo‘shmaslik',inviteNote:'Taklif kelganda tasdiqlashingiz kerak',available:'Username bo‘sh',taken:'Username band',wrong:'Username 5–25 belgidan iborat bo‘lsin (a-z, 0-9, _)',groupDesc:'Guruh tavsifi',members:'A’zolar',leave:'Guruhdan chiqish',leaveOne:'Guruhdan chiqmoqchimisiz?',leaveTwo:'Tasdiqlang: guruhdan chiqasiz va xabarlar ro‘yxatidan o‘chadi',globalLeave:'Umumiy chatdan chiqish',globalDesc:'Barcha yangi va eski ishtirokchilar uchun umumiy suhbat',join:'Qayta qo‘shilish',deleteGroup:'Guruhni o‘chirish',ownerOnly:'Faqat guruh egasi o‘zgartira oladi',approve:'Qabul qilish',decline:'Rad etish',inviteSent:'Ruxsat so‘rovi yuborildi (TEST)',request:'Guruhga qo‘shilish taklifi',profileEdit:'Profilni tahrirlash',share:'Profil havolasi',posts:'Postlar',followers:'Obunachilar',following:'Obunalar',newPost:'Yangi post',caption:'Izoh',publish:'Joylash',likes:'Yoqtirishlar',comment:'Izoh yozish',comments:'Izohlar',follow:'Obuna bo‘lish',followingBtn:'Obuna bo‘lingan',message:'Xabar',privacy:'Profil maxfiyligi',inviteLink:'Taklif havolasi',write:'Xabar yozing...',reply:'Javob berish',editMsg:'Tahrirlash',deleteMsg:'O‘chirish',copy:'Nusxalash',forward:'Uzatish',react:'Reaksiya',pin:'Mahkamlash',unpin:'Mahkamlashni olib tashlash',mute:'Ovozini o‘chirish',unmute:'Ovozni yoqish',archive:'Arxivlash',unarchive:'Arxivdan chiqarish',deleteChat:'Xabarlarni tozalash',searchMessages:'Xabar ichidan qidirish',saveMsg:'Saqlash',savedMessages:'Saqlangan xabarlar',photo:'Rasm',emoji:'Emoji',replying:'Javob',demoAccounts:'TEST akkauntini almashtirish',testNotice:'Faqat shu brauzerdagi sinov akkauntlari o‘rtasida ishlaydi',notifications:'Bildirishnomalar',editGroup:'Guruhni tahrirlash',me:'Siz',online:'Hozir onlayn',privateSearch:'Maxfiy profil qidiruvda ko‘rinmaydi',openChat:'Chatni ochish',showAll:'Barchasi',typePhoto:'Rasm qo‘shish',photoLimit:'Rasm hajmi 300 KB dan oshmasin',confirmDelete:'Rostdan o‘chirasizmi?',nothing:'Hozircha hech narsa yo‘q',settings:'Sozlamalar',noChannel:'Kanallar keyinroq qo‘shiladi',owner:'Egasi',username:'Username',bio:'Bio',removeMember:'Guruhdan chiqarish'},
+ru:{newMsg:'Новое сообщение',createGroup:'Создать группу',allChats:'Все чаты',unread:'Непрочитанные',archived:'Архив',noChats:'Нет переписок',searchAll:'Поиск по имени или @username',saved:'Избранное',groupType:'Тип группы',public:'Публичный',private:'Частный',publicNote:'Виден в поиске',privateNote:'Доступ через переписки',inviteApproval:'Подтверждать приглашения в группы',inviteNote:'Приглашения требуют согласия',available:'Username свободен',taken:'Username занят',wrong:'Username 5–25 символов (a-z, 0-9, _)',groupDesc:'Описание группы',members:'Участники',leave:'Покинуть группу',leaveOne:'Выйти из группы?',leaveTwo:'Подтвердите: чат будет удалён из вашего списка',globalLeave:'Покинуть общий чат',globalDesc:'Общий чат для всех участников',join:'Присоединиться снова',deleteGroup:'Удалить группу',ownerOnly:'Редактирование только владельцем',approve:'Принять',decline:'Отклонить',inviteSent:'Запрос на вступление отправлен (ТЕСТ)',request:'Приглашение в группу',profileEdit:'Редактировать профиль',share:'Ссылка профиля',posts:'Публикации',followers:'Подписчики',following:'Подписки',newPost:'Новая публикация',caption:'Подпись',publish:'Опубликовать',likes:'Нравится',comment:'Комментарий',comments:'Комментарии',follow:'Подписаться',followingBtn:'Вы подписаны',message:'Сообщение',privacy:'Приватность профиля',inviteLink:'Пригласительная ссылка',write:'Введите сообщение...',reply:'Ответить',editMsg:'Редактировать',deleteMsg:'Удалить',copy:'Копировать',forward:'Переслать',react:'Реакция',pin:'Закрепить',unpin:'Открепить',mute:'Без звука',unmute:'Со звуком',archive:'Архивировать',unarchive:'Вернуть из архива',deleteChat:'Очистить историю',searchMessages:'Поиск по сообщениям',saveMsg:'Сохранить',savedMessages:'Избранное',photo:'Фото',emoji:'Эмодзи',replying:'Ответ',demoAccounts:'Сменить тестовый аккаунт',testNotice:'Работает только между тестовыми аккаунтами в этом браузере',notifications:'Уведомления',editGroup:'Изменить группу',me:'Вы',online:'В сети',privateSearch:'Частные аккаунты скрыты из поиска',openChat:'Открыть чат',showAll:'Все',typePhoto:'Добавить фото',photoLimit:'Изображение не более 300 КБ',confirmDelete:'Удалить?',nothing:'Пока ничего нет',settings:'Настройки',noChannel:'Каналы появятся позже',owner:'Владелец',username:'Username',bio:'О себе',removeMember:'Удалить участника'},
+en:{newMsg:'New message',createGroup:'Create group',allChats:'All chats',unread:'Unread',archived:'Archive',noChats:'No conversations yet',searchAll:'Search names or @usernames',saved:'Saved messages',groupType:'Group visibility',public:'Public',private:'Private',publicNote:'Discoverable in search',privateNote:'Available through existing chats',inviteApproval:'Approve group invitations',inviteNote:'Invitation requires your consent',available:'Username available',taken:'Username taken',wrong:'Username needs 5–25 letters, digits or _',groupDesc:'Group description',members:'Members',leave:'Leave group',leaveOne:'Leave this group?',leaveTwo:'Confirm leaving. This chat will disappear from your inbox',globalLeave:'Leave global chat',globalDesc:'Shared conversation for all new and existing members',join:'Rejoin',deleteGroup:'Delete group',ownerOnly:'Only the owner can edit',approve:'Accept',decline:'Decline',inviteSent:'Join request sent (TEST)',request:'Group invitation',profileEdit:'Edit profile',share:'Share profile',posts:'Posts',followers:'Followers',following:'Following',newPost:'New post',caption:'Caption',publish:'Publish',likes:'Likes',comment:'Comment',comments:'Comments',follow:'Follow',followingBtn:'Following',message:'Message',privacy:'Profile privacy',inviteLink:'Invitation link',write:'Message...',reply:'Reply',editMsg:'Edit',deleteMsg:'Delete',copy:'Copy',forward:'Forward',react:'React',pin:'Pin',unpin:'Unpin',mute:'Mute',unmute:'Unmute',archive:'Archive',unarchive:'Unarchive',deleteChat:'Clear history',searchMessages:'Search messages',saveMsg:'Save',savedMessages:'Saved messages',photo:'Photo',emoji:'Emoji',replying:'Reply',demoAccounts:'Switch demo account',testNotice:'Only works for demo accounts on this browser',notifications:'Notifications',editGroup:'Edit group',me:'You',online:'Online',privateSearch:'Private profiles are hidden from search',openChat:'Open chat',showAll:'All',typePhoto:'Attach photo',photoLimit:'Photo maximum 300 KB',confirmDelete:'Delete?',nothing:'Nothing here yet',settings:'Settings',noChannel:'Channels will be added later',owner:'Owner',username:'Username',bio:'Bio',removeMember:'Remove member'}
 };
-const oldT=t;
-
-const tt=k=>extraTrans[state.lang]?.[k]||extraTrans.uz[k]||oldT(k);
-state.username=safeGet('account_username','world');
-state.visibility=safeGet('visibility','public');
-state.approveInvites=safeGet('approve_invites',true);
-state.pendingInvites=safeGet('pending_invites',[]);
-state.lastActivities=safeGet('last_activities',{});
-const nameTaken=(name,ownGroupId='')=>{
- const q=String(name||'').replace(/^@/,'').trim().toLowerCase();
- return [...people.map(p=>p.nick),'world',state.username,...state.groups.filter(g=>g.id!==ownGroupId).map(g=>g.username)].some(n=>n.toLowerCase()===q);
-};
-const validNick=x=>/^[a-z][a-z0-9_]{4,24}$/.test(String(x).toLowerCase());
-const avatarPicker=(id,avatar,name,uploadName)=>'<label class="avatar-upload" title="'+esc(tt('chooseAvatar'))+'">'+
- (avatar?'<img class="avatar" src="'+esc(avatar)+'" alt="">':'<span class="avatar">'+esc((name||'G')[0].toUpperCase())+'</span>')+
- '<span class="avatar-plus">'+ic('plus',16)+'</span><input type="file" name="'+uploadName+'" id="'+id+'" accept="image/png,image/jpeg,image/webp" aria-label="'+esc(tt('chooseAvatar'))+'"></label>';
-const statusField=(value,ownId)=>'<input class="field" name="groupUsername" id="groupUsername" minlength="5" maxlength="25" required pattern="[A-Za-z][A-Za-z0-9_]{4,24}" autocapitalize="off" spellcheck="false" value="'+esc(value||'')+'" placeholder="minecraft_team"><div id="groupUsernameStatus" class="username-status"></div>';
+const W=k=>featureWords[state.lang]?.[k]||featureWords.uz[k]||t(k);
+const F=esc;
+const demo= {active:safeGet('active_user','world'),profiles:safeGet('profiles',{}),invites:safeGet('invites',[]),notifications:safeGet('demo_notifications',[]),chats:safeGet('chat_store',{}),meta:safeGet('chat_meta',{}),posts:safeGet('social_posts',[]),follows:safeGet('demo_follows',{}),globalOut:safeGet('global_out',[]),drafts:safeGet('drafts',{}),saved:safeGet('saved_messages',[]),reply:null,filter:'all',chatSearch:'',postId:null};
+const store=(k,v)=>safeSet(k,v);
+function me(){return demo.active}
+function pData(id){const p=id==='world'?{id:'world',name:state.name||'World',nick:state.username||'world',bio:state.bio,avatar:state.avatar}:people.find(x=>x.id===id)||{id,name:id,nick:id};return {...p,...(demo.profiles[id]||{})}}
+function allPeople(){return ['world',...people.map(x=>x.id)].map(pData)}
+function isPrivate(id){return (demo.profiles[id]?.visibility||'public')==='private'}
+function approveInvites(id){return demo.profiles[id]?.inviteApproval??(id==='world'?state.approveInvites:true)}
+function avatarUI(p,large){return avat(p,large)}
+function currentChatKey(id){return id==='global'||id==='saved'||id.startsWith('group_')?id:'dm_'+[me(),id].sort().join('_')}
+function items(id){const key=currentChatKey(id);return demo.chats[key]||[]}
+function setItems(id,arr){demo.chats[currentChatKey(id)]=arr;store('chat_store',demo.chats)}
+function meta(id){const key=me()+'|'+currentChatKey(id);return demo.meta[key]||(demo.meta[key]={})}
+function saveMeta(){store('chat_meta',demo.meta)}
+function lastTime(id){const arr=items(id);return arr.length?(arr[arr.length-1].at||0):0}
+function timeLabel(at){return at?new Date(at).toLocaleTimeString(state.lang,{hour:'2-digit',minute:'2-digit'}):''}
+function groupById(id){return state.groups.find(g=>g.id===id)}
+function groupIdentity(g){return {id:g.id,name:g.name,nick:g.username||'',avatar:g.avatar||null,bio:g.bio||''}}
+function validNick(v){return /^[a-z][a-z0-9_]{4,24}$/.test(v)}
+function usedNick(v,groupId,ownerId){
+ const q=String(v||'').toLowerCase();
+ return allPeople().some(p=>p.id!==ownerId&&p.nick.toLowerCase()===q)||state.groups.some(g=>g.id!==groupId&&g.username?.toLowerCase()===q);
+}
+function persistGroups(){store('groups',state.groups)}
+function markRead(id){const m=meta(id);m.lastSeen=Date.now();m.unread=0;saveMeta()}
+function addNotice(userId,text,groupId){demo.notifications.unshift({id:'notice_'+Date.now()+'_'+Math.random().toString(16).slice(2),to:userId,text,groupId,at:Date.now(),read:false});store('demo_notifications',demo.notifications)}
+function profileKey(id){return pData(id).nick}
+function modal(content){document.getElementById('overlay').classList.remove('hidden');document.getElementById('overlay').innerHTML='<div class="modal"><div class="row between"><span class="small muted">Minecraft World · TEST</span><button class="icon-btn" data-action="close" aria-label="'+F(t('back'))+'">'+ic('back')+'</button></div>'+content+'</div>'}
+function photoPick(field,avatar,name){return '<label class="circle-photo" title="'+F(W('typePhoto'))+'">'+(avatar?'<img src="'+F(avatar)+'" class="avatar large" alt="">':'<span class="avatar large">'+F((name||'G')[0].toUpperCase())+'</span>')+'<span class="circle-plus">'+ic('plus',16)+'</span><input type="file" name="'+field+'" accept="image/png,image/jpeg,image/webp" aria-label="'+F(W('typePhoto'))+'"></label>'}
+function renderBottom(){
+ document.getElementById('bottom').innerHTML=['home','community','add','chat','profile'].map(n=>'<button type="button" data-nav="'+n+'" class="'+(state.section===n?'active':'')+'">'+ic(n==='add'?'plus':n)+'<span>'+t(n)+'</span></button>').join('');
+ const fab=document.getElementById('fab');fab.classList.toggle('hidden',state.section!=='chat'||!!state.thread);fab.innerHTML=ic('plus',28);fab.dataset.action='newChat';fab.setAttribute('aria-label',W('newMsg'));
+}
+function myFollows(){return allPeople().filter(p=>demo.follows[me()+'|'+p.id])}
+function followers(id){return allPeople().filter(p=>demo.follows[p.id+'|'+id])}
+function profile(){
+ const id=state.viewed==='all'?'world':state.viewed, p=pData(id),own=id===me(),ownerPosts=demo.posts.filter(post=>post.author===id);
+ return '<section class="panel social-profile"><div class="insta-top"><strong>@'+F(p.nick)+'</strong><button class="icon-btn" data-action="settings" aria-label="'+W('settings')+'">'+ic('settings')+'</button></div>'+
+ '<div class="insta-summary">'+avatarUI(p,true)+'<div class="insta-stats"><button data-action="profilePosts">'+ownerPosts.length+'<small>'+W('posts')+'</small></button><button data-action="followers" data-id="'+F(id)+'">'+followers(id).length+'<small>'+W('followers')+'</small></button><button data-action="followingList" data-id="'+F(id)+'">'+allPeople().filter(q=>demo.follows[id+'|'+q.id]).length+'<small>'+W('following')+'</small></button></div></div>'+
+ '<strong>'+F(p.name)+'</strong>'+(p.bio?'<p class="profile-bio">'+F(p.bio)+'</p>':'')+
+ '<div class="social-buttons">'+(own?'<button class="btn secondary" data-action="editProfile">'+W('profileEdit')+'</button><button class="btn secondary" data-action="newPost">'+ic('plus',16)+' '+W('newPost')+'</button>':
+ '<button class="btn '+(demo.follows[me()+'|'+id]?'secondary':'')+'" data-action="toggleDemoFollow" data-id="'+F(id)+'">'+(demo.follows[me()+'|'+id]?W('followingBtn'):W('follow'))+'</button><button class="btn secondary" data-chat="'+F(id)+'">'+W('message')+'</button>')+
+ '<button class="btn secondary" data-action="shareProfile" data-id="'+F(id)+'">'+ic('copy',17)+'</button></div></section>'+
+ '<section class="panel"><div class="social-tabs">'+ic('box')+' '+W('posts')+'</div><div class="post-grid">'+ownerPosts.map(post=>'<button class="post-tile" data-action="postDetail" data-id="'+F(post.id)+'">'+(post.image?'<img src="'+F(post.image)+'" alt="">':ic('photo',34))+'</button>').join('')+(own?'<button class="post-tile post-add" data-action="newPost">'+ic('plus',30)+'</button>':'')+'</div>'+(ownerPosts.length?'':'<p class="mini-empty">'+W('nothing')+'</p>')+'</section>';
+}
+function chatIds(){
+ const user=me();let rows=[];
+ if(!demo.globalOut.includes(user))rows.push({id:'global',kind:'global',name:t('general'),nick:'minecraftworld',avatar:null});
+ state.groups.forEach(g=>{if(g.members?.includes(user))rows.push({id:g.id,kind:'group',name:g.name,nick:g.username||'',avatar:g.avatar})});
+ allPeople().filter(p=>p.id!==user).forEach(p=>{if(!isPrivate(p.id)||items(p.id).length)rows.push({id:p.id,kind:'person',...p})});
+ rows.push({id:'saved',name:W('savedMessages'),nick:user,kind:'saved'});
+ return rows;
+}
+function chatRow(p){
+ const arr=items(p.id), last=arr[arr.length-1],m=meta(p.id),q=demo.chatSearch.trim().toLowerCase().replace(/^@/,'');
+ let image=p.kind==='global'?ic('globe',37):p.kind==='saved'?ic('bookmark',33):avatarUI(p);
+ let summary=last?(last.photo?'📷 '+W('photo')+' ':'')+F(last.text||''):p.kind==='global'?F(W('globalDesc')):'@'+F(p.nick||'');
+ return '<div class="chat-entry"><button class="chat-contact" data-chat="'+F(p.id)+'">'+
+ '<span class="chat-picture">'+image+'</span><span class="contact-body"><strong>'+F(p.name)+'</strong><small>'+summary+'</small></span>'+
+ '<span class="chat-side"><small>'+timeLabel(last?.at)+'</small>'+(m.unread?'<b>'+m.unread+'</b>':'')+(m.pinned?'📌':'')+(m.muted?'🔕':'')+'</span></button>'+
+ '<button class="chat-more" data-action="chatOptions" data-id="'+F(p.id)+'" title="Menu">'+ic('more',19)+'</button></div>';
+}
 function chatContacts(query=''){
- const q=query.trim().replace(/^@/,'').toLocaleLowerCase();
- const peers=people.filter(p=>(p.name+' '+p.nick).toLocaleLowerCase().includes(q));
- const groups=state.groups.filter(g=>g.joined!==false&&(g.name+' '+g.username).toLocaleLowerCase().includes(q));
- const rows=[...(q?[]:[{id:'global',name:t('general'),nick:'minecraftworld',kind:'global'}]),
- ...groups.map(g=>({id:g.id,name:g.name,nick:g.username,avatar:g.avatar,kind:'group'})),
- ...peers.map(p=>({...p,kind:'person'}))];
- rows.sort((a,b)=>(state.lastActivities[b.id]||0)-(state.lastActivities[a.id]||0));
- return '<div class="chat-sort-label">'+(q?tt('searchUsername'):tt('newMessage'))+'</div>'+
- (rows.length?rows.map(p=>'<button type="button" class="chat-contact" data-chat="'+esc(p.id)+'">'+
- (p.kind==='global'?ic('globe',35):avat(p))+'<span class="contact-body"><strong>'+esc(p.name)+'</strong><small>@'+esc(p.nick)+(p.kind==='group'?' · '+(p.members?.length||0)+' '+t('membersCount'):'')+'</small></span></button>').join(''):
- '<div class="mini-empty">'+t('emptyUsers')+'</div>');
+ const q=query.trim().toLowerCase().replace(/^@/,'');
+ let rows=chatIds().filter(p=>(p.name+' '+p.nick).toLowerCase().includes(q));
+ if(q){state.groups.filter(g=>!rows.some(r=>r.id===g.id)&&g.visibility!=='private'&&(g.name+' '+g.username).toLowerCase().includes(q)).forEach(g=>rows.push({...groupIdentity(g),kind:'group'}));}
+ rows=rows.filter(p=>demo.filter==='archived'?meta(p.id).archived:!meta(p.id).archived);
+ if(demo.filter==='unread')rows=rows.filter(p=>meta(p.id).unread>0);
+ rows.sort((a,b)=>Number(!!meta(b.id).pinned)-Number(!!meta(a.id).pinned)||lastTime(b.id)-lastTime(a.id)||a.name.localeCompare(b.name));
+ return rows.length?rows.map(chatRow).join(''):'<div class="mini-empty">'+W('noChats')+'</div>';
+}
+function chat(){
+ if(state.thread)return threadUI();
+ return '<section class="panel chat-inbox"><div class="headrow"><h2>'+ic('chat')+' '+t('chat')+'</h2></div>'+
+ '<label class="chat-search">'+ic('search',19)+'<input class="field" id="chatFind" type="search" autocomplete="off" placeholder="'+F(W('searchAll'))+'" value="'+F(demo.chatSearch)+'"></label>'+
+ '<div class="chat-tabs">'+['all','unread','archived'].map(k=>'<button class="'+(demo.filter===k?'active':'')+'" data-action="chatFilter" data-id="'+k+'">'+(k==='all'?W('allChats'):W(k))+'</button>').join('')+'</div>'+
+ '<div class="chat-list" id="chatContacts">'+chatContacts(demo.chatSearch)+'</div></section>';
+}
+function replySnippet(id){
+ const m=items(id).find(x=>x.id===demo.reply);
+ return m?'<div class="reply-preview">'+ic('reply',17)+' <span>'+F(m.text||W('photo'))+'</span><button type="button" data-action="clearReply">'+ic('back',16)+'</button></div>':'';
 }
 function threadUI(){
- const g=groupById(state.thread);const global=state.thread==='global';
- const p=g?groupIdentity(g):global?{name:t('general'),nick:'world',id:'global'}:person(state.thread);
- const messages=state.messages[state.thread]||[];
- return '<section class="panel chat-screen"><div class="chat-head">'+
- '<button type="button" class="go-back" data-action="chatBack" aria-label="'+t('back')+'">'+ic('back',25)+'</button>'+
- '<button type="button" class="chat-header-profile" '+(g?'data-action="groupInfo" data-id="'+esc(g.id)+'"':global?'':'data-person="'+esc(p.id)+'"')+'>'+
- avat(p)+'<span><strong>'+esc(p.name)+'</strong><small>'+(g?g.members.length+' '+t('membersCount'):'@'+esc(p.nick))+'</small></span></button>'+
- (global||g?'<button type="button" class="icon-btn" data-action="'+(g?'leaveGroup':'leaveGlobal')+'" data-id="'+esc(state.thread)+'" aria-label="'+tt('leave')+'">'+ic('leave')+'</button>':'')+
- '</div><div class="messages" id="messages">'+messages.map(m=>'<div class="bubble '+(m.mine?'mine':'')+'">'+esc(m.text)+'<small>'+esc(m.time||'')+'</small></div>').join('')+
- '</div><form id="chatForm" class="compose"><input class="field" name="text" required maxlength="1500" placeholder="'+esc(t('newMessages'))+'"><button class="btn" type="submit">'+ic('send')+'</button></form></section>';
+ const id=state.thread,group=groupById(id),global=id==='global',saved=id==='saved',p=global?{id:'global',name:t('general'),nick:'minecraftworld',bio:W('globalDesc')}:saved?{id:'saved',name:W('savedMessages'),nick:profileKey(me())}:group?groupIdentity(group):pData(id);
+ const joined=global?!demo.globalOut.includes(me()):group?group.members.includes(me()):true;
+ const arr=items(id).filter(m=>!state.messageSearch||m.text?.toLowerCase().includes(state.messageSearch.toLowerCase()));
+ const pinned=items(id).find(x=>x.pinned);
+ return '<section class="panel chat-screen">'+
+ '<div class="chat-head"><button class="go-back" data-action="chatBack" aria-label="'+t('back')+'">'+ic('back')+'</button>'+
+ '<button class="chat-header-profile" data-action="chatInfo" data-id="'+F(id)+'">'+(global?ic('globe',34):saved?ic('bookmark',29):avatarUI(p))+
+ '<span><strong>'+F(p.name)+'</strong><small>'+(group?group.members.length+' '+W('members'):saved?W('saved'):global?W('globalDesc'):'@'+F(p.nick))+'</small></span></button>'+
+ '<button class="icon-btn" data-action="searchInChat">'+ic('search',20)+'</button></div>'+
+ (pinned?'<button class="pinned-msg" data-action="messageOptions" data-id="'+F(pinned.id)+'">📌 '+F(pinned.text||W('photo'))+'</button>':'')+
+ (state.messageSearch!==undefined&&state.messageSearch!==null?'<input class="field" id="inChatSearch" placeholder="'+W('searchMessages')+'" value="'+F(state.messageSearch||'')+'">':'')+
+ '<div class="messages" id="messages">'+arr.map(m=>'<div class="bubble '+(m.author===me()?'mine':'')+'">'+
+ ((group||global)&&m.author!==me()?'<b class="sender-name">'+F(pData(m.author).name)+'</b>':'')+
+ (m.reply?'<div class="quoted">'+F(items(id).find(x=>x.id===m.reply)?.text||W('photo'))+'</div>':'')+
+ (m.photo?'<img class="chat-photo" src="'+F(m.photo)+'" alt="">':'')+
+ (m.text?'<span class="message-body">'+F(m.text)+'</span>':'')+
+ (m.reactions?'<div class="reaction-strip">'+Object.entries(m.reactions).map(([emoji,ids])=>ids.length?'<button data-action="addReaction" data-id="'+F(m.id)+'" data-emoji="'+F(emoji)+'">'+emoji+' '+ids.length+'</button>':'').join('')+'</div>':'')+
+ '<small>'+timeLabel(m.at)+(m.edited?' · ✎':'')+' '+(m.author===me()?'✓✓':'')+'</small>'+
+ '<button type="button" class="bubble-more" data-action="messageOptions" data-id="'+F(m.id)+'">'+ic('more',16)+'</button></div>').join('')+'</div>'+
+ (!joined?'<button class="btn" data-action="rejoin" data-id="'+F(id)+'">'+W('join')+'</button>':
+ '<form id="chatForm" class="compose">'+replySnippet(id)+'<div class="composer-line">'+
+ '<label class="composer-attach">'+ic('photo',19)+'<input type="file" id="attachChat" accept="image/png,image/jpeg,image/webp" aria-label="'+W('photo')+'"></label>'+
+ '<button type="button" class="icon-emoji" data-action="emojiPicker">☺</button>'+
+ '<input class="field" name="text" id="chatText" maxlength="1500" placeholder="'+W('write')+'" value="'+F(demo.drafts[me()+'|'+id]||'')+'">'+
+ '<button type="submit" class="btn">'+ic('send',20)+'</button></div><div id="attachmentPreview"></div></form>')+'</section>';
 }
-function groupInfoUI(id){
- const g=groupById(id);if(!g)return '<p>'+t('emptyGroups')+'</p>';
- const owner=g.owner==='world'||!g.owner;
- return '<h2>'+t('groupInfo')+'</h2><div class="group-summary">'+avat(groupIdentity(g),true)+
- '<div><strong>'+esc(g.name)+'</strong><small>@'+esc(g.username)+'</small><small>'+g.members.length+' '+t('membersCount')+'</small></div></div>'+
- '<h3 class="spaced">'+t('members')+'</h3><div class="group-members">'+g.members.map(id=>{let p=person(id);return '<button type="button" class="member-row" data-person="'+esc(p.id)+'">'+avat(p)+'<span><strong>'+esc(p.name)+'</strong><small>@'+esc(p.nick)+'</small></span></button>'}).join('')+'</div>'+
- '<div class="row spaced">'+(owner?'<button class="btn" data-action="editGroup" data-id="'+esc(id)+'">'+ic('edit')+t('editGroup')+'</button>':'<small>'+tt('onlyOwner')+'</small>')+
- '<button class="btn secondary" data-action="close">'+t('back')+'</button></div>'+
- '<button type="button" class="danger-link" data-action="leaveGroup" data-id="'+esc(id)+'">'+ic('leave',19)+' '+tt('leave')+'</button>'+
- (owner?'<div><button type="button" class="danger-link" data-action="deleteGroup" data-id="'+esc(id)+'">'+ic('trash',18)+' '+tt('deleteGroup')+'</button></div>':'')+
- '<p class="footnote">'+t('demoGroup')+'</p>';
+function chatInfoUI(id){
+ const g=groupById(id),global=id==='global',saved=id==='saved',p=global?{name:t('general'),nick:'minecraftworld',bio:W('globalDesc')}:saved?{name:W('savedMessages'),nick:profileKey(me())}:g?groupIdentity(g):pData(id);
+ const joined=global?!demo.globalOut.includes(me()):g?g.members?.includes(me()):true;
+ return '<h2>'+W('groupDesc').replace('Guruh tavsifi','Ma’lumotlar')+'</h2><div class="group-summary">'+(global?ic('globe',42):saved?ic('bookmark',40):avatarUI(p,true))+
+ '<div><strong>'+F(p.name)+'</strong><small>@'+F(p.nick||'')+'</small><small>'+F(p.bio||'')+'</small></div></div>'+
+ (g?'<h3>'+W('members')+' ('+g.members.length+')</h3><div class="group-members">'+g.members.map(id=>'<button class="member-row" data-person="'+F(id)+'">'+avatarUI(pData(id))+'<span><strong>'+F(pData(id).name)+(id===g.owner?' · '+W('owner'):'')+'</strong><small>@'+F(pData(id).nick)+'</small></span></button>').join('')+'</div>':'')+
+ '<div class="info-actions">'+(g&&g.owner===me()?'<button class="btn" data-action="editGroup" data-id="'+F(id)+'">'+ic('edit',17)+' '+W('editGroup')+'</button>':'')+
+ (joined&&(g||global)?'<button class="btn secondary danger-text" data-action="requestLeave" data-id="'+F(id)+'">'+ic('leave',18)+' '+(global?W('globalLeave'):W('leave'))+'</button>':'')+
+ (!joined?'<button class="btn" data-action="rejoin" data-id="'+F(id)+'">'+W('join')+'</button>':'')+
+ (g&&g.owner===me()?'<button class="btn secondary danger-text" data-action="deleteGroup" data-id="'+F(id)+'">'+ic('trash',16)+' '+W('deleteGroup')+'</button>':'')+'</div>'+
+ '<p class="privacy-info">'+W('testNotice')+'</p>';
+}
+function usernameField(val,kind){
+ return '<label>'+W('username')+'</label><input class="field" id="'+kind+'Username" name="username" value="'+F(val||'')+'" maxlength="25" placeholder="minecraft_team" autocomplete="off" spellcheck="false"><small class="username-status" id="'+kind+'Status"></small>';
+}
+function statusCheck(){
+ for(const kind of ['group','profile']){
+ const el=document.getElementById(kind+'Username'),lbl=document.getElementById(kind+'Status');if(!el||!lbl)continue;
+ const val=el.value.trim().toLowerCase(),id=kind==='group'?state.groupModalId:'',ownerId=kind==='profile'?me():'';
+ const valid=validNick(val),taken=usedNick(val,id,ownerId);
+ lbl.textContent=!val?'':!valid?W('wrong'):taken?W('taken'):W('available');lbl.className='username-status '+(valid&&!taken?'ok':'bad');
+ }
+ const visibility=document.querySelector('[name="visibility"]:checked')?.value||'public';
+ const wrap=document.getElementById('visibilityUsername');if(wrap)wrap.hidden=visibility==='private';
 }
 function groupFormUI(id=''){
- const g=groupById(id); if(g&&g.owner&&g.owner!=='world')return '<p>'+tt('onlyOwner')+'</p>';
- const chosen=g?.members||['world'];
- return '<h2>'+t(g?'editGroup':'createGroup')+'</h2><form id="groupForm" data-group-id="'+esc(g?.id||'')+'">'+
- '<div class="inline-profile-editor">'+avatarPicker('groupAvatar',g?.avatar,g?.name||'G','groupAvatar')+
- '<div><label>'+t('groupName')+'</label><input class="field" name="groupName" maxlength="48" required value="'+esc(g?.name||'')+'" placeholder="'+esc(t('groupName'))+'"></div></div>'+
- '<label>'+t('groupUsername')+'</label>'+statusField(g?.username||'',g?.id)+
- '<h3 class="spaced">'+t('selectMembers')+'</h3><div class="group-member-picks">'+
- people.map(p=>'<label class="member-pick">'+avat(p)+'<span><strong>'+esc(p.name)+'</strong><small>@'+esc(p.nick)+'</small></span><input type="checkbox" name="members" value="'+esc(p.id)+'" '+(chosen.includes(p.id)?'checked':'')+'></label>').join('')+
- '</div><div class="row spaced"><button class="btn" type="submit">'+ic('check')+' '+t('save')+'</button><button class="btn secondary" type="button" data-action="close">'+t('cancel')+'</button></div></form>';
-}
-function newChatUI(){
- return '<h2>'+tt('newMessage')+'</h2><label class="chat-search">'+ic('search',20)+'<input class="field" type="search" id="newChatFind" placeholder="'+esc(tt('searchUsername'))+'"></label>'+
- '<div class="list"><button class="chat-contact" type="button" data-action="newGroup">'+ic('community',30)+'<span class="contact-body"><strong>'+t('createGroup')+'</strong></span></button></div>'+
- '<div id="newChatPeople">'+people.map(p=>'<button type="button" class="chat-contact" data-chat="'+esc(p.id)+'">'+avat(p)+'<span class="contact-body"><strong>'+esc(p.name)+'</strong><small>@'+esc(p.nick)+'</small></span></button>').join('')+'</div>';
-}
-function settingsUI(){
- return '<h2>'+ic('settings')+' '+t('settings')+'</h2>'+
- '<div class="checkrow"><div><strong>'+t('turnbg')+'</strong></div><button class="switch '+(state.bg?'on':'')+'" data-action="toggleBg"></button></div><div class="sep"></div>'+
- '<div class="checkrow"><div><strong>'+tt('allowInvites')+'</strong><p class="privacy-info">'+tt('allowInfo')+'</p></div><button type="button" class="switch '+(state.approveInvites?'on':'')+'" data-action="inviteToggle" aria-pressed="'+state.approveInvites+'"></button></div>'+
- '<div class="sep"></div><h3>'+t('lang')+'</h3><div class="language-buttons">'+['uz','ru','en'].map(l=>'<button class="tab '+(state.lang===l?'active':'')+'" data-lang="'+l+'">'+({uz:'O‘zbek',ru:'Русский',en:'English'}[l])+'</button>').join('')+'</div>';
+ const g=groupById(id);if(g&&g.owner!==me())return '<h2>'+W('ownerOnly')+'</h2>';
+ const chosen=g?.members||[me()];
+ return '<h2>'+W(g?'editGroup':'createGroup')+'</h2><form id="groupForm" data-group-id="'+F(id)+'">'+
+ '<div class="inline-profile-editor">'+photoPick('avatar',g?.avatar,g?.name||'G')+
+ '<div><label>'+t('groupName')+'</label><input class="field" name="name" required maxlength="48" value="'+F(g?.name||'')+'" placeholder="'+t('groupName')+'"></div></div>'+
+ '<label>'+W('groupDesc')+'</label><textarea name="bio" maxlength="200">'+F(g?.bio||'')+'</textarea>'+
+ '<div class="radio-flex">'+['public','private'].map(x=>'<label><input type="radio" name="visibility" value="'+x+'" '+((g?.visibility||'public')===x?'checked':'')+'> '+W(x)+'</label>').join('')+'</div>'+
+ '<div id="visibilityUsername">'+usernameField(g?.username||'','group')+'</div>'+
+ '<h3>'+t('selectMembers')+'</h3><div class="group-member-picks">'+allPeople().filter(p=>p.id!==me()).map(p=>'<label class="member-pick">'+avatarUI(p)+'<span><strong>'+F(p.name)+'</strong><small>@'+F(p.nick)+'</small></span><input name="members" type="checkbox" value="'+F(p.id)+'" '+(chosen.includes(p.id)?'checked':'')+'></label>').join('')+'</div>'+
+ '<button class="btn form-save" type="submit">'+ic('check',18)+' '+t('save')+'</button></form>';
 }
 function profileEditUI(){
- return '<h2>'+t('edit')+'</h2><form id="profileForm">'+
- '<div class="inline-profile-editor">'+avatarPicker('avatarUpload',state.avatar,state.name,'avatar')+
- '<div><label>'+t('name')+'</label><input class="field" maxlength="45" name="name" required value="'+esc(state.name)+'"></div></div>'+
- '<label>'+t('bio')+'</label><textarea name="bio" maxlength="280">'+esc(state.bio)+'</textarea>'+
- '<h3>'+tt('privacy')+'</h3>'+['public','private'].map(x=>'<label class="setting-radio"><input type="radio" name="visibility" value="'+x+'" '+(state.visibility===x?'checked':'')+'><span><strong>'+tt(x)+'</strong><small>'+tt(x+'Info')+'</small></span></label>').join('')+
- '<div id="accountUsernameWrap"><label>Username</label><input class="field" id="accountUsername" name="username" maxlength="25" minlength="5" pattern="[A-Za-z][A-Za-z0-9_]{4,24}" value="'+esc(state.username)+'"><div id="accountUsernameStatus" class="username-status"></div></div>'+
- '<div class="row spaced"><button class="btn" type="submit">'+t('save')+'</button><button class="btn secondary" type="button" data-action="close">'+t('cancel')+'</button></div></form>';
+ const p=pData(me());
+ return '<h2>'+W('profileEdit')+'</h2><form id="profileForm">'+
+ '<div class="inline-profile-editor">'+photoPick('avatar',p.avatar,p.name)+'<div><label>'+t('name')+'</label><input class="field" name="name" maxlength="45" required value="'+F(p.name)+'"></div></div>'+
+ '<label>'+W('bio')+'</label><textarea name="bio" maxlength="280">'+F(p.bio||'')+'</textarea><h3>'+W('privacy')+'</h3>'+
+ '<div class="radio-flex">'+['public','private'].map(x=>'<label><input type="radio" name="visibility" value="'+x+'" '+((p.visibility||'public')===x?'checked':'')+'> '+W(x)+'<small>'+W(x+'Note')+'</small></label>').join('')+'</div>'+
+ '<div id="visibilityUsername">'+usernameField(p.nick,'profile')+'</div>'+
+ '<button class="btn form-save" type="submit">'+ic('check',17)+' '+t('save')+'</button></form>';
+}
+function newChatUI(){
+ const q=demo.newChatSearch||'';
+ const found=allPeople().filter(p=>p.id!==me()&&(!isPrivate(p.id)||items(p.id).length)&&(p.name+' '+p.nick).toLowerCase().includes(q.toLowerCase().replace(/^@/,'')));
+ return '<h2>'+W('newMsg')+'</h2><label class="chat-search">'+ic('search',19)+'<input class="field" id="newChatFind" placeholder="'+W('searchAll')+'" value="'+F(q)+'" autofocus></label>'+
+ '<button class="chat-contact new-group" data-action="newGroup">'+ic('community',28)+'<span class="contact-body"><strong>'+W('createGroup')+'</strong></span></button>'+
+ '<div id="newChatPeople">'+found.map(p=>'<button class="chat-contact" data-chat="'+F(p.id)+'">'+avatarUI(p)+'<span class="contact-body"><strong>'+F(p.name)+'</strong><small>@'+F(p.nick)+'</small></span></button>').join('')+'</div><p class="privacy-info">'+W('privateSearch')+'</p>';
+}
+function settingsUI(){
+ const p=pData(me());
+ return '<h2>'+ic('settings')+' '+t('settings')+'</h2><div class="setting-line"><span><strong>'+t('turnbg')+'</strong></span><button class="switch '+(state.bg?'on':'')+'" data-action="toggleBg"></button></div>'+
+ '<div class="setting-line"><span><strong>'+W('inviteApproval')+'</strong><small>'+W('inviteNote')+'</small></span><button class="switch '+(approveInvites(me())?'on':'')+'" data-action="inviteToggle"></button></div>'+
+ '<h3>'+t('lang')+'</h3><div class="language-buttons">'+['uz','ru','en'].map(l=>'<button class="tab '+(state.lang===l?'active':'')+'" data-lang="'+l+'">'+({uz:'O‘zbek',ru:'Русский',en:'English'}[l])+'</button>').join('')+'</div>'+
+ '<h3>'+W('demoAccounts')+'</h3><p class="privacy-info">'+W('testNotice')+'</p><div class="demo-accounts">'+allPeople().map(q=>'<button class="member-row '+(q.id===me()?'selected':'')+'" data-action="switchAccount" data-id="'+F(q.id)+'">'+avatarUI(q)+'<span><strong>'+F(q.name)+'</strong><small>@'+F(q.nick)+'</small></span>'+(q.id===me()?ic('check'):'')+'</button>').join('')+'</div>';
 }
 function notifyUI(){
- return '<h2>'+ic('bell')+' '+t('notifications')+'</h2>'+
- state.pendingInvites.map((req,i)=>'<div class="item"><strong>'+tt('pending')+'</strong><p>'+esc(req.name)+' · @'+esc(req.username)+'</p><button class="btn" data-action="acceptInvite" data-index="'+i+'">'+tt('approve')+'</button> <button class="btn secondary" data-action="rejectInvite" data-index="'+i+'">'+tt('reject')+'</button></div>').join('')+
- '<div class="item notif">'+avat(person('anzecraft'))+'<div><strong data-person="anzecraft">Anzecraft</strong><div class="small muted">@anzecraft</div><div class="small">'+t('yours')+'</div></div></div>';
+ const invitations=demo.invites.filter(req=>req.to===me());
+ const notices=demo.notifications.filter(req=>req.to===me());
+ return '<h2>'+W('notifications')+'</h2><div class="list">'+invitations.map(req=>'<div class="item"><strong>'+W('request')+'</strong><p>'+F(pData(req.from).name)+' · '+F(req.groupName)+'</p><button class="btn" data-action="invitationAccept" data-id="'+F(req.id)+'">'+W('approve')+'</button> <button class="btn secondary" data-action="invitationDecline" data-id="'+F(req.id)+'">'+W('decline')+'</button></div>').join('')+
+ notices.map(req=>'<button class="item notification-row" data-action="noticeOpen" data-id="'+F(req.id)+'"><strong>'+F(req.text)+'</strong><small>'+timeLabel(req.at)+'</small></button>').join('')+'</div>'+
+ ((!notices.length&&!invitations.length)?'<div class="mini-empty">'+W('nothing')+'</div>':'');
+}
+function postFormUI(){
+ return '<h2>'+W('newPost')+'</h2><form id="postForm">'+
+ '<label class="file-tile">'+ic('photo',32)+' '+W('typePhoto')+'<input type="file" name="image" accept="image/png,image/jpeg,image/webp"></label>'+
+ '<div id="postImagePreview"></div><label>'+W('caption')+'</label><textarea name="caption" maxlength="1200" placeholder="'+W('caption')+'"></textarea><button class="btn form-save" type="submit">'+W('publish')+'</button></form>';
+}
+function postDetailUI(id){
+ const post=demo.posts.find(x=>x.id===id);if(!post)return W('nothing');
+ return '<div class="post-detail"><button class="identity" data-person="'+F(post.author)+'">'+avatarUI(pData(post.author))+' <strong>'+F(pData(post.author).name)+'</strong></button>'+
+ (post.image?'<img class="post-full-image" src="'+F(post.image)+'" alt="">':'')+'<p>'+F(post.caption||'')+'</p>'+
+ '<div class="row"><button class="btn secondary" data-action="likePost" data-id="'+F(post.id)+'">'+(post.likes?.includes(me())?'❤️':'♡')+' '+(post.likes?.length||0)+'</button><button class="btn secondary" data-action="savePost" data-id="'+F(id)+'">'+ic('bookmark',17)+'</button></div>'+
+ '<h3>'+W('comments')+'</h3><div class="list">'+(post.comments||[]).map(c=>'<div class="comment-row"><strong>'+F(pData(c.author).name)+'</strong> '+F(c.text)+'</div>').join('')+'</div>'+
+ '<form id="commentPost" data-post="'+F(id)+'"><div class="composer-line"><input class="field" name="body" maxlength="400" required placeholder="'+W('comment')+'"><button class="btn" type="submit">'+ic('send')+'</button></div></form></div>';
+}
+function peopleListUI(ids,title){return '<h2>'+title+'</h2><div class="list">'+ids.map(id=>'<button class="member-row" data-person="'+F(id)+'">'+avatarUI(pData(id))+'<span><strong>'+F(pData(id).name)+'</strong><small>@'+F(pData(id).nick)+'</small></span></button>').join('')+'</div>'}
+function chatOptionsUI(id){
+ const m=meta(id);return '<h2>'+W('message')+'</h2><div class="action-list">'+
+ [['pin',m.pinned?W('unpin'):W('pin'),'pin'],['archive',m.archived?W('unarchive'):W('archive'),'archive'],['mute',m.muted?W('unmute'):W('mute'),'bell'],['clear',W('deleteChat'),'trash']].map(([a,l,icon])=>'<button data-action="chatOptionDo" data-cmd="'+a+'" data-id="'+F(id)+'">'+ic(icon,19)+' '+l+'</button>').join('')+
+ '<button data-action="chatInfo" data-id="'+F(id)+'">'+ic('user',19)+' '+W('openChat')+'</button></div>';
+}
+function messageOptionsUI(id){
+ const m=items(state.thread).find(x=>x.id===id);if(!m)return W('nothing');
+ const own=m.author===me();return '<h2>'+W('message')+'</h2><div class="reaction-options">'+['👍','❤️','😂','🔥','👏','😮'].map(emoji=>'<button data-action="addReaction" data-emoji="'+emoji+'" data-id="'+F(id)+'">'+emoji+'</button>').join('')+'</div><div class="action-list">'+
+ [['reply',W('reply'),'reply'],['copy',W('copy'),'copy'],['forward',W('forward'),'send'],['pin',m.pinned?W('unpin'):W('pin'),'pin'],['save',W('saveMsg'),'bookmark'],...(own?[['edit',W('editMsg'),'edit'],['delete',W('deleteMsg'),'trash']]:[])].map(([a,l,icon])=>'<button data-action="messageOptionDo" data-cmd="'+a+'" data-id="'+F(id)+'">'+ic(icon,19)+' '+l+'</button>').join('')+'</div>';
 }
 function render(){
  document.documentElement.lang=state.lang;renderBg();renderHeader();renderBottom();
  document.getElementById('main').innerHTML=state.section==='home'?home():state.section==='community'?community():state.section==='add'?add():state.section==='chat'?chat():profile();
- if(state.modal){let k=state.modal;modal(k==='settings'?settingsUI():k==='notifications'?notifyUI():k==='edit'?profileEditUI():k==='newchat'?newChatUI():k==='newgroup'?groupFormUI():k==='groupinfo'?groupInfoUI(state.groupModalId):k==='editgroup'?groupFormUI(state.groupModalId):'');}
- else closeModal();
- if(state.thread){let m=document.getElementById('messages');if(m)m.scrollTop=m.scrollHeight}
- syncUsernameStatus();
+ if(state.modal){
+ const k=state.modal;
+ modal(k==='settings'?settingsUI():k==='notifications'?notifyUI():k==='edit'?profileEditUI():k==='newchat'?newChatUI():k==='newgroup'?groupFormUI():k==='groupinfo'||k==='chatinfo'?chatInfoUI(state.groupModalId):k==='editgroup'?groupFormUI(state.groupModalId):k==='newpost'?postFormUI():k==='postdetail'?postDetailUI(demo.postId):k==='peoplelist'?peopleListUI(demo.peopleList||[],demo.peopleListTitle||''):k==='chatoptions'?chatOptionsUI(state.groupModalId):k==='messageoptions'?messageOptionsUI(demo.msgId):k==='emoji'?'<h2>'+W('emoji')+'</h2><div class="reaction-options">'+['😀','😂','❤️','🔥','👍','😍','🎮','👋','🤔','🎉'].map(x=>'<button data-action="insertEmoji" data-emoji="'+x+'">'+x+'</button>').join('')+'</div>':k==='editmessage'?'<h2>'+W('editMsg')+'</h2><form id="editMessage"><textarea name="text" required maxlength="1500">'+F(items(state.thread).find(x=>x.id===demo.msgId)?.text||'')+'</textarea><button class="btn" type="submit">'+t('save')+'</button></form>':k==='forward'?'<h2>'+W('forward')+'</h2>'+chatIds().filter(x=>x.id!==state.thread).map(p=>'<button class="chat-contact" data-action="forwardTo" data-id="'+F(p.id)+'">'+avatarUI(p)+' <strong>'+F(p.name)+'</strong></button>').join(''):'');
+ }else closeModal();
+ const m=document.getElementById('messages');if(m)m.scrollTop=m.scrollHeight;
+ statusCheck();
 }
-function syncUsernameStatus(){
- const group=document.getElementById('groupUsername');
- if(group){const v=group.value.trim().replace(/^@/,'').toLowerCase();const el=document.getElementById('groupUsernameStatus');const busy=nameTaken(v,group.closest('form').dataset.groupId);el.textContent=!v?'':!validNick(v)?t('badGroup'):busy?tt('taken'):tt('available');el.className='username-status '+(validNick(v)&&!busy?'ok':'bad');}
- const acc=document.getElementById('accountUsername');if(acc){const v=acc.value.trim().toLowerCase();const used=v!==state.username&&nameTaken(v);const el=document.getElementById('accountUsernameStatus');el.textContent=!v?'':!validNick(v)?t('badGroup'):used?tt('taken'):tt('available');el.className='username-status '+(validNick(v)&&!used?'ok':'bad')}
- const wrap=document.getElementById('accountUsernameWrap');if(wrap)wrap.style.display=document.querySelector('[name="visibility"]:checked')?.value==='private'?'none':'block';
+function vmodal(kind,id){state.modal=kind;if(id)state.groupModalId=id;render()}
+function reloadScreen(){if(state.modal){render();return}render()}
+function imgReader(file,cb){
+ if(!file)return cb(null);
+ if(file.size>300000||!['image/png','image/jpeg','image/webp'].includes(file.type)){toast(W('photoLimit'));return}
+ const r=new FileReader();r.onload=()=>cb(String(r.result));r.onerror=()=>toast(W('photoLimit'));r.readAsDataURL(file);
 }
-const readAvatar=(file,done)=>{if(!file)return done(null);if(file.size>350000||!['image/png','image/jpeg','image/webp'].includes(file.type)){toast(t('maxPhoto'));return}const rd=new FileReader();rd.onload=()=>done(String(rd.result));rd.onerror=()=>toast(t('maxPhoto'));rd.readAsDataURL(file)};
-document.body.addEventListener('click',ev=>{
- const b=ev.target.closest('[data-action]');if(!b)return;
- const a=b.dataset.action;
- if(!['newChat','newGroup','leaveGroup','leaveGlobal','deleteGroup','inviteToggle','acceptInvite','rejectInvite'].includes(a))return;
- ev.preventDefault();ev.stopImmediatePropagation();
- if(a==='newChat'){state.modal='newchat';render()}
- if(a==='newGroup'){state.modal='newgroup';render()}
- if(a==='inviteToggle'){state.approveInvites=!state.approveInvites;safeSet('approve_invites',state.approveInvites);render()}
- if(a==='leaveGlobal'){navigate('chat')}
- if(a==='leaveGroup'){let g=groupById(b.dataset.id);if(!g)return;if(!confirm(tt('leave')+'?'))return;g.joined=false;safeSet('groups',state.groups);closeModal();navigate('chat')}
- if(a==='deleteGroup'){let g=groupById(b.dataset.id);if(!g||(g.owner&&g.owner!=='world'))return;if(!confirm(tt('deleteGroup')+'?'))return;state.groups=state.groups.filter(x=>x.id!==g.id);safeSet('groups',state.groups);closeModal();navigate('chat')}
- if(a==='acceptInvite'||a==='rejectInvite'){let idx=Number(b.dataset.index);let req=state.pendingInvites.splice(idx,1)[0];if(a==='acceptInvite'&&req){let g=groupById(req.id);if(g){g.members=[...new Set([...g.members,'world'])];g.joined=true;safeSet('groups',state.groups)}}safeSet('pending_invites',state.pendingInvites);render()}
-},true);
-document.body.addEventListener('submit',ev=>{
- const f=ev.target;if(!['groupForm','profileForm','chatForm'].includes(f.id))return;
- ev.preventDefault();ev.stopImmediatePropagation();const fd=new FormData(f);
- if(f.id==='chatForm'){const txt=String(fd.get('text')||'').trim();if(!txt)return;state.messages[state.thread]??=[];state.messages[state.thread].push({mine:true,text:txt,time:new Date().toLocaleTimeString(state.lang,{hour:'2-digit',minute:'2-digit'})});state.lastActivities[state.thread]=Date.now();safeSet('last_activities',state.lastActivities);render();return}
- if(f.id==='profileForm'){
- const visibility=fd.get('visibility')||'public';let username=String(fd.get('username')||state.username).trim().toLowerCase();if(visibility==='public'&&(!validNick(username)||(username!==state.username&&nameTaken(username)))){toast(tt('taken'));return}
- readAvatar(f.querySelector('[name="avatar"]')?.files?.[0],avatar=>{state.name=String(fd.get('name')||'World').trim()||'World';state.bio=String(fd.get('bio')||'').trim();state.visibility=visibility;state.username=username;if(avatar)state.avatar=avatar;['name','bio','visibility','avatar'].forEach(k=>safeSet(k,state[k]));safeSet('account_username',state.username);closeModal();render()});return;
+function returnChat(id){state.modal=null;state.messageSearch=null;demo.reply=null;navigate('chat',id);markRead(id)}
+function leaveConversation(id){
+ if(id==='global'){if(!confirm(W('leaveOne')))return;if(!confirm(W('leaveTwo')))return;demo.globalOut=[...new Set([...demo.globalOut,me()])];store('global_out',demo.globalOut)}
+ else {const g=groupById(id);if(!g)return;if(g.owner===me()){toast(W('ownerOnly')+' — '+W('deleteGroup'));return}
+ if(!confirm(W('leaveOne')))return;if(!confirm(W('leaveTwo')))return;g.members=g.members.filter(x=>x!==me());persistGroups()}
+ closeModal();navigate('chat');
+}
+function joinConversation(id){
+ if(id==='global'){demo.globalOut=demo.globalOut.filter(x=>x!==me());store('global_out',demo.globalOut);returnChat(id);return}
+ const g=groupById(id);if(!g)return;
+ if(!g.members.includes(me())){if(approveInvites(me())){g.members.push(me());persistGroups()}else{g.members.push(me());persistGroups()}}
+ returnChat(id);
+}
+function sendText(body,photo){
+ const id=state.thread,txt=(body||'').trim();if(!txt&&!photo)return;
+ const g=groupById(id);
+ if((id==='global'&&demo.globalOut.includes(me()))||(g&&!g.members.includes(me())))return;
+ const msg={id:'m_'+Date.now()+'_'+Math.random().toString(16).slice(2,6),author:me(),text:txt,photo:photo||null,reply:demo.reply,at:Date.now(),reactions:{}};
+ setItems(id,[...items(id),msg]);demo.reply=null;delete demo.drafts[me()+'|'+id];store('drafts',demo.drafts);
+ const recipients=id==='global'?allPeople().filter(p=>!demo.globalOut.includes(p.id)).map(p=>p.id):g?g.members:id==='saved'?[]:[id];
+ recipients.filter(p=>p!==me()).forEach(p=>{const key=p+'|'+currentChatKey(id);demo.meta[key]??={};demo.meta[key].unread=(demo.meta[key].unread||0)+1});saveMeta();
+ render();
+}
+function changeGroup(form,fd){
+ const old=groupById(form.dataset.groupId);
+ if(old&&old.owner!==me()){toast(W('ownerOnly'));return}
+ const name=String(fd.get('name')||'').trim(),visibility=fd.get('visibility')||'public';
+ const username=String(fd.get('username')||'').trim().replace(/^@/,'').toLowerCase();
+ if(!name){toast(t('groupName'));return}
+ if(visibility==='public'&&(!validNick(username)||usedNick(username,old?.id))){toast(validNick(username)?W('taken'):W('wrong'));return}
+ const selected=fd.getAll('members').map(String);
+ imgReader(form.querySelector('[name="avatar"]')?.files?.[0],picture=>{
+ const id=old?.id||'group_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,5);
+ const g={id,name,username:visibility==='public'?username:'',visibility,bio:String(fd.get('bio')||'').trim(),owner:old?.owner||me(),avatar:picture||old?.avatar||null,members:old?.members?.filter(x=>x!==me()&&selected.includes(x))||[]};
+ g.members=[...new Set([g.owner,...g.members])];
+ selected.forEach(target=>{
+ if(g.members.includes(target))return;
+ if(approveInvites(target)){if(!demo.invites.some(x=>x.groupId===id&&x.to===target))demo.invites.push({id:'req_'+Date.now()+'_'+target,groupId:id,groupName:name,from:me(),to:target});}
+ else g.members.push(target);
+ });
+ if(old)state.groups=state.groups.map(item=>item.id===id?g:item);else state.groups.push(g);
+ persistGroups();store('invites',demo.invites);state.modal=null;returnChat(id);
+ if(selected.some(target=>approveInvites(target)))toast(W('inviteSent'));
+ });
+}
+function saveProfileForm(form,fd){
+ const id=me(),p=pData(id),visibility=fd.get('visibility')||'public',username=String(fd.get('username')||p.nick).trim().replace(/^@/,'').toLowerCase();
+ if(visibility==='public'&&(!validNick(username)||usedNick(username,'',id))){toast(validNick(username)?W('taken'):W('wrong'));return}
+ imgReader(form.querySelector('[name="avatar"]')?.files?.[0],avatar=>{
+ demo.profiles[id]={...(demo.profiles[id]||{}),name:String(fd.get('name')||p.name).trim(),nick:username,bio:String(fd.get('bio')||''),visibility,avatar:avatar||p.avatar||null};
+ store('profiles',demo.profiles);state.modal=null;state.viewed=id;render();
+ });
+}
+function handleActions(e){
+ const b=e.target.closest('button,[data-person],[data-chat]');if(!b)return;
+ const a=b.dataset.action,nav=b.dataset.nav,who=b.dataset.person,to=b.dataset.chat,id=b.dataset.id||state.thread;
+ const override=!!(nav||who||to||a||b.dataset.lang||b.dataset.follow);
+ if(!override)return;
+ if(a&&!['newChat','newGroup','chatBack','close','toggleBg','notifications','settings','editProfile','profile','groupInfo','editGroup','chatInfo','chatFilter','requestLeave','leaveGroup','leaveGlobal','rejoin','deleteGroup','inviteToggle','switchAccount','invitationAccept','invitationDecline','noticeOpen','newPost','postDetail','likePost','savePost','shareProfile','toggleDemoFollow','followers','followingList','profilePosts','chatOptions','chatOptionDo','messageOptions','messageOptionDo','addReaction','clearReply','searchInChat','emojiPicker','insertEmoji','forwardTo','chatBack','filter','modPreview','joinDemo','showSaved','newchat','openChat'].includes(a)){
+ if(a==='editGroupInfo'){e.preventDefault();e.stopImmediatePropagation();vmodal('editgroup',id)}return;
  }
- const id=f.dataset.groupId,old=groupById(id);if(old&&old.owner&&old.owner!=='world'){toast(tt('onlyOwner'));return}
- const name=String(fd.get('groupName')||'').trim(),username=String(fd.get('groupUsername')||'').trim().replace(/^@/,'').toLowerCase();
- if(!name||!validNick(username)||nameTaken(username,id)){toast(!validNick(username)?t('badGroup'):tt('taken'));return}
- const wanted=fd.getAll('members').map(String).filter(id=>people.some(p=>p.id===id));
- readAvatar(f.querySelector('[name="groupAvatar"]')?.files?.[0],avatar=>{
- const group={id:old?.id||'group_'+Date.now().toString(36),owner:'world',name:name.slice(0,48),username,avatar:avatar||old?.avatar||null,joined:true,members:['world',...wanted.filter(id=>!people.find(p=>p.id===id)?.approveInvites)]};
- if(old)state.groups=state.groups.map(x=>x.id===id?group:x);else state.groups.push(group);
- // For this isolated demo, invite approval is represented by a local pending request.
- wanted.filter(id=>people.find(p=>p.id===id)?.approveInvites).forEach(id=>{state.pendingInvites.push({id:group.id,name:group.name,username:group.username,recipient:id})});
- safeSet('groups',state.groups);safeSet('pending_invites',state.pendingInvites);closeModal();navigate('chat',group.id);
- if(wanted.some(id=>people.find(p=>p.id===id)?.approveInvites))toast(tt('inviteSent'));
- });return;
-},true);
-document.body.addEventListener('input',ev=>{
- if(['groupUsername','accountUsername'].includes(ev.target.id))syncUsernameStatus();
- if(ev.target.id==='newChatFind'){const q=ev.target.value.toLocaleLowerCase().replace(/^@/,'');let el=document.getElementById('newChatPeople');if(el)el.innerHTML=people.filter(p=>(p.name+' '+p.nick).toLocaleLowerCase().includes(q)).map(p=>'<button type="button" class="chat-contact" data-chat="'+esc(p.id)+'">'+avat(p)+'<span class="contact-body"><strong>'+esc(p.name)+'</strong><small>@'+esc(p.nick)+'</small></span></button>').join('')||'<div class="mini-empty">'+t('emptyUsers')+'</div>'}
-},true);
-document.body.addEventListener('change',ev=>{
- if(ev.target.name==='visibility')syncUsernameStatus();
- if(ev.target.type==='file'&&ev.target.closest('.avatar-upload')&&ev.target.files?.[0]){
- const box=ev.target.closest('.avatar-upload'),file=ev.target.files[0];readAvatar(file,src=>{if(!src)return;const old=box.querySelector('.avatar');if(old){const img=document.createElement('img');img.className='avatar';img.src=src;old.replaceWith(img)}})
+ e.preventDefault();e.stopImmediatePropagation();
+ if(nav){state.viewed=me();demo.chatSearch='';navigate(nav);return}
+ if(who){state.viewed=who;closeModal();navigate('profile');return}
+ if(to){if(to.startsWith('group_')&&groupById(to)&&!groupById(to).members.includes(me())){vmodal('chatinfo',to);return}closeModal();returnChat(to);return}
+ if(b.dataset.lang){state.lang=b.dataset.lang;store('lang',state.lang);render();return}
+ if(b.dataset.follow){const k=me()+'|'+b.dataset.follow;demo.follows[k]=!demo.follows[k];store('demo_follows',demo.follows);render();return}
+ if(a==='profile'){state.viewed=me();navigate('profile');return}
+ if(a==='chatBack'){demo.reply=null;state.messageSearch=null;navigate('chat');return}
+ if(a==='close'){closeModal();return}
+ if(a==='newChat'){demo.newChatSearch='';vmodal('newchat');return}
+ if(a==='newGroup'){vmodal('newgroup');return}
+ if(a==='chatInfo'||a==='groupInfo'){vmodal('chatinfo',id);return}
+ if(a==='editGroup'){vmodal('editgroup',id);return}
+ if(a==='chatFilter'){demo.filter=id;render();return}
+ if(a==='requestLeave'||a==='leaveGroup'||a==='leaveGlobal'){leaveConversation(id);return}
+ if(a==='rejoin'){joinConversation(id);return}
+ if(a==='deleteGroup'){let g=groupById(id);if(!g||g.owner!==me())return;if(!confirm(W('confirmDelete')))return;
+ state.groups=state.groups.filter(x=>x.id!==id);persistGroups();closeModal();navigate('chat');return}
+ if(a==='toggleBg'){state.bg=!state.bg;store('bg',state.bg);render();return}
+ if(a==='inviteToggle'){demo.profiles[me()]={...(demo.profiles[me()]||{}),inviteApproval:!approveInvites(me())};store('profiles',demo.profiles);render();return}
+ if(a==='switchAccount'){demo.active=id;store('active_user',id);state.viewed=id;demo.filter='all';closeModal();navigate('chat');return}
+ if(a==='notifications'){vmodal('notifications');return}
+ if(a==='settings'){vmodal('settings');return}
+ if(a==='editProfile'){vmodal('edit');return}
+ if(a==='invitationAccept'||a==='invitationDecline'){
+ const req=demo.invites.find(x=>x.id===id);if(!req)return;
+ if(a==='invitationAccept'){let g=groupById(req.groupId);if(g&&!g.members.includes(me())){g.members.push(me());persistGroups()}}
+ demo.invites=demo.invites.filter(x=>x.id!==id);store('invites',demo.invites);render();return}
+ if(a==='noticeOpen'){const note=demo.notifications.find(x=>x.id===id);if(note){note.read=true;store('demo_notifications',demo.notifications);if(note.groupId){closeModal();returnChat(note.groupId)}else render()}return}
+ if(a==='toggleDemoFollow'){let k=me()+'|'+id;demo.follows[k]=!demo.follows[k];store('demo_follows',demo.follows);if(demo.follows[k])addNotice(id,pData(me()).name+' · '+W('follow'),null);render();return}
+ if(a==='followers'||a==='followingList'){demo.peopleList=a==='followers'?followers(id).map(p=>p.id):allPeople().filter(p=>demo.follows[id+'|'+p.id]).map(p=>p.id);demo.peopleListTitle=W(a==='followers'?'followers':'following');vmodal('peoplelist');return}
+ if(a==='profilePosts'){document.querySelector('.post-grid')?.scrollIntoView({behavior:'smooth'});return}
+ if(a==='shareProfile'){const url=location.href.split('#')[0]+'#profile/'+id;if(navigator.clipboard?.writeText)navigator.clipboard.writeText(url).then(()=>toast(W('copy'))).catch(()=>toast(url));else toast(url);return}
+ if(a==='newPost'){vmodal('newpost');return}
+ if(a==='postDetail'){demo.postId=id;vmodal('postdetail');return}
+ if(a==='likePost'){let post=demo.posts.find(p=>p.id===id);if(!post)return;post.likes??=[];post.likes=post.likes.includes(me())?post.likes.filter(x=>x!==me()):[...post.likes,me()];store('social_posts',demo.posts);render();return}
+ if(a==='savePost'){toast(W('saveMsg'));return}
+ if(a==='chatOptions'){vmodal('chatoptions',id);return}
+ if(a==='chatOptionDo'){let m=meta(id),cmd=b.dataset.cmd;if(cmd==='pin')m.pinned=!m.pinned;if(cmd==='archive')m.archived=!m.archived;if(cmd==='mute')m.muted=!m.muted;
+ if(cmd==='clear'){if(!confirm(W('confirmDelete')))return;setItems(id,[])}saveMeta();closeModal();render();return}
+ if(a==='messageOptions'){demo.msgId=id;vmodal('messageoptions');return}
+ if(a==='addReaction'){const m=items(state.thread).find(x=>x.id===id),em=b.dataset.emoji;if(!m)return;m.reactions??={};m.reactions[em]??=[];m.reactions[em]=m.reactions[em].includes(me())?m.reactions[em].filter(x=>x!==me()):[...m.reactions[em],me()];setItems(state.thread,items(state.thread));closeModal();render();return}
+ if(a==='messageOptionDo'){
+ const cmd=b.dataset.cmd,m=items(state.thread).find(x=>x.id===id);if(!m)return;
+ if(cmd==='reply'){demo.reply=id;closeModal();render();document.getElementById('chatText')?.focus();return}
+ if(cmd==='copy'){navigator.clipboard?.writeText(m.text||'');closeModal();toast(W('copy'));return}
+ if(cmd==='forward'){demo.msgId=id;vmodal('forward');return}
+ if(cmd==='edit'&&m.author===me()){demo.msgId=id;vmodal('editmessage');return}
+ if(cmd==='delete'&&m.author===me()){if(!confirm(W('confirmDelete')))return;setItems(state.thread,items(state.thread).filter(x=>x.id!==id));closeModal();render();return}
+ if(cmd==='pin'){m.pinned=!m.pinned;setItems(state.thread,items(state.thread))}
+ if(cmd==='save'){demo.saved.push({text:m.text||'',photo:m.photo,author:me(),at:Date.now(),id:'saved_'+Date.now()});setItems('saved',[...items('saved'),demo.saved[demo.saved.length-1]]);store('saved_messages',demo.saved)}
+ closeModal();render();return;
  }
+ if(a==='forwardTo'){const orig=items(state.thread).find(x=>x.id===demo.msgId);if(orig){let m={...orig,id:'m_'+Date.now(),author:me(),at:Date.now(),forwarded:true};setItems(id,[...items(id),m]);closeModal();returnChat(id)}return}
+ if(a==='clearReply'){demo.reply=null;render();return}
+ if(a==='searchInChat'){state.messageSearch='';render();return}
+ if(a==='emojiPicker'){vmodal('emoji');return}
+ if(a==='insertEmoji'){demo.drafts[me()+'|'+state.thread]=(demo.drafts[me()+'|'+state.thread]||'')+b.dataset.emoji;store('drafts',demo.drafts);closeModal();render();return}
+ if(a==='filter'){state.filter=b.dataset.value;render();return}
+ if(a==='modPreview'||a==='joinDemo'){toast(W('testNotice'));return}
+}
+document.body.addEventListener('click',handleActions,true);
+document.body.addEventListener('submit',e=>{
+ const f=e.target;if(!['groupForm','profileForm','chatForm','postForm','commentPost','editMessage'].includes(f.id))return;
+ e.preventDefault();e.stopImmediatePropagation();let fd=new FormData(f);
+ if(f.id==='groupForm'){changeGroup(f,fd);return}
+ if(f.id==='profileForm'){saveProfileForm(f,fd);return}
+ if(f.id==='chatForm'){const photo=f.querySelector('#attachChat')?.files?.[0];imgReader(photo,pic=>sendText(fd.get('text'),pic));return}
+ if(f.id==='postForm'){imgReader(f.querySelector('[name="image"]')?.files?.[0],img=>{demo.posts.unshift({id:'post_'+Date.now(),author:me(),caption:String(fd.get('caption')||''),image:img,likes:[],comments:[],at:Date.now()});store('social_posts',demo.posts);closeModal();state.viewed=me();navigate('profile')});return}
+ if(f.id==='commentPost'){const post=demo.posts.find(x=>x.id===f.dataset.post);if(post){post.comments??=[];post.comments.push({author:me(),text:String(fd.get('body')||'').trim(),at:Date.now()});store('social_posts',demo.posts)}render();return}
+ if(f.id==='editMessage'){let m=items(state.thread).find(x=>x.id===demo.msgId);if(m&&m.author===me()){m.text=String(fd.get('text')||'').trim();m.edited=true;setItems(state.thread,items(state.thread))}closeModal();render();return}
 },true);
+document.body.addEventListener('input',e=>{
+ const x=e.target;
+ if(x.id==='groupUsername'||x.id==='profileUsername'){statusCheck();return}
+ if(x.id==='newChatFind'){demo.newChatSearch=x.value;const box=document.getElementById('newChatPeople');if(box){box.innerHTML=allPeople().filter(p=>p.id!==me()&&(!isPrivate(p.id)||items(p.id).length)&&(p.name+' '+p.nick).toLowerCase().includes(x.value.toLowerCase().replace(/^@/,''))).map(p=>'<button class="chat-contact" data-chat="'+F(p.id)+'">'+avatarUI(p)+'<span class="contact-body"><strong>'+F(p.name)+'</strong><small>@'+F(p.nick)+'</small></span></button>').join('')}return}
+ if(x.id==='chatFind'){demo.chatSearch=x.value;const box=document.getElementById('chatContacts');if(box)box.innerHTML=chatContacts(x.value);return}
+ if(x.id==='inChatSearch'){state.messageSearch=x.value;const cursor=x.selectionStart;render();let field=document.getElementById('inChatSearch');field?.focus();field?.setSelectionRange(cursor,cursor);return}
+ if(x.id==='chatText'){demo.drafts[me()+'|'+state.thread]=x.value;store('drafts',demo.drafts)}
+},true);
+document.body.addEventListener('change',e=>{
+ const x=e.target;if(x.name==='visibility'){statusCheck();return}
+ if(x.type==='file'&&x.closest('.circle-photo')&&x.files?.[0]){imgReader(x.files[0],src=>{if(!src)return;let box=x.closest('.circle-photo');let old=box.querySelector('.avatar');if(old){let img=document.createElement('img');img.className='avatar large';img.src=src;old.replaceWith(img)}})}
+ if(x.id==='attachChat'&&x.files?.[0]){imgReader(x.files[0],src=>{let box=document.getElementById('attachmentPreview');if(box&&src)box.innerHTML='<img class="upload-preview" src="'+F(src)+'" alt="">'});return}
+ if(x.name==='image'&&x.closest('#postForm')&&x.files?.[0])imgReader(x.files[0],src=>{let box=document.getElementById('postImagePreview');if(box&&src)box.innerHTML='<img class="upload-preview" src="'+F(src)+'" alt="">'});
+},true);
+state.groups.forEach(g=>{g.owner??='world';g.members??=[];if(!g.members.includes(g.owner))g.members.unshift(g.owner);g.visibility??='public';});
+persistGroups();
+const initHash=location.hash.match(/^#(home|chat|profile|community|add)(?:\/([^/]+))?/);
+if(initHash){state.section=initHash[1];state.thread=initHash[2]||null}
+state.viewed=me();
+render();
+
 
 init();
 </script></body></html>
