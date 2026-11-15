@@ -192,13 +192,109 @@ function settingsUI(){return `<h2>${ic('settings')} ${t('settings')}</h2><div cl
 function profileEditUI(){return `<h2>${ic('edit')} ${t('edit')}</h2><form id="profileForm"><label>${t('name')}</label><input class="field" maxlength="45" name="name" required value="${esc(state.name)}"><label>Username</label><input class="field" readonly value="@world"><label>${t('bio')}</label><textarea name="bio" maxlength="280">${esc(state.bio)}</textarea><label>${t('photo')}</label><input class="field" type="file" id="avatarUpload" accept="image/png,image/jpeg,image/webp"><div class="row"><button class="btn" type="submit">${t('save')}</button><button type="button" class="btn secondary" data-action="close">${t('cancel')}</button></div></form><p class="footnote">${t('testing')}</p>`}
 function modal(content){document.getElementById('overlay').classList.remove('hidden');document.getElementById('overlay').innerHTML=`<div class="modal"><div class="row between"><div></div><button type="button" class="icon-btn" data-action="close" aria-label="${t('cancel')}">${ic('back')}</button></div>${content}</div>`}
 function closeModal(){state.modal=null;document.getElementById('overlay').classList.add('hidden');document.getElementById('overlay').innerHTML=''}
-function render(){document.documentElement.lang=state.lang;renderBg();renderHeader();renderBottom();document.getElementById('main').innerHTML=state.section==='home'?home():state.section==='community'?community():state.section==='add'?add():state.section==='chat'?chat():profile();if(state.modal){modal(state.modal==='settings'?settingsUI():state.modal==='notifications'?notifyUI():state.modal==='edit'?profileEditUI():`<h2>${t('newchat')}</h2><div class="list">${people.map(p=>`<div class="item clickable" data-chat="${p.id}">${ident(p)}</div>`).join('')}</div>`)}else closeModal();if(state.thread){let m=document.getElementById('messages');if(m)m.scrollTop=m.scrollHeight}}
+function render(){
+  document.documentElement.lang=state.lang;
+  renderBg();renderHeader();renderBottom();
+  document.getElementById('main').innerHTML=
+    state.section==='home'?home():state.section==='community'?community():
+    state.section==='add'?add():state.section==='chat'?chat():profile();
+  if(state.modal){
+    const kind=state.modal;
+    modal(kind==='settings'?settingsUI():
+      kind==='notifications'?notifyUI():
+      kind==='edit'?profileEditUI():
+      kind==='newgroup'?groupFormUI():
+      kind==='groupinfo'?groupInfoUI(state.groupModalId):
+      kind==='editgroup'?groupFormUI(state.groupModalId):
+      `<h2>${t('chat')}</h2>`);
+  }else closeModal();
+  if(state.thread){
+    const m=document.getElementById('messages');
+    if(m)m.scrollTop=m.scrollHeight;
+  }
+}
 function navigate(section,thread=null,historyFlag=true){state.section=section;state.thread=thread;if(section==='profile'&&!state.viewed)state.viewed='world';state.modal=null;if(historyFlag)history.pushState({section,thread,viewed:state.viewed},'',`#${section}${thread?'/'+thread:''}`);render();window.scrollTo(0,0)}
 let exitTap=0;
 window.addEventListener('popstate',ev=>{if(state.modal){closeModal();return}if(state.thread){navigate('chat',null,false);return}if(ev.state?.section){state.viewed=ev.state.viewed||'world';navigate(ev.state.section,ev.state.thread||null,false);return}if(Date.now()-exitTap>1800){exitTap=Date.now();toast('Chiqish uchun yana bir marta orqaga bosing');history.pushState({section:'home'},'','#home')}else{toast('Sinov sahifasidan chiqilyapti')}});
-document.body.addEventListener('click',ev=>{const x=ev.target.closest('button,[data-person],[data-chat]');if(!x)return;const n=x.dataset.nav,action=x.dataset.action,who=x.dataset.person,chatId=x.dataset.chat,follow=x.dataset.follow,lang=x.dataset.lang;if(n){state.viewed='world';navigate(n);return}if(action==='profile'){state.viewed='world';navigate('profile');return}if(who){state.viewed=who;closeModal();navigate('profile');return}if(follow){state.follows[follow]=!state.follows[follow];safeSet('follows',state.follows);toast(state.follows[follow]?t('unfollow'):t('follow'));render();return}if(chatId){closeModal();navigate('chat',chatId);return}if(lang){state.lang=lang;safeSet('lang',lang);render();return}if(action==='chatBack'){navigate('chat');return}if(action==='close'){closeModal();return}if(action==='toggleBg'){state.bg=!state.bg;safeSet('bg',state.bg);render();return}if(action==='notifications'||action==='settings'||action==='editProfile'||action==='newChat'){state.modal={notifications:'notifications',settings:'settings',editProfile:'edit',newChat:'newchat'}[action];render();return}if(action==='filter'){state.filter=x.dataset.value;render();return}if(action==='modPreview'){toast('TEST: modlar bazasi alohida ulanmagan');return}if(action==='joinDemo'){toast(t('testing'));return}});
-document.body.addEventListener('submit',ev=>{if(!['profileForm','chatForm','modform'].includes(ev.target.id))return;ev.preventDefault();let fd=new FormData(ev.target);if(ev.target.id==='profileForm'){state.name=String(fd.get('name')||'World').trim()||'World';state.bio=String(fd.get('bio')||'').trim();safeSet('name',state.name);safeSet('bio',state.bio);const img=document.getElementById('avatarUpload')?.files?.[0];if(img&&img.size<=900000&&img.type.startsWith('image/')){const reader=new FileReader();reader.onload=()=>{state.avatar=reader.result;safeSet('avatar',state.avatar);closeModal();render();toast(t('save'))};reader.readAsDataURL(img)}else{closeModal();render();toast(t('save'))}return}if(ev.target.id==='chatForm'){if(!state.thread)return;state.messages[state.thread]??=[{mine:false,text:'Salom!'}];state.messages[state.thread].push({mine:true,text:String(fd.get('text')||'').trim()});render();return}if(ev.target.id==='modform'){state.posts.unshift({title:String(fd.get('title')||'Mod'),details:String(fd.get('desc')||''),version:String(fd.get('version')||''),author:'world'});safeSet('posts',state.posts);toast(t('testing'));navigate('profile');return}});
-document.getElementById('overlay').addEventListener('click',ev=>{if(ev.target.id==='overlay')closeModal()});
+document.body.addEventListener('click',ev=>{
+  const x=ev.target.closest('button,[data-person],[data-chat]');
+  if(!x)return;
+  const n=x.dataset.nav,action=x.dataset.action,who=x.dataset.person;
+  const chatId=x.dataset.chat,follow=x.dataset.follow,lang=x.dataset.lang;
+  if(n){state.viewed='world';state.chatQuery='';navigate(n);return}
+  if(action==='profile'){state.viewed='world';navigate('profile');return}
+  if(who){state.viewed=who;closeModal();navigate('profile');return}
+  if(follow){
+    state.follows[follow]=!state.follows[follow];
+    safeSet('follows',state.follows);
+    toast(state.follows[follow]?t('unfollow'):t('follow'));render();return;
+  }
+  if(chatId){closeModal();navigate('chat',chatId);return}
+  if(lang){state.lang=lang;safeSet('lang',lang);render();return}
+  if(action==='chatBack'){navigate('chat');return}
+  if(action==='groupInfo'||action==='editGroup'){
+    state.groupModalId=x.dataset.id||state.thread;
+    if(!groupById(state.groupModalId))return;
+    state.modal=action==='editGroup'?'editgroup':'groupinfo';render();return;
+  }
+  if(action==='newGroup'){
+    state.groupModalId=null;state.modal='newgroup';render();return;
+  }
+  if(action==='close'){closeModal();return}
+  if(action==='toggleBg'){state.bg=!state.bg;safeSet('bg',state.bg);render();return}
+  if(action==='notifications'||action==='settings'||action==='editProfile'||action==='newChat'){
+    state.modal={notifications:'notifications',settings:'settings',editProfile:'edit',newChat:'newgroup'}[action];
+    render();return;
+  }
+  if(action==='filter'){state.filter=x.dataset.value;render();return}
+  if(action==='modPreview'){toast('TEST: modlar bazasi alohida ulanmagan');return}
+  if(action==='joinDemo'){toast(t('testing'));return}
+});
+document.body.addEventListener('submit',ev=>{if(!['profileForm','chatForm','modform','groupForm'].includes(ev.target.id))return;ev.preventDefault();let fd=new FormData(ev.target);
+if(ev.target.id==='groupForm'){
+  const id=ev.target.dataset.groupId;
+  const name=String(fd.get('groupName')||'').trim();
+  const username=String(fd.get('groupUsername')||'').trim().replace(/^@/,'').toLowerCase();
+  if(!name){toast(t('groupName'));return}
+  if(!/^[a-z0-9_]{3,25}$/.test(username)){toast(t('badGroup'));return}
+  if(state.groups.some(g=>g.username===username&&g.id!==id)){
+    toast(t('uniqueGroup'));return;
+  }
+  const file=ev.target.querySelector('[name="groupAvatar"]')?.files?.[0];
+  if(file&&(file.size>350000||!['image/jpeg','image/png','image/webp'].includes(file.type))){
+    toast(t('maxPhoto'));return;
+  }
+  const members=fd.getAll('members').map(String).filter(member=>people.some(p=>p.id===member));
+  const previous=groupById(id);
+  const group={id:previous?.id||'group_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),
+    name:name.slice(0,48),username,members,avatar:previous?.avatar||null};
+  const save=avatar=>{
+    group.avatar=avatar;
+    if(previous)state.groups=state.groups.map(g=>g.id===id?group:g);
+    else state.groups.push(group);
+    safeSet('groups',state.groups);
+    closeModal();
+    if(previous){render();toast(t('groupSaved'))}
+    else {navigate('chat',group.id);toast(t('groupCreated'))}
+  };
+  if(file){const reader=new FileReader();
+    reader.onload=()=>save(String(reader.result));
+    reader.onerror=()=>toast(t('maxPhoto'));
+    reader.readAsDataURL(file);
+  }else save(group.avatar);
+  return;
+}
+if(ev.target.id==='profileForm'){state.name=String(fd.get('name')||'World').trim()||'World';state.bio=String(fd.get('bio')||'').trim();safeSet('name',state.name);safeSet('bio',state.bio);const img=document.getElementById('avatarUpload')?.files?.[0];if(img&&img.size<=900000&&img.type.startsWith('image/')){const reader=new FileReader();reader.onload=()=>{state.avatar=reader.result;safeSet('avatar',state.avatar);closeModal();render();toast(t('save'))};reader.readAsDataURL(img)}else{closeModal();render();toast(t('save'))}return}if(ev.target.id==='chatForm'){if(!state.thread)return;state.messages[state.thread]??=[{mine:false,text:'Salom!'}];state.messages[state.thread].push({mine:true,text:String(fd.get('text')||'').trim()});render();return}if(ev.target.id==='modform'){state.posts.unshift({title:String(fd.get('title')||'Mod'),details:String(fd.get('desc')||''),version:String(fd.get('version')||''),author:'world'});safeSet('posts',state.posts);toast(t('testing'));navigate('profile');return}});
+document.body.addEventListener('input',ev=>{
+  if(ev.target.id==='chatFind'){
+    state.chatQuery=ev.target.value.slice(0,60);
+    const list=document.getElementById('chatContacts');
+    if(list)list.innerHTML=chatContacts(state.chatQuery);
+  }
+});
+document.getElementById('overlay').addEventListener('click',ev=>{
+  if(ev.target.id==='overlay')closeModal()
+});
 function init(){document.getElementById('fab').innerHTML=ic('plus');state.viewed='world';history.replaceState({section:'home',viewed:'world'},'',location.pathname+'#home');render();}
 init();
 </script></body></html>
