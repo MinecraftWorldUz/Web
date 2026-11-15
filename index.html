@@ -875,6 +875,24 @@ border-color:#ef9892;color:#fff}
   .top .head-actions>.iconbtn>.svg-icon{width:19px!important;height:19px!important}
 }
 
+
+/* The same localized category list powers the upload form and Home filters. */
+.quick-categories{
+ display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;
+ gap:8px;max-width:100%;padding:4px 1px 10px;
+ scrollbar-width:thin;scrollbar-color:#8e6b41 transparent;
+ overscroll-behavior-x:contain;
+}
+.quick-categories .category-chip{
+ white-space:nowrap;flex:0 0 auto;min-height:36px;padding:8px 13px;
+}
+.filters select.field{min-width:0;max-width:100%;cursor:pointer}
+.filters select#gameVersion{flex:1.1}
+@media(max-width:560px){
+ .filters{gap:9px}
+ .filters select.field{font-size:13px;padding:10px 7px}
+}
+
 </style>
 </head>
 <body>
@@ -989,11 +1007,99 @@ const S={
   chatId:null,lang:localStorage.getItem('mw_lang')||'uz',
   feed:[],cache:{},channel:null,homeView:'all',visibleMods:12,gameVersion:'all',savedIds:new Set()
 };
-const V=[
-  '1.16','1.17','1.18','1.19','1.20','1.20.1',
-  '1.20.4','1.21','1.21.1','1.21.4','1.21.10','Other'
+/* Shared version & category registries for HOME, upload and play invites.
+   Stable, released versions only — no snapshot/preview releases. */
+const BEDROCK_VERSIONS=[
+  'Bedrock 26.63','Bedrock 26.62','Bedrock 26.60',
+  'Bedrock 26.52','Bedrock 26.51','Bedrock 26.50',
+  'Bedrock 26.45','Bedrock 26.44','Bedrock 26.43',
+  'Bedrock 26.42','Bedrock 26.41','Bedrock 26.40',
+  'Bedrock 26.35','Bedrock 26.34','Bedrock 26.33',
+  'Bedrock 26.32','Bedrock 26.31','Bedrock 26.30',
+  'Bedrock 26.23','Bedrock 26.21','Bedrock 26.20',
+  'Bedrock 26.13','Bedrock 26.12','Bedrock 26.11',
+  'Bedrock 26.10','Bedrock 26.3','Bedrock 26.2',
+  'Bedrock 26.1','Bedrock 26.0',
+  'Bedrock 1.21.132','Bedrock 1.21.131','Bedrock 1.21.130',
+  'Bedrock 1.21.120','Bedrock 1.21.111','Bedrock 1.21.100',
+  'Bedrock 1.21.90','Bedrock 1.21.80','Bedrock 1.21.70',
+  'Bedrock 1.21.60','Bedrock 1.21.50','Bedrock 1.21.40',
+  'Bedrock 1.21.30','Bedrock 1.21.20','Bedrock 1.21.0'
 ];
-const C=['addon','world','setting','map','texture','skin','other'];
+const JAVA_VERSIONS=[
+  'Java 26.3','Java 26.2','Java 26.1.2','Java 26.1.1','Java 26.1',
+  'Java 1.21.11','Java 1.21.10','Java 1.21.9','Java 1.21.8',
+  'Java 1.21.7','Java 1.21.6','Java 1.21.5','Java 1.21.4',
+  'Java 1.21.3','Java 1.21.2','Java 1.21.1','Java 1.21',
+  'Java 1.20.6','Java 1.20.4','Java 1.20.1'
+];
+// Preserve original selection values of older community mods.
+const LEGACY_VERSIONS=[
+  '1.21.10','1.21.4','1.21.1','1.21',
+  '1.20.4','1.20.1','1.20','1.19','1.18','1.17','1.16','Other'
+];
+const V=[...BEDROCK_VERSIONS,...JAVA_VERSIONS,...LEGACY_VERSIONS];
+const C=[
+  'addon','mod','world','map','texture','resource','behavior',
+  'skin','shader','animation','furniture','mobs','animals','biomes',
+  'structures','survival','adventure','building','decor','redstone',
+  'technology','performance','setting','ui','sounds','vehicles',
+  'tools','minigame','pvp','economy','other'
+];
+const CATEGORY_NAMES={
+  addon:['Addonlar','Аддоны','Add-ons'],
+  mod:['Modlar','Моды','Mods'],
+  world:['Dunyolar','Миры','Worlds'],
+  map:['Xaritalar','Карты','Maps'],
+  texture:['Teksturalar','Текстуры','Textures'],
+  resource:['Resurs paketlari','Ресурс-паки','Resource Packs'],
+  behavior:['Behavior paketlari','Пакеты поведения','Behavior Packs'],
+  skin:['Skinlar','Скины','Skins'],
+  shader:['Shaderlar','Шейдеры','Shaders'],
+  animation:['Animatsiyalar','Анимации','Animations'],
+  furniture:['Mebellar','Мебель','Furniture'],
+  mobs:['Moblar','Мобы','Mobs'],
+  animals:['Hayvonlar','Животные','Animals'],
+  biomes:['Biomlar','Биомы','Biomes'],
+  structures:['Inshootlar','Структуры','Structures'],
+  survival:['Omon qolish','Выживание','Survival'],
+  adventure:['Sarguzasht','Приключения','Adventure'],
+  building:['Qurilish','Строительство','Building'],
+  decor:['Bezaklar','Декор','Decoration'],
+  redstone:['Redstone','Редстоун','Redstone'],
+  technology:['Texnologiya','Технологии','Technology'],
+  performance:['Tezlashtirish','Оптимизация','Performance'],
+  setting:['Sozlamalar','Настройки','Settings'],
+  ui:['Interfeys','Интерфейс','Interface'],
+  sounds:['Ovozlar','Звуки','Sounds'],
+  vehicles:['Transport','Транспорт','Vehicles'],
+  tools:['Asboblar','Инструменты','Tools'],
+  minigame:['Mini o‘yinlar','Мини-игры','Mini-games'],
+  pvp:['PvP','PvP','PvP'],
+  economy:['Iqtisodiyot','Экономика','Economy'],
+  other:['Boshqa','Другое','Other']
+};
+function categoryName(id){
+  const name=CATEGORY_NAMES[id];
+  if(!name)return id||'';
+  return name[({uz:0,ru:1,en:2})[S.lang]??0];
+}
+function categoryOptions(selected){
+  return C.map(x=>'<option value="'+e(x)+'"'+
+    (selected===x?' selected':'')+'>'+e(categoryName(x))+'</option>').join('');
+}
+function versionOptions(selected){
+  const group=(items,name)=>'<optgroup label="'+e(name)+'">'+
+    items.map(x=>'<option value="'+e(x)+'"'+
+    (selected===x?' selected':'')+'>'+e(x)+'</option>').join('')+'</optgroup>';
+  const headings=({uz:['Bedrock / Telefon','Java / Kompyuter','Eski versiyalar'],
+    ru:['Bedrock / Телефон','Java / Компьютер','Старые версии'],
+    en:['Bedrock / Mobile','Java / PC','Older versions']})[S.lang]||
+    ['Bedrock / Telefon','Java / Kompyuter','Eski versiyalar'];
+  return group(BEDROCK_VERSIONS,headings[0])+
+    group(JAVA_VERSIONS,headings[1])+
+    group(LEGACY_VERSIONS,headings[2]);
+}
 const words={
 uz:{
 home:'Bosh sahifa',community:'Hamjamiyat',create:'Qo‘shish',
@@ -1400,7 +1506,7 @@ function card(m,p,own=false){
     <div class="art" data-act="mod" data-id="${m.id}">
       ${cover(m.cover_path)?`<img loading="lazy"
         src="${e(cover(m.cover_path))}" alt="">`:ico('package',58)}
-      <span class="chip">${e(m.category)}</span>
+      <span class="chip">${e(categoryName(m.category))}</span>
       ${m.status==='approved'?`<button class="quick-save ${S.savedIds?.has(m.id)?'saved':''}"
         data-act="quickSave" data-id="${e(m.id)}" title="Saqlash"
         aria-label="Modni saqlash">${ico('bookmark',21)}</button>`:''}
@@ -1505,11 +1611,11 @@ function homeShell(){
             placeholder="Mod nomi yoki tavsifini qidiring..." value="${e(S.query)}">
         </label>
         <select class="field" id="category">
-          <option value="all">Barcha kategoriyalar</option>${optionList(C,S.category)}
+          <option value="all">Barcha kategoriyalar</option>${categoryOptions(S.category)}
         </select>
         <select class="field" id="gameVersion">
           <option value="all">Barcha versiyalar</option>
-          ${optionList(V,S.gameVersion||'all')}
+          ${versionOptions(S.gameVersion||'all')}
         </select>
       </div>
       <div id="quickCategories" class="quick-categories"></div>
@@ -1530,10 +1636,10 @@ function homeShell(){
 function refreshFeedCounters(){
   if(!$('#quickCategories'))return;
   // Counters removed from homepage.
-  $('#quickCategories').innerHTML=
-    [...new Set(S.feed.map(m=>m.category).filter(Boolean))].slice(0,6).map(c=>
-      `<button class="category-chip ${S.category===c?'selected':''}"
-        data-act="quickCategory" data-category="${e(c)}">${e(c)}</button>`).join('');
+  $('#quickCategories').innerHTML=C.map(c=>
+    `<button class="category-chip ${S.category===c?'selected':''}"
+      data-act="quickCategory" data-category="${e(c)}"
+      title="${e(categoryName(c))}">${e(categoryName(c))}</button>`).join('');
 }
 async function loadSavedIds(){
   if(!S.u){S.savedIds=new Set();return}
@@ -2070,13 +2176,13 @@ function modFields(m,adminEdit=false){
       <div class="formgroup">
         <label>${t('category')}</label>
         <select class="field" name="category">
-          ${optionList(C,m?.category||'addon')}
+          ${categoryOptions(m?.category||'addon')}
         </select>
       </div>
       <div class="formgroup">
         <label>${t('version')}</label>
         <select class="field" name="version">
-          ${optionList(V,m?.game_version||'1.21')}
+          ${versionOptions(m?.game_version||'Bedrock 26.63')}
         </select>
       </div>
     </div>
@@ -2169,10 +2275,15 @@ async function editMod(id){
   dialog(t('edit'),modFields(m))
 }
 async function removeMod(id){
-  if(!requireUser()||!confirm('Mod o‘chirilsinmi?'))return;
+  if(!requireUser())return;
+  const name=getCachedMod(id)?.title||'bu mod';
+  if(!confirm('«'+name+'» modini butunlay o‘chirasizmi? Bu amalga qaytish qiyin.'))return;
+  if(!confirm('Yakuniy tasdiq: modni butunlay o‘chirishga rozimisiz?'))return;
   check(await DB.from('mods').delete()
     .eq('id',id).eq('author_id',S.u.id));
-  await go('profile',S.u.id)
+  modCache.delete(id);
+  S.feed=S.feed.filter(m=>m.id!==id);
+  await go('profile',S.u.id);
 }
 
 const modCache=new Map();
@@ -2226,7 +2337,7 @@ function renderMod(m){
       </div>
       <div class="mod-headline">
         <h2>${e(localModTitle(m))}</h2>
-        <span class="status">${e(m.game_version)} · ${e(m.category)}</span>
+        <span class="status">${e(m.game_version)} · ${e(categoryName(m.category))}</span>
         <span class="mod-view-stat">${ico('eye',17)} <span data-mod-view-count>${count(m.views_count)}</span></span>
       </div>
       <p class="wrap mod-description">${e(localModDesc(m))}</p>
@@ -2562,7 +2673,7 @@ function inviteBox(){
       <div class="formgroup">
         <label>${t('version')}</label>
         <select class="field" name="version">
-          ${optionList(V,'1.21')}
+          ${versionOptions('Bedrock 26.63')}
         </select>
       </div>
       <div class="formgroup">
