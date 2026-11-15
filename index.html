@@ -604,6 +604,141 @@ border-color:#ef9892;color:#fff}
 .bubble{display:block!important;width:max-content!important;max-width:75%!important}
 .chat-peer .peer-text b{font-size:14px}
 
+
+/* Chat: content-sized Telegram-like message bubbles.
+   Separate rules for message containers and their children prevent vertical stretching. */
+#msgs.messages {
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:flex-start!important;
+  align-items:stretch!important;
+  row-gap:9px!important;
+  overflow-x:hidden!important;
+}
+#msgs.messages > .world-message {
+  display:flex!important;
+  flex:0 0 auto!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  width:100%!important;
+  flex-direction:column!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  row-gap:3px!important;
+  margin:0!important;
+}
+#msgs.messages > .world-message:has(.bubble.mine) {
+  align-items:flex-end!important;
+}
+#msgs.messages .bubble,
+#msgs.messages > .bubble {
+  display:inline-flex!important;
+  flex-direction:column!important;
+  justify-content:flex-start!important;
+  flex:0 0 auto!important;
+  align-self:flex-start!important;
+  width:fit-content!important;
+  min-width:0!important;
+  max-width:min(78%, 30rem)!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:9px 12px 6px!important;
+  box-sizing:border-box!important;
+  background:#634b31!important;
+  color:#fff4dc!important;
+  border:1px solid #876744!important;
+  border-radius:12px 12px 12px 4px!important;
+  box-shadow:none!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+#msgs.messages .bubble.mine{
+  align-self:flex-end!important;
+  background:#92703e!important;
+  border-color:#b58d50!important;
+  border-radius:12px 12px 4px 12px!important;
+}
+#msgs.messages .bubble .bubble-body{
+  display:block!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  height:auto!important;
+  min-height:0!important;
+  line-height:1.38!important;
+  font-size:14px!important;
+  white-space:pre-wrap!important;
+  overflow-wrap:anywhere!important;
+}
+#msgs.messages .bubble small{
+  display:block!important;
+  align-self:flex-end!important;
+  color:#ead2aa!important;
+  text-align:right!important;
+  font-size:10px!important;
+  line-height:1.25!important;
+  margin-top:4px!important;
+}
+#msgs.messages .world-message > .linkbtn{
+  max-width:100%;
+  padding:2px 0!important;
+  min-height:0!important;
+}
+#msgs.messages .world-message:has(.bubble.mine) > .linkbtn{
+  display:none!important;
+}
+/* Lightweight autumn leaves: visible on phones and behind transparent overlay,
+   with pointer events disabled. */
+#leaves {
+  display:block!important;
+  position:fixed!important;
+  inset:0!important;
+  width:100%!important;
+  height:100dvh!important;
+  pointer-events:none!important;
+  overflow:hidden!important;
+  z-index:4!important;
+  background:transparent!important;
+}
+#leaves .leaf {
+  display:block!important;
+  position:absolute!important;
+  top:-42px;
+  color:#d9a74d!important;
+  opacity:.23!important;
+  pointer-events:none!important;
+  width:auto;
+  height:auto;
+  transform:translate3d(0,0,0);
+  animation:autumnLeafFall linear infinite!important;
+  will-change:transform;
+}
+@keyframes autumnLeafFall {
+  0%{transform:translate3d(0,-10vh,0) rotate(0deg)}
+  45%{transform:translate3d(var(--leaf-drift),48vh,0) rotate(var(--leaf-rotate))}
+  100%{transform:translate3d(0,113vh,0) rotate(650deg)}
+}
+@media(prefers-reduced-motion:reduce){
+  #leaves .leaf{animation:none!important;opacity:.15!important}
+}
+.tick{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:21px!important;
+  height:21px!important;
+  padding:0!important;
+  margin-left:5px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:none!important;
+  box-shadow:none!important;
+  vertical-align:middle!important;
+}
+.tick .verified-mark{width:21px;height:21px;display:block;flex:none}
+
 </style>
 </head>
 <body>
@@ -824,7 +959,10 @@ function nick(p){return banned(p)?t('banned'):p?.username||'...'}
 function tick(p){
   return p?.verified&&(!p.verified_until||
     new Date(p.verified_until)>new Date())
-    ?'<span class="tick" title="Verified">'+ico('badge',13)+'</span>':''
+    ?'<span class="tick" title="Tasdiqlangan akkaunt" aria-label="Tasdiqlangan akkaunt">'+
+      '<svg class="verified-mark" viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">'+
+      '<path d="m12 1.5 3 1.7 3.5.4.6 3.4 2.4 2.5-1.1 3.3.6 3.5-3 1.8-2 3.2-3.5-.5-3.5.5-2-3.2-3-1.8.6-3.5-1.1-3.3L4.9 7l.6-3.4L9 3.2Z" fill="#2998ef" stroke="#d5f1ff" stroke-width="1"/>'+
+      '<path d="m7.4 12.2 3.1 3.1 6.1-6.4" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>':''
 }
 function label(p){return '@'+e(nick(p))+tick(p)}
 function avatar(p,large=false){
@@ -2148,6 +2286,10 @@ async function chats(){
   if(S.chatId==='world')await worldConversation();
   else await conversation(S.chatId);
 }
+function chatTime(date){
+  const d=new Date(date);
+  return Number.isNaN(d.getTime())?'':d.toLocaleTimeString('uz-UZ',{hour:'2-digit',minute:'2-digit'});
+}
 function chatBubble(body,mine,whenText,extra=''){
   return `<div class="bubble ${mine?'mine':''}">
     <div class="bubble-body">${e(body)}</div>
@@ -2178,7 +2320,7 @@ async function conversation(id){
     </header>
     <div class="messages" id="msgs">
       ${msgResult.data.slice().reverse().map(m=>
-        chatBubble(m.body,m.sender_id===uid,when(m.created_at),
+        chatBubble(m.body,m.sender_id===uid,chatTime(m.created_at),
           `<button class="linkbtn" data-act="reportMsg" data-id="${e(m.id)}">${ico('flag',12)}</button>`)
       ).join('')||'<p class="muted">Birinchi xabarni yuboring.</p>'}
     </div>
@@ -2223,7 +2365,7 @@ async function worldConversation(){
       ${rows.map(m=>`<div class="world-message">
         <button class="linkbtn" data-act="user" data-id="${e(m.author_id)}">
           ${avatar(names[m.author_id])} ${label(names[m.author_id])}</button>
-        ${chatBubble(m.body,m.author_id===S.u.id,when(m.created_at),
+        ${chatBubble(m.body,m.author_id===S.u.id,chatTime(m.created_at),
           m.author_id!==S.u.id?`<button class="linkbtn" data-act="reportUser"
             data-id="${e(m.author_id)}" title="Shikoyat">${ico('flag',12)}</button>`:'')}
       </div>`).join('')||'<p class="muted">Hozircha xabar yo‘q.</p>'}
@@ -2292,7 +2434,7 @@ async function onIncomingDirect(msg){
     }).catch(console.warn);
   }
   if(S.page==='chat'&&S.chatId===sender&&$('#msgs')){
-    $('#msgs').insertAdjacentHTML('beforeend',chatBubble(msg.body,false,when(msg.created_at),
+    $('#msgs').insertAdjacentHTML('beforeend',chatBubble(msg.body,false,chatTime(msg.created_at),
       `<button class="linkbtn" data-act="reportMsg" data-id="${e(msg.id)}">${ico('flag',12)}</button>`));
     const container=$('#msgs');container.scrollTop=container.scrollHeight;
     markChatSeen(sender);
@@ -2314,7 +2456,7 @@ async function onIncomingWorld(msg){
     $('#msgs').insertAdjacentHTML('beforeend',`<div class="world-message">
       <button class="linkbtn" data-act="user" data-id="${e(msg.author_id)}">
       ${avatar(p)} ${label(p)}</button>
-      ${chatBubble(msg.body,false,when(msg.created_at),
+      ${chatBubble(msg.body,false,chatTime(msg.created_at),
         `<button class="linkbtn" data-act="reportUser" data-id="${e(msg.author_id)}"
         title="Shikoyat">${ico('flag',12)}</button>`)}
     </div>`);
@@ -2935,7 +3077,7 @@ window.addEventListener('submit',async ev=>{
       f.reset();
       const msgs=$('#msgs');
       if(msgs&&S.chatId===f.dataset.id){
-        msgs.insertAdjacentHTML('beforeend',chatBubble(result.body,true,when(result.created_at)));
+        msgs.insertAdjacentHTML('beforeend',chatBubble(result.body,true,chatTime(result.created_at)));
         msgs.scrollTop=msgs.scrollHeight;
       }
       markChatSeen(f.dataset.id);
@@ -2957,7 +3099,7 @@ window.addEventListener('submit',async ev=>{
       const msgs=$('#msgs');
       if(msgs&&S.chatId==='world'){
         msgs.insertAdjacentHTML('beforeend',`<div class="world-message">
-          ${chatBubble(result.body,true,when(result.created_at))}</div>`);
+          ${chatBubble(result.body,true,chatTime(result.created_at))}</div>`);
         msgs.scrollTop=msgs.scrollHeight;
       }
       worldUpdate({last_seen_at:new Date().toISOString()}).catch(console.warn);
@@ -3009,17 +3151,28 @@ window.addEventListener('keydown',ev=>{
 
 // KUZGI BARGLAR
 function leaves(){
-  for(let i=0;i<3;i++){
-    let x=document.createElement('span');
-    x.className='leaf';
-    x.innerHTML=ico('leaf',24);
-    x.style.left=(i*59.3%100)+'%';
-    x.style.animationDuration=(12+i%7*3)+'s';
-    x.style.animationDelay=(-i*2.2)+'s';
-    x.style.width=(14+i%6*4)+'px';
-    x.style.height=(14+i%6*4)+'px';
-    $('#leaves').append(x)
+  const layer=$('#leaves');
+  if(!layer)return;
+  layer.replaceChildren();
+  const mobile=window.innerWidth<760;
+  const amount=mobile?7:11;
+  const fragment=document.createDocumentFragment();
+  for(let i=0;i<amount;i++){
+    const leaf=document.createElement('span');
+    const size=mobile?(13+i%4*3):(16+i%5*3);
+    leaf.className='leaf';
+    leaf.innerHTML=ico('leaf',size);
+    leaf.style.left=((i*37+11)%100)+'%';
+    leaf.style.top='-42px';
+    leaf.style.setProperty('--leaf-drift',((i%2?1:-1)*(20+i%4*14))+'px');
+    leaf.style.setProperty('--leaf-rotate',(i%2?1:-1)*(260+i%3*70)+'deg');
+    leaf.style.animationDuration=(17+i%5*3)+'s';
+    leaf.style.animationDelay=(-i*3.7)+'s';
+    leaf.style.width=size+'px';
+    leaf.style.height=size+'px';
+    fragment.appendChild(leaf);
   }
+  layer.appendChild(fragment);
 }
 
 // PWA - only public website shell is cached by the service worker.
