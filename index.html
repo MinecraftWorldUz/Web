@@ -777,6 +777,104 @@ border-color:#ef9892;color:#fff}
 .translation-fields>summary{cursor:pointer;font-weight:700;color:#ebc584;margin-bottom:8px}
 .translation-fields .formgroup{margin-top:9px}
 
+
+/* Mobile header consistency: same-sized action squares, no wrapped version.
+   The world logo artwork and favicon are intentionally unchanged. */
+.top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+.top .logo{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  flex:0 1 auto!important;
+  min-width:0;
+  width:auto;
+  flex-wrap:nowrap!important;
+  white-space:nowrap!important;
+  gap:8px;
+}
+.top .brand-icon{flex:0 0 auto}
+.top .brand-word{
+  display:inline-flex;
+  align-items:baseline;
+  flex:0 0 auto;
+  gap:5px;
+  white-space:nowrap;
+}
+.top .version-pill{
+  display:inline-flex!important;
+  flex:0 0 auto;
+  margin:0!important;
+  padding:4px 6px;
+  align-items:center;
+  justify-content:center;
+  white-space:nowrap;
+  line-height:1;
+}
+.top .head-actions{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end;
+  flex:0 0 auto!important;
+  gap:7px;
+}
+.top .head-actions>.iconbtn{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 43px!important;
+  width:43px!important;
+  min-width:43px!important;
+  max-width:43px!important;
+  height:43px!important;
+  min-height:43px!important;
+  max-height:43px!important;
+  padding:0!important;
+  margin:0!important;
+  line-height:1!important;
+  box-sizing:border-box!important;
+}
+.top .head-actions>.iconbtn>.svg-icon,
+.top .head-actions>.iconbtn>[data-icon] .svg-icon{
+  width:21px!important;
+  height:21px!important;
+  flex:none;
+}
+@media(max-width:650px){
+  .top{padding:9px!important;gap:6px!important}
+  .top .logo{font-size:11px!important;letter-spacing:0!important;gap:6px!important}
+  .top .brand-icon{width:33px!important;height:33px!important}
+  .top .brand-word{gap:4px!important}
+  .top .version-pill{font-size:9px!important;padding:4px 5px!important}
+  .top .head-actions{gap:5px!important}
+  .top .head-actions>.iconbtn{
+    flex-basis:40px!important;width:40px!important;min-width:40px!important;
+    max-width:40px!important;height:40px!important;
+    min-height:40px!important;max-height:40px!important;
+  }
+  .top #accountTop>span:not(.dot){display:none!important}
+  .top #accountTop>.svg-icon:last-child{display:none!important}
+  .top #accountTop{font-size:0!important;gap:0!important}
+}
+@media(max-width:380px){
+  .top{padding:7px!important;gap:4px!important}
+  .top .logo{font-size:10px!important;gap:4px!important}
+  .top .brand-icon{width:30px!important;height:30px!important}
+  .top .brand-word{gap:3px!important}
+  .top .version-pill{font-size:8px!important;padding:3px 4px!important}
+  .top .head-actions{gap:4px!important}
+  .top .head-actions>.iconbtn{
+    flex-basis:36px!important;width:36px!important;min-width:36px!important;
+    max-width:36px!important;height:36px!important;
+    min-height:36px!important;max-height:36px!important;
+  }
+  .top .head-actions>.iconbtn>.svg-icon{width:19px!important;height:19px!important}
+}
+
 </style>
 </head>
 <body>
@@ -784,7 +882,7 @@ border-color:#ef9892;color:#fff}
 <div class="shell">
   <header class="top">
     <button class="logo" data-go="home">
-      <span class="brand-icon" data-icon="world" data-size="24"></span><span>MINECRAFT <b>WORLD</b><span class="version-pill">V1.0</span></span>
+      <span class="brand-icon" data-icon="world" data-size="24"></span><span class="brand-word">MINECRAFT <b>WORLD</b></span><span class="version-pill">V1.0</span>
     </button>
     <div class="head-actions">
       <button class="iconbtn" data-act="notifications">
