@@ -2,7 +2,8 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.81.0";
 
 // Telegram Mini App delivery. Public endpoint, but Telegram HMAC auth is mandatory.
-// NEVER put TELEGRAM_BOT_TOKEN or Supabase secret/service keys in GitHub Pages.
+// Bot token is read server-side from encrypted Postgres Vault via a service-role-only RPC.
+// NEVER put Telegram token or Supabase secret/service keys in GitHub Pages.
 const ORIGIN="https://minecraftworlduz.github.io";
 const MAX_FILE_BYTES=49*1024*1024;
 const MAX_INIT_AGE_SECONDS=12*60*60;
@@ -77,8 +78,6 @@ Deno.serve(async req=>{
   }});
   if(req.method!=="POST")return json({ok:false,error:"Method not allowed"},405);
   if(req.headers.get("origin")!==ORIGIN)return json({ok:false,error:"Not allowed"},403);
-  const botToken=Deno.env.get("TELEGRAM_BOT_TOKEN")||"";
-  if(!botToken)return json({ok:false,error:"Bot tokeni hali sozlanmagan. Supabase Secrets ga TELEGRAM_BOT_TOKEN qo‘shing."},503);
   let body:Record<string,unknown>;
   try{
     if(Number(req.headers.get("content-length")||0)>10000)return json({ok:false,error:"Request too large"},413);
@@ -87,13 +86,18 @@ Deno.serve(async req=>{
   const initData=typeof body.initData==="string"?body.initData:"";
   const modId=typeof body.modId==="string"?body.modId:"";
   if(!UUID.test(modId))return json({ok:false,error:"Mod ID xato."},400);
-  const tgUserId=await validatedTelegramUser(initData,botToken);
-  if(!tgUserId)return json({ok:false,error:"Telegram sessiyasi eskirgan. Botdan saytni qayta oching."},401);
   const url=Deno.env.get("SUPABASE_URL")||"";
   const key=getServerKey();
   if(!url||!key)return json({ok:false,error:"Server sozlamalari yetishmayapti."},503);
   try{
     const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
+    const {data:botToken,error:tokenError}=await db.rpc("telegram_bot_token_for_service");
+    if(tokenError||typeof botToken!=="string"||!botToken){
+      console.error("Telegram bot token unavailable:",tokenError?.message||"not configured");
+      return json({ok:false,error:"Telegram bot sozlamalari mavjud emas."},503);
+    }
+    const tgUserId=await validatedTelegramUser(initData,botToken);
+    if(!tgUserId)return json({ok:false,error:"Telegram sessiyasi eskirgan. Botdan saytni qayta oching."},401);
     const {data:mod,error:modErr}=await db.from("mods")
       .select("id,title,file_path,status").eq("id",modId).eq("status","approved").single();
     if(modErr||!mod?.file_path)return json({ok:false,error:"Mod topilmadi yoki hali tasdiqlanmagan."},404);
