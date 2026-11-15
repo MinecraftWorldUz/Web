@@ -44,6 +44,42 @@
  .chat-contact{min-height:75px;padding:10px 11px;gap:11px}
  .chat-search input{font-size:14px}
 }
+
+/* Test V1.1: compact Telegram-inspired mobile forms */
+.chat-contact{border:0;background:transparent;border-bottom:1px solid #72513a55;border-radius:0;min-height:67px;padding:9px 7px}
+.chat-contact:hover{background:#4c3424;border-radius:11px}
+.chat-list{gap:0}
+.avatar,.avatar.large,.member-row .avatar,.member-pick .avatar{flex:0 0 auto!important;display:inline-flex!important;align-items:center;justify-content:center;aspect-ratio:1/1!important;object-fit:cover!important;border-radius:50%!important;width:45px!important;height:45px!important;min-width:45px!important;font-size:20px!important;overflow:hidden}
+.avatar.large{width:76px!important;height:76px!important;min-width:76px!important;font-size:32px!important}
+.group-summary{align-items:center}
+.member-row{padding:9px 12px}
+.member-pick{min-height:62px}
+.member-pick input{order:3;margin-left:auto}
+.modal{max-height:calc(100dvh - 28px);overflow:auto}
+.avatar-upload{position:relative;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;width:82px;height:82px;flex:none;background:#765439;color:#fff;cursor:pointer;border:2px solid #d2a366;overflow:visible}
+.avatar-upload .avatar{width:78px!important;height:78px!important;min-width:78px!important;font-size:31px!important}
+.avatar-upload input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.avatar-upload .avatar-plus{position:absolute;right:-4px;bottom:-3px;display:grid;place-items:center;background:var(--gold);color:#332317;width:27px;height:27px;border-radius:50%;border:2px solid #30241b}
+.avatar-upload .avatar-plus svg{width:17px;height:17px}
+.inline-profile-editor{display:flex;align-items:center;gap:15px;margin:14px 0 24px}
+.inline-profile-editor>div{flex:1;min-width:0}
+.inline-profile-editor .field{margin:0}
+.setting-radio{display:flex;gap:12px;align-items:flex-start;margin:12px 0;padding:13px;border-radius:12px;background:#443124;border:1px solid #795738;cursor:pointer}
+.setting-radio input{accent-color:#f3bd64;width:19px;height:19px;margin:3px 0}
+.setting-radio span{flex:1}
+.setting-radio small{display:block;color:var(--muted);margin-top:5px}
+.username-status{min-height:22px;font-size:12px;margin:4px 0 12px;color:#d8b88c}
+.username-status.ok{color:#9fe7ad}.username-status.bad{color:#ff9b8b}
+.mini-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px;background:#412e21;border-radius:12px}
+.chat-sort-label{font-size:12px;color:var(--muted);padding:9px 8px}
+.chat-screen .bubble{max-width:84%}
+.form-section{margin:18px 0}
+.form-section>label{display:block;margin:8px 0}
+.search-row{display:flex;align-items:center;gap:10px;margin:8px 0 14px}
+.search-row .field{flex:1}
+.danger-link{background:transparent;color:#ffa18a;border:0;padding:12px 0;font-weight:700}
+.group-leave{background:#60402b}
+.privacy-info{font-size:12px;color:var(--muted)}
 </style></head><body class="has-fall"><div id="scene" class="scene" aria-hidden="true"></div><div class="wrap"><header><div class="brand"><div class="brandmark" id="logo"></div><span>MINECRAFT <b>WORLD</b></span><span class="ver">V1.1</span></div><div class="header-actions"><button class="icon-btn" data-action="notifications" title="Bildirishnomalar" id="bell"></button><button class="icon-btn" data-action="settings" title="Sozlamalar" id="settingsTop"></button><button class="icon-btn" data-action="profile" title="Profil" id="profileTop"></button></div></header><div class="ribbon"><span class="dot"></span><span id="testlabel">V1.1 TEST • Sinov rejimi • Asosiy sayt ma’lumotlariga ulanmagan</span></div><main id="main"></main></div><button id="fab" class="fab hidden" data-action="newChat" aria-label="Yangi chat"></button><nav id="bottom" class="bottom"></nav><div id="overlay" class="overlay hidden"></div><div id="toast"></div>
 <script>
 'use strict';
@@ -71,7 +107,7 @@ const ident=(p,extra='')=>`<div class="identity" ${extra}>${avat(p)}<div style="
 function toast(x){let e=document.getElementById('toast');e.textContent=x;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2800)}
 function renderBg(){document.body.classList.toggle('has-fall',!!state.bg);const el=document.getElementById('scene');el.innerHTML='';if(!state.bg)return;const svg='<svg viewBox="0 0 32 32"><path d="M16 2 20 9l5-2-2 6 6 4-7 3 1 6-7-3-7 3 1-6-7-3 6-4-2-6 5 2Z"/></svg>';const colors=['#f19a25','#b65024','#dc6a22','#a43c28','#ecaf49','#d34228'];for(let i=0;i<8;i++){let s=document.createElement('span');s.className='fall-leaf';s.style.left=(8+i*13.3)%100+'%';s.style.color=colors[i%6];s.style.setProperty('--duration',(20+i*2.6)+'s');s.style.setProperty('--delay',(-i*4.4)+'s');s.style.setProperty('--drift',((i%2?1:-1)*(20+i*3))+'px');s.innerHTML=svg;el.append(s)}}
 function renderHeader(){document.getElementById('logo').innerHTML=ic('world',31);document.getElementById('bell').innerHTML=ic('bell')+'<span class="count">1</span>';document.getElementById('settingsTop').innerHTML=ic('settings');document.getElementById('profileTop').innerHTML=ic('user');document.getElementById('testlabel').textContent='V1.1 TEST • '+t('testing')}
-function renderBottom(){document.getElementById('bottom').innerHTML=['home','community','add','chat','profile'].map(n=>`<button type="button" data-nav="${n}" class="${state.section===n?'active':''}">${ic(n==='add'?'plus':n)}<span>${t(n)}</span></button>`).join('');const fab=document.getElementById('fab');fab.classList.toggle('hidden',state.section!=='chat'||!!state.thread);fab.innerHTML=ic('plus',28);fab.dataset.action='newGroup';fab.setAttribute('aria-label',t('createGroup'))}
+function renderBottom(){document.getElementById('bottom').innerHTML=['home','community','add','chat','profile'].map(n=>`<button type="button" data-nav="${n}" class="${state.section===n?'active':''}">${ic(n==='add'?'plus':n)}<span>${t(n)}</span></button>`).join('');const fab=document.getElementById('fab');fab.classList.toggle('hidden',state.section!=='chat'||!!state.thread);fab.innerHTML=ic('plus',28);fab.dataset.action='newChat';fab.setAttribute('aria-label',t('newchat'))}
 function home(){return `<section class="hero"><div><h1> Minecraft <span>World V1.1</span></h1><p>${t('modinfo')}</p><div class="small" style="margin-top:12px;color:#f9db9d">${t('testing')}</div></div></section><section class="panel"><div class="headrow"><h2>${ic('box')} ${t('mods')}</h2><span class="badge">V1.1 TEST</span></div><div class="cats">${['all','addons','maps','textures','shaders','chat'].map((x,i)=>`<button class="cat ${state.filter===x?'active':''}" data-action="filter" data-value="${x}">${ic(['box','plus','world','eye','sun','chat'][i])}<span>${['Barchasi','Addonlar','Xaritalar','Teksturalar','Shaderlar','Chat'][i]}</span></button>`).join('')}</div></section><section class="panel"><div class="headrow"><h2>${ic('box')} ${t('posted')}</h2><button class="btn secondary" data-nav="add">${ic('plus')} ${t('add')}</button></div><div class="cards">${[...state.posts,{title:'Visible Trades',details:'Villagerlar savdosini qulayroq ko‘rish',version:'Bedrock 1.21+',author:'admin',demo:true}].map(m=>`<div class="mod"><div class="mod-art">${ic('world',45)}</div><div class="mod-info"><h3>${esc(m.title)}</h3><p>${esc(m.details)}</p><div class="tiny">${esc(m.version||'Bedrock 1.21+')} · ${ic('eye',13)} 12 · ${ic('heart',13)} 3</div><div class="row"><button class="btn secondary" data-action="modPreview">${t('view')}</button><small class="muted">@${esc(m.author||'world')}</small></div></div></div>`).join('')}</div></section>`}
 function community(){return `<section class="panel"><div class="headrow"><h2>${ic('community')} ${t('community')}</h2></div><p class="muted">${t('testing')}</p><div class="list spaced">${people.map(p=>`<div class="item"><div class="row between">${ident(p,`data-person="${p.id}"`)}<button class="btn ${state.follows[p.id]?'secondary':''}" data-follow="${p.id}">${state.follows[p.id]?t('unfollow'):t('follow')}</button></div></div>`).join('')}<div class="item"><h3>Birga Minecraft o‘ynaymiz!</h3><p class="muted" style="margin:9px 0">Bedrock • Survival • 20:00</p><button class="btn secondary" data-action="joinDemo">${t('community')}</button></div></div></section>`}
 function translationFields(){let languages=['uz','ru','en'].filter(l=>l!==state.lang);return languages.map(l=>`<div class="translation-box"><b>${{uz:'O‘zbekcha',ru:'Русский',en:'English'}[l]}</b><label>${t('title')}</label><input class="field" name="title_${l}" placeholder="${{uz:'Nom',ru:'Название',en:'Title'}[l]}"><label>${t('desc')}</label><textarea name="description_${l}" placeholder="${{uz:'Tavsif',ru:'Описание',en:'Description'}[l]}"></textarea></div>`).join('')}
@@ -296,5 +332,165 @@ document.getElementById('overlay').addEventListener('click',ev=>{
   if(ev.target.id==='overlay')closeModal()
 });
 function init(){document.getElementById('fab').innerHTML=ic('plus');state.viewed='world';history.replaceState({section:'home',viewed:'world'},'',location.pathname+'#home');render();}
+
+/* Isolated test-only UX improvements; no real accounts, messages or backend operations. */
+icons.leave='<path d="M9 3H4v18h5M14 7l5 5-5 5M19 12H8"/>';
+icons.camera='<path d="M4 7h4l2-3h4l2 3h4v13H4z"/><circle cx="12" cy="13" r="3"/>';
+icons.search='<circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/>';
+icons.trash='<path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v7m4-7v7"/>';
+const extraTrans={
+uz:{privacy:'Chat maxfiyligi',public:'Ommaviy',private:'Maxfiy',publicInfo:'Barcha akkauntlar qidiruvda topiladi',privateInfo:'Faqat mavjud suhbatlar va sizga yozayotganlar orqali bog‘lanish mumkin',groupPrivacy:'Guruh turi',allowInvites:'Guruhlarga qo‘shishni tasdiqlash',allowInfo:'Taklif kelganda roziligingiz so‘raladi',inviteSent:'Qo‘shilish uchun ruxsat so‘rovi yuborildi',approve:'Rozilik berish',reject:'Rad etish',leave:'Guruhdan chiqish',deleteGroup:'Guruhni o‘chirish',available:'Username bo‘sh',taken:'Username band',newMessage:'Yangi xabar',create:'Guruh yaratish',selectPerson:'Kontaktlarni qidirish',onlyOwner:'Faqat guruh egasi tahrirlay oladi',chooseAvatar:'Avatarni o‘zgartirish',pending:'Guruhga qo‘shilish taklifi',groupDetails:'Guruh ma’lumotlari',searchUsername:'Ism yoki @username orqali qidiring',requestJoin:'Guruhga qo‘shilish uchun taklif'},
+ru:{privacy:'Приватность чата',public:'Публичный',private:'Приватный',publicInfo:'Все аккаунты можно найти через поиск',privateInfo:'Общение через существующие переписки',groupPrivacy:'Тип группы',allowInvites:'Подтверждать приглашения в группы',allowInfo:'Приглашения требуют вашего согласия',inviteSent:'Запрос на вступление отправлен',approve:'Принять',reject:'Отклонить',leave:'Покинуть группу',deleteGroup:'Удалить группу',available:'Username свободен',taken:'Username занят',newMessage:'Новое сообщение',create:'Создать группу',selectPerson:'Поиск контактов',onlyOwner:'Только владелец может редактировать',chooseAvatar:'Изменить аватар',pending:'Приглашение в группу',groupDetails:'Информация о группе',searchUsername:'Поиск по имени или @username',requestJoin:'Приглашение в группу'},
+en:{privacy:'Chat privacy',public:'Public',private:'Private',publicInfo:'Everyone can discover public accounts in search',privateInfo:'Reachable through existing conversations',groupPrivacy:'Group privacy',allowInvites:'Approve group invitations',allowInfo:'Invitations require your approval',inviteSent:'Join approval request sent',approve:'Approve',reject:'Decline',leave:'Leave group',deleteGroup:'Delete group',available:'Username available',taken:'Username taken',newMessage:'New message',create:'Create group',selectPerson:'Find contacts',onlyOwner:'Only the owner can edit this group',chooseAvatar:'Change avatar',pending:'Group invitation',groupDetails:'Group information',searchUsername:'Search names or @usernames',requestJoin:'Group invitation'}
+};
+const oldT=t;
+const tt=k=>extraTrans[state.lang]?.[k]||extraTrans.uz[k]||oldT(k);
+state.username=safeGet('account_username','world');
+state.visibility=safeGet('visibility','public');
+state.approveInvites=safeGet('approve_invites',true);
+state.pendingInvites=safeGet('pending_invites',[]);
+state.lastActivities=safeGet('last_activities',{});
+const nameTaken=(name,ownGroupId='')=>{
+ const q=String(name||'').replace(/^@/,'').trim().toLowerCase();
+ return [...people.map(p=>p.nick),'world',state.username,...state.groups.filter(g=>g.id!==ownGroupId).map(g=>g.username)].some(n=>n.toLowerCase()===q);
+};
+const validNick=x=>/^[a-z][a-z0-9_]{4,24}$/.test(String(x).toLowerCase());
+const avatarPicker=(id,avatar,name,uploadName)=>'<label class="avatar-upload" title="'+esc(tt('chooseAvatar'))+'">'+
+ (avatar?'<img class="avatar" src="'+esc(avatar)+'" alt="">':'<span class="avatar">'+esc((name||'G')[0].toUpperCase())+'</span>')+
+ '<span class="avatar-plus">'+ic('plus',16)+'</span><input type="file" name="'+uploadName+'" id="'+id+'" accept="image/png,image/jpeg,image/webp" aria-label="'+esc(tt('chooseAvatar'))+'"></label>';
+const statusField=(value,ownId)=>'<input class="field" name="groupUsername" id="groupUsername" minlength="5" maxlength="25" required pattern="[A-Za-z][A-Za-z0-9_]{4,24}" autocapitalize="off" spellcheck="false" value="'+esc(value||'')+'" placeholder="minecraft_team"><div id="groupUsernameStatus" class="username-status"></div>';
+function chatContacts(query=''){
+ const q=query.trim().replace(/^@/,'').toLocaleLowerCase();
+ const peers=people.filter(p=>(p.name+' '+p.nick).toLocaleLowerCase().includes(q));
+ const groups=state.groups.filter(g=>g.joined!==false&&(g.name+' '+g.username).toLocaleLowerCase().includes(q));
+ const rows=[...(q?[]:[{id:'global',name:t('general'),nick:'minecraftworld',kind:'global'}]),
+ ...groups.map(g=>({id:g.id,name:g.name,nick:g.username,avatar:g.avatar,kind:'group'})),
+ ...peers.map(p=>({...p,kind:'person'}))];
+ rows.sort((a,b)=>(state.lastActivities[b.id]||0)-(state.lastActivities[a.id]||0));
+ return '<div class="chat-sort-label">'+(q?tt('searchUsername'):tt('newMessage'))+'</div>'+
+ (rows.length?rows.map(p=>'<button type="button" class="chat-contact" data-chat="'+esc(p.id)+'">'+
+ (p.kind==='global'?ic('globe',35):avat(p))+'<span class="contact-body"><strong>'+esc(p.name)+'</strong><small>@'+esc(p.nick)+(p.kind==='group'?' · '+(p.members?.length||0)+' '+t('membersCount'):'')+'</small></span></button>').join(''):
+ '<div class="mini-empty">'+t('emptyUsers')+'</div>');
+}
+function threadUI(){
+ const g=groupById(state.thread);const global=state.thread==='global';
+ const p=g?groupIdentity(g):global?{name:t('general'),nick:'world',id:'global'}:person(state.thread);
+ const messages=state.messages[state.thread]||[];
+ return '<section class="panel chat-screen"><div class="chat-head">'+
+ '<button type="button" class="go-back" data-action="chatBack" aria-label="'+t('back')+'">'+ic('back',25)+'</button>'+
+ '<button type="button" class="chat-header-profile" '+(g?'data-action="groupInfo" data-id="'+esc(g.id)+'"':global?'':'data-person="'+esc(p.id)+'"')+'>'+
+ avat(p)+'<span><strong>'+esc(p.name)+'</strong><small>'+(g?g.members.length+' '+t('membersCount'):'@'+esc(p.nick))+'</small></span></button>'+
+ (global||g?'<button type="button" class="icon-btn" data-action="'+(g?'leaveGroup':'leaveGlobal')+'" data-id="'+esc(state.thread)+'" aria-label="'+tt('leave')+'">'+ic('leave')+'</button>':'')+
+ '</div><div class="messages" id="messages">'+messages.map(m=>'<div class="bubble '+(m.mine?'mine':'')+'">'+esc(m.text)+'<small>'+esc(m.time||'')+'</small></div>').join('')+
+ '</div><form id="chatForm" class="compose"><input class="field" name="text" required maxlength="1500" placeholder="'+esc(t('newMessages'))+'"><button class="btn" type="submit">'+ic('send')+'</button></form></section>';
+}
+function groupInfoUI(id){
+ const g=groupById(id);if(!g)return '<p>'+t('emptyGroups')+'</p>';
+ const owner=g.owner==='world'||!g.owner;
+ return '<h2>'+t('groupInfo')+'</h2><div class="group-summary">'+avat(groupIdentity(g),true)+
+ '<div><strong>'+esc(g.name)+'</strong><small>@'+esc(g.username)+'</small><small>'+g.members.length+' '+t('membersCount')+'</small></div></div>'+
+ '<h3 class="spaced">'+t('members')+'</h3><div class="group-members">'+g.members.map(id=>{let p=person(id);return '<button type="button" class="member-row" data-person="'+esc(p.id)+'">'+avat(p)+'<span><strong>'+esc(p.name)+'</strong><small>@'+esc(p.nick)+'</small></span></button>'}).join('')+'</div>'+
+ '<div class="row spaced">'+(owner?'<button class="btn" data-action="editGroup" data-id="'+esc(id)+'">'+ic('edit')+t('editGroup')+'</button>':'<small>'+tt('onlyOwner')+'</small>')+
+ '<button class="btn secondary" data-action="close">'+t('back')+'</button></div>'+
+ '<button type="button" class="danger-link" data-action="leaveGroup" data-id="'+esc(id)+'">'+ic('leave',19)+' '+tt('leave')+'</button>'+
+ (owner?'<div><button type="button" class="danger-link" data-action="deleteGroup" data-id="'+esc(id)+'">'+ic('trash',18)+' '+tt('deleteGroup')+'</button></div>':'')+
+ '<p class="footnote">'+t('demoGroup')+'</p>';
+}
+function groupFormUI(id=''){
+ const g=groupById(id); if(g&&g.owner&&g.owner!=='world')return '<p>'+tt('onlyOwner')+'</p>';
+ const chosen=g?.members||['world'];
+ return '<h2>'+t(g?'editGroup':'createGroup')+'</h2><form id="groupForm" data-group-id="'+esc(g?.id||'')+'">'+
+ '<div class="inline-profile-editor">'+avatarPicker('groupAvatar',g?.avatar,g?.name||'G','groupAvatar')+
+ '<div><label>'+t('groupName')+'</label><input class="field" name="groupName" maxlength="48" required value="'+esc(g?.name||'')+'" placeholder="'+esc(t('groupName'))+'"></div></div>'+
+ '<label>'+t('groupUsername')+'</label>'+statusField(g?.username||'',g?.id)+
+ '<h3 class="spaced">'+t('selectMembers')+'</h3><div class="group-member-picks">'+
+ people.map(p=>'<label class="member-pick">'+avat(p)+'<span><strong>'+esc(p.name)+'</strong><small>@'+esc(p.nick)+'</small></span><input type="checkbox" name="members" value="'+esc(p.id)+'" '+(chosen.includes(p.id)?'checked':'')+'></label>').join('')+
+ '</div><div class="row spaced"><button class="btn" type="submit">'+ic('check')+' '+t('save')+'</button><button class="btn secondary" type="button" data-action="close">'+t('cancel')+'</button></div></form>';
+}
+function newChatUI(){
+ return '<h2>'+tt('newMessage')+'</h2><label class="chat-search">'+ic('search',20)+'<input class="field" type="search" id="newChatFind" placeholder="'+esc(tt('searchUsername'))+'"></label>'+
+ '<div class="list"><button class="chat-contact" type="button" data-action="newGroup">'+ic('community',30)+'<span class="contact-body"><strong>'+t('createGroup')+'</strong></span></button></div>'+
+ '<div id="newChatPeople">'+people.map(p=>'<button type="button" class="chat-contact" data-chat="'+esc(p.id)+'">'+avat(p)+'<span class="contact-body"><strong>'+esc(p.name)+'</strong><small>@'+esc(p.nick)+'</small></span></button>').join('')+'</div>';
+}
+function settingsUI(){
+ return '<h2>'+ic('settings')+' '+t('settings')+'</h2>'+
+ '<div class="checkrow"><div><strong>'+t('turnbg')+'</strong></div><button class="switch '+(state.bg?'on':'')+'" data-action="toggleBg"></button></div><div class="sep"></div>'+
+ '<div class="checkrow"><div><strong>'+tt('allowInvites')+'</strong><p class="privacy-info">'+tt('allowInfo')+'</p></div><button type="button" class="switch '+(state.approveInvites?'on':'')+'" data-action="inviteToggle" aria-pressed="'+state.approveInvites+'"></button></div>'+
+ '<div class="sep"></div><h3>'+t('lang')+'</h3><div class="language-buttons">'+['uz','ru','en'].map(l=>'<button class="tab '+(state.lang===l?'active':'')+'" data-lang="'+l+'">'+({uz:'O‘zbek',ru:'Русский',en:'English'}[l])+'</button>').join('')+'</div>';
+}
+function profileEditUI(){
+ return '<h2>'+t('edit')+'</h2><form id="profileForm">'+
+ '<div class="inline-profile-editor">'+avatarPicker('avatarUpload',state.avatar,state.name,'avatar')+
+ '<div><label>'+t('name')+'</label><input class="field" maxlength="45" name="name" required value="'+esc(state.name)+'"></div></div>'+
+ '<label>'+t('bio')+'</label><textarea name="bio" maxlength="280">'+esc(state.bio)+'</textarea>'+
+ '<h3>'+tt('privacy')+'</h3>'+['public','private'].map(x=>'<label class="setting-radio"><input type="radio" name="visibility" value="'+x+'" '+(state.visibility===x?'checked':'')+'><span><strong>'+tt(x)+'</strong><small>'+tt(x+'Info')+'</small></span></label>').join('')+
+ '<div id="accountUsernameWrap"><label>Username</label><input class="field" id="accountUsername" name="username" maxlength="25" minlength="5" pattern="[A-Za-z][A-Za-z0-9_]{4,24}" value="'+esc(state.username)+'"><div id="accountUsernameStatus" class="username-status"></div></div>'+
+ '<div class="row spaced"><button class="btn" type="submit">'+t('save')+'</button><button class="btn secondary" type="button" data-action="close">'+t('cancel')+'</button></div></form>';
+}
+function notifyUI(){
+ return '<h2>'+ic('bell')+' '+t('notifications')+'</h2>'+
+ state.pendingInvites.map((req,i)=>'<div class="item"><strong>'+tt('pending')+'</strong><p>'+esc(req.name)+' · @'+esc(req.username)+'</p><button class="btn" data-action="acceptInvite" data-index="'+i+'">'+tt('approve')+'</button> <button class="btn secondary" data-action="rejectInvite" data-index="'+i+'">'+tt('reject')+'</button></div>').join('')+
+ '<div class="item notif">'+avat(person('anzecraft'))+'<div><strong data-person="anzecraft">Anzecraft</strong><div class="small muted">@anzecraft</div><div class="small">'+t('yours')+'</div></div></div>';
+}
+function render(){
+ document.documentElement.lang=state.lang;renderBg();renderHeader();renderBottom();
+ document.getElementById('main').innerHTML=state.section==='home'?home():state.section==='community'?community():state.section==='add'?add():state.section==='chat'?chat():profile();
+ if(state.modal){let k=state.modal;modal(k==='settings'?settingsUI():k==='notifications'?notifyUI():k==='edit'?profileEditUI():k==='newchat'?newChatUI():k==='newgroup'?groupFormUI():k==='groupinfo'?groupInfoUI(state.groupModalId):k==='editgroup'?groupFormUI(state.groupModalId):'');}
+ else closeModal();
+ if(state.thread){let m=document.getElementById('messages');if(m)m.scrollTop=m.scrollHeight}
+ syncUsernameStatus();
+}
+function syncUsernameStatus(){
+ const group=document.getElementById('groupUsername');
+ if(group){const v=group.value.trim().replace(/^@/,'').toLowerCase();const el=document.getElementById('groupUsernameStatus');const busy=nameTaken(v,group.closest('form').dataset.groupId);el.textContent=!v?'':!validNick(v)?t('badGroup'):busy?tt('taken'):tt('available');el.className='username-status '+(validNick(v)&&!busy?'ok':'bad');}
+ const acc=document.getElementById('accountUsername');if(acc){const v=acc.value.trim().toLowerCase();const used=v!==state.username&&nameTaken(v);const el=document.getElementById('accountUsernameStatus');el.textContent=!v?'':!validNick(v)?t('badGroup'):used?tt('taken'):tt('available');el.className='username-status '+(validNick(v)&&!used?'ok':'bad')}
+ const wrap=document.getElementById('accountUsernameWrap');if(wrap)wrap.style.display=document.querySelector('[name="visibility"]:checked')?.value==='private'?'none':'block';
+}
+const readAvatar=(file,done)=>{if(!file)return done(null);if(file.size>350000||!['image/png','image/jpeg','image/webp'].includes(file.type)){toast(t('maxPhoto'));return}const rd=new FileReader();rd.onload=()=>done(String(rd.result));rd.onerror=()=>toast(t('maxPhoto'));rd.readAsDataURL(file)};
+document.body.addEventListener('click',ev=>{
+ const b=ev.target.closest('[data-action]');if(!b)return;
+ const a=b.dataset.action;
+ if(!['newChat','newGroup','leaveGroup','leaveGlobal','deleteGroup','inviteToggle','acceptInvite','rejectInvite'].includes(a))return;
+ ev.preventDefault();ev.stopImmediatePropagation();
+ if(a==='newChat'){state.modal='newchat';render()}
+ if(a==='newGroup'){state.modal='newgroup';render()}
+ if(a==='inviteToggle'){state.approveInvites=!state.approveInvites;safeSet('approve_invites',state.approveInvites);render()}
+ if(a==='leaveGlobal'){navigate('chat')}
+ if(a==='leaveGroup'){let g=groupById(b.dataset.id);if(!g)return;if(!confirm(tt('leave')+'?'))return;g.joined=false;safeSet('groups',state.groups);closeModal();navigate('chat')}
+ if(a==='deleteGroup'){let g=groupById(b.dataset.id);if(!g||g.owner!=='world')return;if(!confirm(tt('deleteGroup')+'?'))return;state.groups=state.groups.filter(x=>x.id!==g.id);safeSet('groups',state.groups);closeModal();navigate('chat')}
+ if(a==='acceptInvite'||a==='rejectInvite'){let idx=Number(b.dataset.index);let req=state.pendingInvites.splice(idx,1)[0];if(a==='acceptInvite'&&req){let g=groupById(req.id);if(g){g.members=[...new Set([...g.members,'world'])];g.joined=true;safeSet('groups',state.groups)}}safeSet('pending_invites',state.pendingInvites);render()}
+},true);
+document.body.addEventListener('submit',ev=>{
+ const f=ev.target;if(!['groupForm','profileForm','chatForm'].includes(f.id))return;
+ ev.preventDefault();ev.stopImmediatePropagation();const fd=new FormData(f);
+ if(f.id==='chatForm'){const txt=String(fd.get('text')||'').trim();if(!txt)return;state.messages[state.thread]??=[];state.messages[state.thread].push({mine:true,text:txt,time:new Date().toLocaleTimeString(state.lang,{hour:'2-digit',minute:'2-digit'})});state.lastActivities[state.thread]=Date.now();safeSet('last_activities',state.lastActivities);render();return}
+ if(f.id==='profileForm'){
+ const visibility=fd.get('visibility')||'public';let username=String(fd.get('username')||state.username).trim().toLowerCase();if(visibility==='public'&&(!validNick(username)||(username!==state.username&&nameTaken(username)))){toast(tt('taken'));return}
+ readAvatar(f.querySelector('[name="avatar"]')?.files?.[0],avatar=>{state.name=String(fd.get('name')||'World').trim()||'World';state.bio=String(fd.get('bio')||'').trim();state.visibility=visibility;state.username=username;if(avatar)state.avatar=avatar;['name','bio','visibility','avatar'].forEach(k=>safeSet(k,state[k]));safeSet('account_username',state.username);closeModal();render()});return;
+ }
+ const id=f.dataset.groupId,old=groupById(id);if(old&&old.owner!=='world'){toast(tt('onlyOwner'));return}
+ const name=String(fd.get('groupName')||'').trim(),username=String(fd.get('groupUsername')||'').trim().replace(/^@/,'').toLowerCase();
+ if(!name||!validNick(username)||nameTaken(username,id)){toast(!validNick(username)?t('badGroup'):tt('taken'));return}
+ const wanted=fd.getAll('members').map(String).filter(id=>people.some(p=>p.id===id));
+ readAvatar(f.querySelector('[name="groupAvatar"]')?.files?.[0],avatar=>{
+ const group={id:old?.id||'group_'+Date.now().toString(36),owner:'world',name:name.slice(0,48),username,avatar:avatar||old?.avatar||null,joined:true,members:['world',...wanted.filter(id=>!people.find(p=>p.id===id)?.approveInvites)]};
+ if(old)state.groups=state.groups.map(x=>x.id===id?group:x);else state.groups.push(group);
+ // For this isolated demo, invite approval is represented by a local pending request.
+ wanted.filter(id=>people.find(p=>p.id===id)?.approveInvites).forEach(id=>{state.pendingInvites.push({id:group.id,name:group.name,username:group.username,recipient:id})});
+ safeSet('groups',state.groups);safeSet('pending_invites',state.pendingInvites);closeModal();navigate('chat',group.id);
+ if(wanted.some(id=>people.find(p=>p.id===id)?.approveInvites))toast(tt('inviteSent'));
+ });return;
+},true);
+document.body.addEventListener('input',ev=>{
+ if(['groupUsername','accountUsername'].includes(ev.target.id))syncUsernameStatus();
+ if(ev.target.id==='newChatFind'){const q=ev.target.value.toLocaleLowerCase().replace(/^@/,'');let el=document.getElementById('newChatPeople');if(el)el.innerHTML=people.filter(p=>(p.name+' '+p.nick).toLocaleLowerCase().includes(q)).map(p=>'<button type="button" class="chat-contact" data-chat="'+esc(p.id)+'">'+avat(p)+'<span class="contact-body"><strong>'+esc(p.name)+'</strong><small>@'+esc(p.nick)+'</small></span></button>').join('')||'<div class="mini-empty">'+t('emptyUsers')+'</div>'}
+},true);
+document.body.addEventListener('change',ev=>{
+ if(ev.target.name==='visibility')syncUsernameStatus();
+ if(ev.target.type==='file'&&ev.target.closest('.avatar-upload')&&ev.target.files?.[0]){
+ const box=ev.target.closest('.avatar-upload'),file=ev.target.files[0];readAvatar(file,src=>{if(!src)return;const old=box.querySelector('.avatar');if(old){const img=document.createElement('img');img.className='avatar';img.src=src;old.replaceWith(img)}})
+ }
+},true);
+
 init();
 </script></body></html>
