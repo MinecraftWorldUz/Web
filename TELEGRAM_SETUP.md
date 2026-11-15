@@ -1,47 +1,35 @@
-# Minecraft World — Telegram Mini App va mod yuborish
+# Minecraft World — Telegram Mini App (ulangan)
 
-Sayt: https://minecraftworlduz.github.io/Web/
-Supabase Edge Function: https://ruovdgyfcucspffrvijh.supabase.co/functions/v1/telegram-mod
+Bot: [@Minecraft_World_Robot](https://t.me/Minecraft_World_Robot)
 
-## 1. Telegram botni yaratish
+Mini App: https://minecraftworlduz.github.io/Web/
 
-1. Telegramda rasmiy [@BotFather](https://t.me/BotFather) botini oching.
-2. `/newbot` yuboring. Nom sifatida **Minecraft World**, username uchun mavjud bo‘lgan va `bot` bilan tugaydigan nom tanlang.
-3. BotFather sizga bot **TOKEN** beradi. Bu parolga teng. Uni hech kimga yubormang, GitHub’ga yozmang, saytning HTML/JS kodiga qo‘ymang.
+Edge Function: https://ruovdgyfcucspffrvijh.supabase.co/functions/v1/telegram-mod
 
-## 2. Tokenni Supabase Secrets ga kiritish (asosiy yakuniy qadam)
+## Hozirgi holat
 
-- Supabase Dashboard → MinecraftWorldUz → Edge Functions → Secrets.
-- Key: `TELEGRAM_BOT_TOKEN`
-- Value: BotFather bergan token.
-- Save bosing. Function kodida boshqa narsa almashtirish kerak emas.
+- Telegram Bot API `getMe` botni tasdiqladi.
+- `setChatMenuButton` orqali butun bot uchun `🌐 Minecraft World` Web App menyu tugmasi o‘rnatildi.
+- `getChatMenuButton` javobi **web_app** turini, matnni va yuqoridagi HTTPS manzilni qaytardi.
+- Bot kaliti GitHub yoki brauzer kodida emas, Supabase Postgres Vault ichida shifrlangan; xizmat uni `telegram_bot_token_for_service` RPC orqali oladi. RPC faqat `service_role` uchun ochiq.
+- `telegram-mod` Edge Function v2: Telegram imzosini tekshiradi, tasdiqlangan modni private Storage’dan oladi va `sendDocument` orqali yuboradi.
+- Oddiy brauzerda saytning eski yuklab olish imkoniyati saqlangan.
+- Noto‘g‘ri Telegram initData bilan endpoint sinovdan o‘tdi: server **401** qaytardi.
+- Real faylning shaxsiy Telegram chatiga yetkazilishini foydalanuvchi botni ishga tushirgach sinash kerak.
 
-## 3. Telegramdagi 🌐 Minecraft World tugmasi
+## Foydalanish
 
-BotFatherga `/setmenubutton` yuboring va yangi botni tanlang.
-- URL: `https://minecraftworlduz.github.io/Web/`
-- Button text: `🌐 Minecraft World`
+1. [Botni oching](https://t.me/Minecraft_World_Robot).
+2. Telegram shaxsiy chatida **Start** yoki `/start` bosing.
+3. **🌐 Minecraft World** menyu tugmasidan Mini App’ni oching.
+4. Tasdiqlangan modni tanlang, **Telegramga yuborish** tugmasini bosing.
+5. Bot faylni shu chatga hujjat sifatida yuboradi. Agar birinchi urinishda bo‘lmasa, botga /start bosilganini va Telegram ichidan Mini App ochilganini tekshiring.
 
-BotFather interfeysida mavjud bo‘lsa, Main Mini App ham shu HTTPS URL bilan sozlanadi.
-Yangi botning shaxsiy chatida `/start` bosing va menu tugmasidan saytni oching.
+## Xavfsizlik va cheklovlar
 
-## 4. Ishlash tartibi
-
-- Telegram bot menyusidan Mini App ochiladi.
-- Modni bosib **Telegramga yuborish** tanlanadi.
-- Supabase Edge Function Telegram WebApp initData HMAC imzosini maxfiy bot tokeni bilan tekshiradi.
-- Faqat `approved` mod fayli Supabase Storage’dan olinadi.
-- Bot faylni `sendDocument` orqali aynan shu Telegram foydalanuvchisining shaxsiy chatiga yuboradi.
-- Yuborishdan keyin mod yuklab olishlar hisoblagichi yangilanadi.
-- Telegramdan tashqarida saytning odatiy download tugmasi o‘z holicha qoladi.
-
-## Cheklovlar va xavfsizlik
-
-- Bot avval foydalanuvchi tomonidan ishga tushirilishi kerak (`/start`).
-- Telegram Bot API fayllarni multipart bilan odatda 50 MB gacha yuboradi; loyihadagi cheklov 49 MB.
-- Server funksiyasi 1 foydalanuvchiga 1 daqiqada 3 ta yuborishni cheklaydi.
-- Telegram initData 12 soatdan eski bo‘lsa yangidan Mini App ochish kerak.
-- Token faqat server secrets ichida turadi. `verify_jwt=false` funksiyada Telegram imzo tekshiruvi bilan himoyalangan.
-- Test uchun: BotFather tokeni kiritilgach bot chatida `/start`, menu, Visible Trades → Telegramga yuborish.
-
-**Muhim:** Token kiritilmaguncha modul tayyor, lekin Telegram fayl yuborishi ishlamaydi.
+- Faqat Telegram imzosidan o‘tgan foydalanuvchi o‘z chatiga mod yubora oladi.
+- Bir Telegram foydalanuvchisi uchun: 1 daqiqada ko‘pi bilan 3 ta yuborish.
+- File size chegarasi: 49 MB.
+- Faqat `approved` statusli modlarga ruxsat.
+- `Telegram WebApp.initData` eskirgan bo‘lsa (12 soatdan katta), Mini App’ni bot menyusidan qayta ochish kerak.
+- Frontendda bot tokeni ham, Supabase server kaliti ham yo‘q.
