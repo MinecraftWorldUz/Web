@@ -2168,6 +2168,7 @@ async function refreshUser(){
   S.u=s.data?.user||null;
   if(previousId!==S.u?.id){
     invalidateProfileData();
+    prefetchedFor=null;
     S.communityData=null;S.accountsAt=0;
     S.chatId=null;S.chatUnread=new Set();S.chatPeers=[];
     S.chatUsers={};S.worldUnread=0;S.worldPref=null;
