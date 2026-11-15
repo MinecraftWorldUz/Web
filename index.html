@@ -1262,6 +1262,10 @@ body:before,.hero:after{display:none!important}
   opacity:.72;cursor:progress;
 }
 
+
+/* Preserve paragraph breaks in multilingual mod descriptions. */
+.mod-detail .mod-description,
+.admin-mod-preview .wrap{white-space:pre-wrap!important;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -1906,7 +1910,9 @@ function localModTitle(m){
   return m['title_'+S.lang]||m.title||'';
 }
 function localModDesc(m){
-  return m['description_'+S.lang]||m.description||'';
+  const description=m['description_'+S.lang]||m.description||'';
+  // Older uploads stored escaped line breaks as literal backslash-n.
+  return String(description).replace(/\\r\\n|\\n|\\r/g,'\n');
 }
 function card(m,p,own=false){
   cacheMod(m);
