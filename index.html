@@ -712,7 +712,7 @@ border-color:#ef9892;color:#fff}
   width:auto;
   height:auto;
   transform:translate3d(0,0,0);
-  animation:autumnLeafFall linear infinite!important;
+  animation:autumnLeafFall var(--leaf-duration,20s) linear var(--leaf-delay,0s) infinite!important;
   will-change:transform;
 }
 @keyframes autumnLeafFall {
@@ -3166,8 +3166,8 @@ function leaves(){
     leaf.style.top='-42px';
     leaf.style.setProperty('--leaf-drift',((i%2?1:-1)*(20+i%4*14))+'px');
     leaf.style.setProperty('--leaf-rotate',(i%2?1:-1)*(260+i%3*70)+'deg');
-    leaf.style.animationDuration=(17+i%5*3)+'s';
-    leaf.style.animationDelay=(-i*3.7)+'s';
+    leaf.style.setProperty('--leaf-duration',(17+i%5*3)+'s');
+    leaf.style.setProperty('--leaf-delay',(-i*3.7)+'s');
     leaf.style.width=size+'px';
     leaf.style.height=size+'px';
     fragment.appendChild(leaf);
