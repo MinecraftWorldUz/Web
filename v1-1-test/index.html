@@ -3,6 +3,47 @@
 <style>
 :root{color-scheme:dark;--bg:#1a1710;--panel:#30241b;--panel2:#483427;--soft:#63472e;--gold:#f3bd64;--line:#856445;--text:#fff0d6;--muted:#c6ad8e;--green:#8a8833;--red:#ba5b37;--shadow:#120d08}*{box-sizing:border-box}body{margin:0;color:var(--text);font:15px/1.45 system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);min-height:100vh}body.has-fall{background:linear-gradient(180deg,#1b1b11e6,#1c1713f0),url('../hero-autumn.svg') center top / cover fixed}button,input,textarea,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}.scene{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}.fall-leaf{position:absolute;top:-50px;display:block;width:25px;height:27px;opacity:.36;animation:fall var(--duration) linear var(--delay) infinite;will-change:transform}.fall-leaf svg{width:100%;height:100%;fill:currentColor;filter:none}@keyframes fall{from{transform:translate3d(0,-10vh,0) rotate(-35deg)}50%{transform:translate3d(var(--drift),48vh,0) rotate(160deg)}to{transform:translate3d(-8px,115vh,0) rotate(390deg)}}body:not(.has-fall) .scene{display:none}.wrap{max-width:1080px;margin:0 auto;padding:10px 16px 122px;position:relative;z-index:2}header{position:sticky;top:8px;z-index:25;border:1px solid #8f6c45;border-radius:15px;background:#302218f5;box-shadow:0 4px 0 #100b07;padding:10px 13px;display:flex;align-items:center;gap:10px;min-height:70px}.brand{display:flex;align-items:center;gap:9px;min-width:0;flex:1;white-space:nowrap;font-weight:900;letter-spacing:.04em;font-size:13px}.brandmark{width:43px;height:43px;display:grid;place-items:center;background:#96703f;border:2px solid #d8b46c;border-radius:7px;flex:none}.brandmark svg{width:30px;height:30px}.brand b{color:var(--gold)}.ver{font-size:10px;color:#ffe1a3;border:1px solid #d5b067;background:#50351b;padding:4px 5px;border-radius:5px;letter-spacing:0}.header-actions{display:flex;gap:7px}.icon-btn{display:grid;place-items:center;background:#65482f;border:1px solid #98744c;border-radius:8px;color:var(--gold);min-width:42px;width:42px;height:42px;box-shadow:inset 0 2px #9f7a50,inset 0 -3px #3c291b;position:relative}.icon-btn svg{width:22px;height:22px}.count{position:absolute;top:-6px;right:-5px;background:#e84e4e;border-radius:99px;font-size:11px;padding:1px 5px;color:white}.ribbon{display:flex;gap:9px;align-items:center;margin:14px 1px 15px;padding:8px 12px;border:1px dashed #e6bb70;background:#46301ec9;border-radius:9px;color:#ffe0a8;font-size:12px;font-weight:800}.ribbon .dot{background:#d85e37;width:9px;height:9px;border-radius:50%;flex:none}main{min-height:65vh}section{margin:0 0 18px}.panel{border:1px solid #8b6847;background:#2e221aef;border-radius:16px;padding:20px;box-shadow:0 3px 0 #130d09}.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.between{justify-content:space-between}.muted{color:var(--muted)}h1,h2,h3,p{margin:0}h1{font-size:clamp(30px,5.5vw,53px);line-height:1.12}h2{font-size:24px}h3{font-size:17px}.spaced{margin-top:15px}.hero{background:linear-gradient(90deg,#24170fe8 7%,#322016ca 55%,#2b1b1070),url('../hero-autumn.svg') center/cover;border:1px solid #b48b5b;border-radius:16px;min-height:280px;padding:36px;display:flex;align-items:center}.hero h1 span{color:var(--gold)}.hero p{color:#f0dabc;margin-top:15px;max-width:440px}.headrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0}.headrow h2{display:flex;align-items:center;gap:8px}.tabs{display:flex;gap:8px;overflow:auto;padding:3px 0 8px}.tab,.pill{padding:9px 13px;background:#523a28;border:1px solid #977047;border-radius:10px;color:#ffead0;font-weight:750;white-space:nowrap}.tab.active,.pill.active{background:#777934;border-color:#c6c05e}.fields{display:grid;grid-template-columns:1fr 1fr;gap:11px}.field,textarea,select{min-width:0;width:100%;border:1px solid #896543;color:var(--text);background:#211810;padding:13px;border-radius:9px;outline:none}input:focus,textarea:focus,select:focus{border-color:#e6b866}textarea{min-height:95px;resize:vertical}.field::placeholder{color:#b49b80}.wide{grid-column:1/-1}.btn{padding:10px 16px;border:1px solid #f6cc81;background:#e3af59;color:#2d1c10;border-radius:9px;font-weight:850;box-shadow:inset 0 2px #ffe8b6,inset 0 -3px #986a32;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:43px}.btn.secondary{background:#493426;color:#f9dfb1;border-color:#a47d53;box-shadow:inset 0 2px #7d5b42,inset 0 -3px #2a1d14}.btn.red{background:#91462d;color:#fff1df;border-color:#c98454}.btn svg{width:19px;height:19px}.cats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}.cat{display:grid;place-items:center;gap:7px;border:1px solid #876346;background:#513929;border-radius:11px;min-height:85px;padding:11px 4px;color:#f8e2c3;font-size:12px;font-weight:800;text-align:center}.cat.active{background:#858338;border-color:#ddd46d}.cat svg{width:27px;height:27px}.cards{display:grid;gap:13px}.mod{display:flex;overflow:hidden;min-height:160px;background:#3c291d;border:1px solid #916d45;border-radius:12px}.mod-art{width:39%;flex:none;min-height:150px;background:linear-gradient(#dba67354,#4f783b65),url('../hero-autumn.svg') center/cover;display:grid;place-items:center}.mod-info{padding:16px;display:flex;flex-direction:column;justify-content:center;gap:8px;flex:1}.mod-info p{font-size:13px;color:var(--muted)}.tiny{font-size:12px;color:#d1ad7b}.identity{display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer}.avatar{background:#805b3b;color:#fff2d8;border-radius:50%;display:grid;place-items:center;width:43px;height:43px;min-width:43px;font-weight:900;font-size:18px;border:1px solid #986d45}.avatar.large{width:83px;height:83px;font-size:35px}.identity strong{display:block;line-height:1.12}.identity small{display:block;color:var(--muted);font-size:12px;margin-top:5px}.verify{width:16px;height:16px;vertical-align:-2px;margin-left:3px}.profile{padding:21px;margin-top:14px}.profile-top{display:flex;align-items:center;gap:16px}.profile-name{font-size:23px;font-weight:850}.profile-bio{margin-top:11px;white-space:pre-wrap}.statrow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:17px 0}.stat{background:#261b16;border:1px solid #775337;padding:12px;text-align:center;border-radius:8px}.stat strong{color:var(--gold);display:block;font-size:23px}.stat small{font-size:12px;color:var(--muted)}.list{display:grid;gap:10px}.item{background:#36261d;border:1px solid #79563d;border-radius:10px;padding:12px}.item.clickable{cursor:pointer}.item.clickable:hover{border-color:#eac073}.small{font-size:12px}.badge{font-size:11px;border:1px solid #ac884f;color:#edc27c;border-radius:5px;padding:3px 7px;background:#624429}.notif{display:flex;gap:12px;align-items:center}.notif>div:nth-child(2){flex:1}.notif strong{color:#fbd79a}.notif button{flex:none}.follow{font-weight:900;color:#e4b168}.chat-top{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;padding:7px 0 14px;border-bottom:1px solid #765438;margin-bottom:12px}.chat-user{flex:0 0 68px;text-align:center;cursor:pointer;border:0;background:transparent;color:#f4e2c8}.chat-user .avatar{margin:0 auto 5px;width:49px;height:49px}.chat-user span{font-size:11px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chat-list .item{display:flex;align-items:center;gap:12px;cursor:pointer}.chat-list .item .message-preview{color:var(--muted);font-size:12px}.chat-list .item .nameblock{flex:1}.chat-list .item strong{display:block}.chat-screen{display:flex;flex-direction:column;min-height:calc(100dvh - 300px)}.chat-head{display:flex;align-items:center;gap:10px;border-bottom:1px solid #8c6343;padding-bottom:11px}.chat-head .identity{flex:1}.go-back{background:transparent;border:0;color:var(--gold);padding:10px;min-width:35px}.messages{display:flex;flex-direction:column;gap:12px;padding:20px 4px;flex:1;min-height:210px}.bubble{max-width:82%;width:fit-content;padding:9px 12px 6px;white-space:pre-wrap;overflow-wrap:anywhere;background:#76583c;border-radius:13px 13px 13px 4px;font-size:14px}.bubble.mine{align-self:flex-end;background:#94813f;border-radius:13px 13px 4px 13px}.bubble small{display:block;text-align:right;font-size:10px;color:#e9d4ac;margin-top:5px}.compose{display:flex;gap:8px}.compose input{flex:1}.fab{position:fixed;right:max(23px,calc((100vw - 1030px)/2));bottom:110px;z-index:35;width:56px;height:56px;border-radius:16px;border:1px solid #f3ce84;background:#d2a450;color:#302017;box-shadow:0 3px 0 #5b3821;display:grid;place-items:center}.fab svg{width:27px;height:27px}.bottom{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:32;max-width:1060px;width:calc(100% - 22px);display:grid;grid-template-columns:repeat(5,1fr);padding:6px;gap:4px;background:#2b211aec;border:1px solid #94714d;border-radius:15px}.bottom button{border:0;background:transparent;display:grid;place-items:center;color:#edcf9e;font-size:11px;gap:3px;padding:8px 2px;border-radius:10px;min-height:61px}.bottom button.active{background:#87873c;color:#fff6c7;border:1px solid #c6c06a}.bottom svg{width:24px;height:24px}.overlay{position:fixed;inset:0;z-index:60;background:#070604bc;display:flex;align-items:center;justify-content:center;padding:18px}.modal{max-width:500px;width:100%;max-height:85dvh;overflow-y:auto;border-radius:14px;background:#34251a;border:1px solid #d6ae72;box-shadow:0 9px 40px #090705;padding:19px}.modal h2{font-size:21px;margin-bottom:15px}.modal label{font-size:13px;font-weight:750;display:block;margin:10px 0 6px}.modal .row{margin-top:16px}.modal .btn{min-width:110px}.checkrow{display:flex;align-items:center;gap:12px;padding:13px;background:#453125;border:1px solid #74543b;border-radius:10px;justify-content:space-between}.switch{position:relative;display:inline-flex;align-items:center;width:47px;height:27px;background:#68513c;border-radius:25px;transition:background .2s}.switch:after{content:"";width:19px;height:19px;background:#e8d3ab;border-radius:50%;position:absolute;left:4px;transition:transform .2s}.switch.on{background:#879140}.switch.on:after{transform:translateX(20px)}.empty{border:1px dashed #765337;color:#baa181;border-radius:12px;padding:35px 18px;text-align:center}.footnote{font-size:11px;color:#b59a78;margin-top:14px}.hidden{display:none!important}.sep{height:1px;background:#715438;margin:16px 0}.language-buttons{display:flex;gap:8px}.language-buttons .tab{flex:1}.translation-box{background:#3f2c21;border:1px solid #805f43;border-radius:10px;padding:12px;margin:12px 0}#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:100px;background:#56402b;color:#f9e5c7;padding:11px 16px;max-width:92vw;border:1px solid #c69c63;border-radius:12px;z-index:150;display:none;box-shadow:0 6px 20px #160b05}
 @media(max-width:660px){.wrap{padding:8px 11px 118px}header{min-height:65px;padding:9px 10px;gap:4px}.brand{gap:6px;font-size:11px}.brandmark{width:34px;height:34px}.brandmark svg{width:24px;height:24px}.header-actions{gap:5px}.icon-btn{width:36px;min-width:36px;height:37px}.icon-btn svg{width:19px;height:19px}.ver{font-size:9px;padding:3px}.panel{padding:15px}.hero{min-height:235px;padding:24px 18px}.hero p{font-size:13px}.cats{grid-template-columns:repeat(3,1fr)}.cat{min-height:78px}.fields{gap:8px}.mod{min-height:140px}.mod-art{width:40%;min-height:130px}.mod-info{padding:10px}.mod-info h3{font-size:15px}.profile-top{align-items:flex-start}.profile-name{font-size:20px}.stat{padding:9px 4px}.chat-screen{min-height:calc(100dvh - 340px)}.bottom button{font-size:10px;min-height:57px}.bottom svg{width:22px;height:22px}.fab{right:20px;bottom:96px}body.has-fall{background-attachment:scroll}.ribbon{font-size:11px}h2{font-size:20px}}@media(prefers-reduced-motion:reduce){.fall-leaf{animation:none}}
+
+/* V1.1 TEST chat overhaul */
+.chat-inbox{padding:18px 16px!important}
+.chat-inbox .headrow{margin:0 0 16px}
+.chat-search{position:relative;display:block;margin:0 0 17px}
+.chat-search>svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);pointer-events:none;color:#e9b86c}
+.chat-search input{padding:13px 13px 13px 46px;min-height:51px;border-color:#b68a59}
+.chat-list{display:grid;gap:11px}
+.chat-contact{width:100%;display:flex;gap:13px;align-items:center;text-align:left;
+ border:1px solid #806042;background:#3b2a20;color:#f9ead2;border-radius:13px;
+ padding:13px 15px;min-height:83px}
+.chat-contact:hover,.chat-contact:focus-visible{border-color:#e3b46b;background:#4c3424}
+.contact-body{flex:1;min-width:0;display:grid;gap:5px}
+.contact-body strong{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.contact-body small{font-size:12px;color:#d0b294;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.contact-category{font-size:12px;font-weight:900;color:#e6be82;text-transform:uppercase;
+ margin:11px 5px 0;letter-spacing:.04em}
+.mini-empty{font-size:12px;color:#bba186;border:1px dashed #73553e;border-radius:10px;padding:12px}
+.chat-header-profile{border:0;background:transparent;color:#f8ebd1;min-width:0;
+ display:flex;align-items:center;text-align:left;gap:10px;flex:1;padding:3px}
+.chat-header-profile>span:last-child{display:grid;gap:4px;min-width:0}
+.chat-header-profile strong{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-header-profile small{font-size:12px;color:#d4b88f}
+.group-summary{display:flex;align-items:center;gap:14px;border:1px solid #76533a;
+ border-radius:12px;background:#422f21;padding:13px}
+.group-summary>div:last-child{display:grid;gap:5px;min-width:0}
+.group-summary strong{font-size:20px}.group-summary small{color:#dfbd8f;font-size:12px}
+.group-member-picks,.group-members{display:grid;gap:8px;margin:11px 0}
+.member-pick,.member-row{display:flex;align-items:center;gap:11px;padding:10px;
+ color:#f6e6cc;background:#412f22;border:1px solid #7e593d;border-radius:10px;text-align:left}
+.member-pick span,.member-row span{flex:1;display:grid;gap:4px;min-width:0}
+.member-pick small,.member-row small{font-size:12px;color:#c9ad8b}
+.member-pick input{width:19px;height:19px;accent-color:#a7a749;flex:none}
+.member-pick .avatar,.member-row .avatar{width:38px;height:38px;min-width:38px}
+.group-avatar-preview{margin:8px 0}
+#groupForm .row{justify-content:flex-start}
+@media(max-width:660px){
+ .chat-inbox{padding:13px!important}
+ .chat-contact{min-height:75px;padding:10px 11px;gap:11px}
+ .chat-search input{font-size:14px}
+}
 </style></head><body class="has-fall"><div id="scene" class="scene" aria-hidden="true"></div><div class="wrap"><header><div class="brand"><div class="brandmark" id="logo"></div><span>MINECRAFT <b>WORLD</b></span><span class="ver">V1.1</span></div><div class="header-actions"><button class="icon-btn" data-action="notifications" title="Bildirishnomalar" id="bell"></button><button class="icon-btn" data-action="settings" title="Sozlamalar" id="settingsTop"></button><button class="icon-btn" data-action="profile" title="Profil" id="profileTop"></button></div></header><div class="ribbon"><span class="dot"></span><span id="testlabel">V1.1 TEST • Sinov rejimi • Asosiy sayt ma’lumotlariga ulanmagan</span></div><main id="main"></main></div><button id="fab" class="fab hidden" data-action="newChat" aria-label="Yangi chat"></button><nav id="bottom" class="bottom"></nav><div id="overlay" class="overlay hidden"></div><div id="toast"></div>
 <script>
 'use strict';
@@ -11,11 +52,17 @@
 const icons={world:'<path d="m12 2 9 5-9 5-9-5 9-5Zm-9 5v10l9 5 9-5V7M12 12v10"/>',home:'<path d="m3 10 9-7 9 7v11H3V10Zm6 11v-7h6v7"/>',community:'<circle cx="9" cy="8" r="3"/><path d="M2 21v-3a7 7 0 0 1 14 0v3M17 5a3 3 0 0 1 0 6m0 3a6 6 0 0 1 5 6"/>',plus:'<path d="M12 3v18M3 12h18"/>',chat:'<path d="M21 4H3v14h6l4 4v-4h8V4Z"/>',user:'<circle cx="12" cy="7" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/>',bell:'<path d="M6 9a6 6 0 0 1 12 0v6l2 3H4l2-3V9Zm3 12h6"/>',settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2"/>',back:'<path d="m15 5-7 7 7 7M8 12h13"/>',send:'<path d="m22 2-7 20-4-9-9-4 20-7ZM11 13l11-11"/>',edit:'<path d="m4 20 5-1 11-11-4-4L5 15l-1 5ZM14 6l4 4"/>',check:'<path d="m5 12 4 4 10-10"/>',eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',box:'<path d="m12 2 9 5-9 5-9-5 9-5ZM3 7v10l9 5 9-5V7M12 12v10"/>',flag:'<path d="M5 22V3m0 1h14l-3 6 3 6H5"/>',moon:'<path d="M20 15A9 9 0 0 1 9 4a9 9 0 1 0 11 11Z"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M20 4l-2 2M6 18l-2 2"/>',leaf:'<path d="M21 3C7 3 2 10 3 21c11 1 18-4 18-18ZM3 21 15 9"/>',download:'<path d="M12 2v14m-5-5 5 5 5-5M4 19v3h16v-3"/>',heart:'<path d="M12 21S3 15 3 9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6-9 12-9 12Z"/>',globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a16 16 0 0 1 0 20M12 2a16 16 0 0 0 0 20"/>'};
 const ic=(n,s=22)=>`<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[n]||icons.box}</svg>`;
 const tr={uz:{home:'Bosh sahifa',community:'Hamjamiyat',add:'Qo‘shish',chat:'Chat',profile:'Profil',settings:'Sozlamalar',mods:'Modlar',see:'Modlarni ko‘rish',saved:'Saqlash',followers:'Obunachilar',following:'Obunalar',posts:'Postlar',edit:'Profilni o‘zgartirish',name:'Ko‘rinadigan ism',bio:'Bio',save:'Saqlash',turnbg:'Kuzgi fon va yaproqlar',lang:'Til',notifications:'Bildirishnomalar',newchat:'Yangi chat',send:'Yuborish',general:'Umumiy chat',search:'Qidirish',desc:'Tavsif',title:'Mod nomi',photo:'Profil rasmi',follow:'Obuna bo‘lish',unfollow:'Obunadasiz',posted:'Tasdiqlangan modlar',translation:'Mod tarjimalari',create:'Mod joylash',review:'Tekshiruvga yuborish',back:'Orqaga',yours:'Sizga yangi obunachi!',testing:'Sinov rejimi • Asosiy sayt ma’lumotlariga ulanmagan',warning:'Bu sinov sahifasi. Hech qanday haqiqiy xabar yoki mod yuborilmaydi.',modinfo:'Modlar, chat va hamjamiyat — bir joyda!',select:'Chatni tanlang',users:'Foydalanuvchilar',view:'Ko‘rish',cancel:'Bekor qilish'},ru:{home:'Главная',community:'Сообщество',add:'Добавить',chat:'Чат',profile:'Профиль',settings:'Настройки',mods:'Моды',see:'Смотреть моды',saved:'Сохранить',followers:'Подписчики',following:'Подписки',posts:'Посты',edit:'Редактировать профиль',name:'Отображаемое имя',bio:'О себе',save:'Сохранить',turnbg:'Осенний фон и листья',lang:'Язык',notifications:'Уведомления',newchat:'Новый чат',send:'Отправить',general:'Общий чат',search:'Поиск',desc:'Описание',title:'Название мода',photo:'Фото профиля',follow:'Подписаться',unfollow:'Вы подписаны',posted:'Одобренные моды',translation:'Переводы мода',create:'Опубликовать мод',review:'На проверку',back:'Назад',yours:'Новый подписчик!',testing:'Тестовый режим • Не подключено к реальному сайту',warning:'Это тест. Реальные сообщения и моды не отправляются.',modinfo:'Моды, чат и сообщество — в одном месте!',select:'Выберите чат',users:'Пользователи',view:'Смотреть',cancel:'Отмена'},en:{home:'Home',community:'Community',add:'Add',chat:'Chat',profile:'Profile',settings:'Settings',mods:'Mods',see:'Explore mods',saved:'Save',followers:'Followers',following:'Following',posts:'Posts',edit:'Edit profile',name:'Display name',bio:'Bio',save:'Save',turnbg:'Autumn background & leaves',lang:'Language',notifications:'Notifications',newchat:'New chat',send:'Send',general:'Global chat',search:'Search',desc:'Description',title:'Mod title',photo:'Profile image',follow:'Follow',unfollow:'Following',posted:'Approved mods',translation:'Mod translations',create:'Upload a mod',review:'Submit for review',back:'Back',yours:'New follower!',testing:'Test preview • Not connected to the live website',warning:'Demo only. No real messages or mods will be sent.',modinfo:'Mods, chat and community in one place!',select:'Choose a chat',users:'Users',view:'View',cancel:'Cancel'}};
-const t=k=>tr[state.lang]?.[k]||tr.uz[k]||k;
+
+const CHAT_I18N={
+ uz:{chatHint:'Username yoki ism orqali odam qidiring...',groups:'Guruhlar',createGroup:'Guruh yaratish',editGroup:'Guruhni tahrirlash',groupName:'Guruh nomi',groupUsername:'Guruh username',groupPhoto:'Guruh avatari',members:'A’zolar',selectMembers:'Guruh a’zolarini tanlang',groupInfo:'Guruh ma’lumotlari',emptyUsers:'Bunday foydalanuvchi topilmadi',emptyGroups:'Hozircha guruh yo‘q',demoGroup:'Guruh va xabarlar faqat ushbu test qurilmada saqlanadi',groupSaved:'Guruh saqlandi (TEST)',groupCreated:'Guruh yaratildi (TEST)',uniqueGroup:'Bunday guruh username allaqachon mavjud',badGroup:'Username 3–25 ta: a–z, 0–9 yoki _',newMessages:'Xabar yozing...',membersCount:'ta a’zo',groupAdmin:'Guruh boshqaruvi',startChat:'Suhbatni ochish',maxPhoto:'Avatar hajmi 350 KB dan oshmasin',searchPeople:'Foydalanuvchilarni qidirish',editGroupInfo:'Guruhni tahrirlash',optionalPhoto:'Rasm tanlash (ixtiyoriy)'},
+ ru:{chatHint:'Поиск людей по имени или username...',groups:'Группы',createGroup:'Создать группу',editGroup:'Редактировать группу',groupName:'Название группы',groupUsername:'Username группы',groupPhoto:'Аватар группы',members:'Участники',selectMembers:'Выберите участников',groupInfo:'Информация о группе',emptyUsers:'Пользователи не найдены',emptyGroups:'Пока нет групп',demoGroup:'Группы и сообщения сохраняются только на этом тестовом устройстве',groupSaved:'Группа сохранена (ТЕСТ)',groupCreated:'Группа создана (ТЕСТ)',uniqueGroup:'Этот username группы уже занят',badGroup:'Username: 3–25 символов a–z, 0–9 или _',newMessages:'Напишите сообщение...',membersCount:'участников',groupAdmin:'Управление группой',startChat:'Открыть чат',maxPhoto:'Аватар не должен превышать 350 КБ',searchPeople:'Поиск пользователей',editGroupInfo:'Редактировать группу',optionalPhoto:'Выбрать изображение (необязательно)'},
+ en:{chatHint:'Search people by name or username...',groups:'Groups',createGroup:'Create group',editGroup:'Edit group',groupName:'Group name',groupUsername:'Group username',groupPhoto:'Group avatar',members:'Members',selectMembers:'Select members',groupInfo:'Group info',emptyUsers:'No matching users',emptyGroups:'No groups yet',demoGroup:'Groups and messages are saved on this test device only',groupSaved:'Group saved (TEST)',groupCreated:'Group created (TEST)',uniqueGroup:'That group username is already taken',badGroup:'Username: 3–25 characters a–z, 0–9 or _',newMessages:'Type a message...',membersCount:'members',groupAdmin:'Group management',startChat:'Open chat',maxPhoto:'Avatar must be under 350 KB',searchPeople:'Search users',editGroupInfo:'Edit group',optionalPhoto:'Choose an image (optional)'}
+};
+const t=k=>CHAT_I18N[state.lang]?.[k]||tr[state.lang]?.[k]||tr.uz[k]||k;
 const esc=s=>String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 const safeGet=(k,def)=>{try{let v=localStorage.getItem('mw_v11test_'+k);return v===null?def:JSON.parse(v)}catch{return def}};
 const safeSet=(k,v)=>{try{localStorage.setItem('mw_v11test_'+k,JSON.stringify(v))}catch{}};
-const state={lang:safeGet('lang','uz'),bg:safeGet('bg',true),name:safeGet('name','World'),nick:'world',bio:safeGet('bio','Minecraft World hamjamiyatiga xush kelibsiz!'),avatar:safeGet('avatar',null),section:'home',thread:null,modal:null,account:'world',follows:safeGet('follows',{}),messages:{},posts:safeGet('posts',[]),viewed:'all',followed:false,filter:'all',tab:'all'};
+const state={lang:safeGet('lang','uz'),bg:safeGet('bg',true),name:safeGet('name','World'),nick:'world',bio:safeGet('bio','Minecraft World hamjamiyatiga xush kelibsiz!'),avatar:safeGet('avatar',null),section:'home',thread:null,modal:null,account:'world',follows:safeGet('follows',{}),messages:{},groups:safeGet('groups',[]),chatQuery:'',posts:safeGet('posts',[]),viewed:'all',followed:false,filter:'all',tab:'all'};
 const people=[{id:'anzecraft',name:'Anzecraft',nick:'anzecraft',last:'Salom hammaga',unread:1},{id:'minecraft',name:'Minecraft Player',nick:'minecraft',last:'Salom, nima gaplar?',unread:0},{id:'admin',name:'Minecraft Admin',nick:'admin',last:'Salom',verified:true,unread:0}];
 const person=id=>id==='world'?{id:'world',name:state.name||'World',nick:'world',bio:state.bio,avatar:state.avatar}:people.find(x=>x.id===id)||people[0];
 const avat=(p,large=false)=>p.avatar?`<img class="avatar ${large?'large':''}" src="${esc(p.avatar)}" alt="" style="object-fit:cover">`:`<span class="avatar ${large?'large':''}">${esc((p.name||p.nick||'?').charAt(0).toUpperCase())}</span>`;
@@ -24,26 +71,230 @@ const ident=(p,extra='')=>`<div class="identity" ${extra}>${avat(p)}<div style="
 function toast(x){let e=document.getElementById('toast');e.textContent=x;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2800)}
 function renderBg(){document.body.classList.toggle('has-fall',!!state.bg);const el=document.getElementById('scene');el.innerHTML='';if(!state.bg)return;const svg='<svg viewBox="0 0 32 32"><path d="M16 2 20 9l5-2-2 6 6 4-7 3 1 6-7-3-7 3 1-6-7-3 6-4-2-6 5 2Z"/></svg>';const colors=['#f19a25','#b65024','#dc6a22','#a43c28','#ecaf49','#d34228'];for(let i=0;i<8;i++){let s=document.createElement('span');s.className='fall-leaf';s.style.left=(8+i*13.3)%100+'%';s.style.color=colors[i%6];s.style.setProperty('--duration',(20+i*2.6)+'s');s.style.setProperty('--delay',(-i*4.4)+'s');s.style.setProperty('--drift',((i%2?1:-1)*(20+i*3))+'px');s.innerHTML=svg;el.append(s)}}
 function renderHeader(){document.getElementById('logo').innerHTML=ic('world',31);document.getElementById('bell').innerHTML=ic('bell')+'<span class="count">1</span>';document.getElementById('settingsTop').innerHTML=ic('settings');document.getElementById('profileTop').innerHTML=ic('user');document.getElementById('testlabel').textContent='V1.1 TEST • '+t('testing')}
-function renderBottom(){document.getElementById('bottom').innerHTML=['home','community','add','chat','profile'].map(n=>`<button type="button" data-nav="${n}" class="${state.section===n?'active':''}">${ic(n==='add'?'plus':n)}<span>${t(n)}</span></button>`).join('');const fab=document.getElementById('fab');fab.classList.toggle('hidden',state.section!=='chat'||!!state.thread);fab.innerHTML=ic('plus',28)}
+function renderBottom(){document.getElementById('bottom').innerHTML=['home','community','add','chat','profile'].map(n=>`<button type="button" data-nav="${n}" class="${state.section===n?'active':''}">${ic(n==='add'?'plus':n)}<span>${t(n)}</span></button>`).join('');const fab=document.getElementById('fab');fab.classList.toggle('hidden',state.section!=='chat'||!!state.thread);fab.innerHTML=ic('plus',28);fab.dataset.action='newGroup';fab.setAttribute('aria-label',t('createGroup'))}
 function home(){return `<section class="hero"><div><h1> Minecraft <span>World V1.1</span></h1><p>${t('modinfo')}</p><div class="small" style="margin-top:12px;color:#f9db9d">${t('testing')}</div></div></section><section class="panel"><div class="headrow"><h2>${ic('box')} ${t('mods')}</h2><span class="badge">V1.1 TEST</span></div><div class="cats">${['all','addons','maps','textures','shaders','chat'].map((x,i)=>`<button class="cat ${state.filter===x?'active':''}" data-action="filter" data-value="${x}">${ic(['box','plus','world','eye','sun','chat'][i])}<span>${['Barchasi','Addonlar','Xaritalar','Teksturalar','Shaderlar','Chat'][i]}</span></button>`).join('')}</div></section><section class="panel"><div class="headrow"><h2>${ic('box')} ${t('posted')}</h2><button class="btn secondary" data-nav="add">${ic('plus')} ${t('add')}</button></div><div class="cards">${[...state.posts,{title:'Visible Trades',details:'Villagerlar savdosini qulayroq ko‘rish',version:'Bedrock 1.21+',author:'admin',demo:true}].map(m=>`<div class="mod"><div class="mod-art">${ic('world',45)}</div><div class="mod-info"><h3>${esc(m.title)}</h3><p>${esc(m.details)}</p><div class="tiny">${esc(m.version||'Bedrock 1.21+')} · ${ic('eye',13)} 12 · ${ic('heart',13)} 3</div><div class="row"><button class="btn secondary" data-action="modPreview">${t('view')}</button><small class="muted">@${esc(m.author||'world')}</small></div></div></div>`).join('')}</div></section>`}
 function community(){return `<section class="panel"><div class="headrow"><h2>${ic('community')} ${t('community')}</h2></div><p class="muted">${t('testing')}</p><div class="list spaced">${people.map(p=>`<div class="item"><div class="row between">${ident(p,`data-person="${p.id}"`)}<button class="btn ${state.follows[p.id]?'secondary':''}" data-follow="${p.id}">${state.follows[p.id]?t('unfollow'):t('follow')}</button></div></div>`).join('')}<div class="item"><h3>Birga Minecraft o‘ynaymiz!</h3><p class="muted" style="margin:9px 0">Bedrock • Survival • 20:00</p><button class="btn secondary" data-action="joinDemo">${t('community')}</button></div></div></section>`}
 function translationFields(){let languages=['uz','ru','en'].filter(l=>l!==state.lang);return languages.map(l=>`<div class="translation-box"><b>${{uz:'O‘zbekcha',ru:'Русский',en:'English'}[l]}</b><label>${t('title')}</label><input class="field" name="title_${l}" placeholder="${{uz:'Nom',ru:'Название',en:'Title'}[l]}"><label>${t('desc')}</label><textarea name="description_${l}" placeholder="${{uz:'Tavsif',ru:'Описание',en:'Description'}[l]}"></textarea></div>`).join('')}
 function add(){return `<section class="panel"><div class="headrow"><h2>${ic('plus')} ${t('create')}</h2></div><p class="muted small">${t('warning')}</p><form id="modform" class="spaced"><label>${t('title')}</label><input class="field" name="title" required maxlength="90"><label style="display:block;margin:12px 0 5px">${t('desc')}</label><textarea name="desc" required maxlength="1500"></textarea><div class="fields spaced"><div><label>Minecraft</label><select name="version"><option>Bedrock 26.63</option><option>Bedrock 1.21</option><option>Java 26.3</option><option>Java 1.21.11</option></select></div><div><label>${t('mods')}</label><select name="type"><option>Addon</option><option>Mod</option><option>Map</option><option>Texture</option></select></div></div><div class="sep"></div><h3>${t('translation')} (${['uz','ru','en'].filter(l=>l!==state.lang).join(' / ').toUpperCase()})</h3><p class="small muted">${t('testing')}</p>${translationFields()}<button class="btn" type="submit">${t('review')}</button></form></section>`}
 function profile(){let p=person(state.viewed);const own=p.id==='world';return `<section class="panel profile"><div class="profile-top">${avat(p,true)}<div style="min-width:0"><div class="profile-name">${esc(p.name)} ${verified(p)}</div><div class="muted">@${esc(p.nick)}</div></div></div>${p.bio?`<p class="profile-bio">${esc(p.bio)}</p>`:''}<div class="small muted spaced">ID: ${own?'#2':p.id==='admin'?'#1':'#3'}</div><div class="statrow"><div class="stat"><strong>${own?state.posts.length:1}</strong><small>${t('posts')}</small></div><div class="stat"><strong>${own?1:3}</strong><small>${t('followers')}</small></div><div class="stat"><strong>${own?1:3}</strong><small>${t('following')}</small></div></div><div class="row">${own?`<button class="btn" data-action="editProfile">${ic('edit')} ${t('edit')}</button><button class="btn secondary" data-action="settings">${ic('settings')} ${t('settings')}</button>`:`<button class="btn" data-follow="${p.id}">${state.follows[p.id]?t('unfollow'):t('follow')}</button><button class="btn secondary" data-chat="${p.id}">${ic('chat')} ${t('chat')}</button>`}</div></section><div class="headrow"><h2>${t('posts')}</h2>${own?`<button class="btn" data-nav="add">${ic('plus')} ${t('add')}</button>`:''}</div>${state.posts.length&&own?state.posts.map(x=>`<div class="item"><h3>${esc(x.title)}</h3><p>${esc(x.details)}</p><span class="badge">TEST</span></div>`).join(''):`<div class="empty">${ic('box',31)}<p>${t('testing')}</p></div>`}`}
-function chat(){if(state.thread)return threadUI();return `<section class="panel"><div class="headrow"><h2>${ic('chat')} ${t('chat')}</h2><span class="small muted">Telegram uslubi</span></div><div class="chat-top">${people.map(p=>`<button class="chat-user" data-chat="${p.id}">${avat(p)}<span>${esc(p.name)}</span></button>`).join('')}</div><div class="chat-list"><div class="item" data-chat="global">${ic('globe',32)}<div class="nameblock"><strong>${t('general')}</strong><span class="message-preview">Minecraft World</span></div></div>${people.map(p=>`<div class="item" data-chat="${p.id}">${avat(p)}<div class="nameblock"><strong>${esc(p.name)} ${verified(p)}</strong><span class="message-preview">@${esc(p.nick)} · ${esc(p.last)}</span></div>${p.unread?'<span class="badge">1</span>':''}</div>`).join('')}</div></section>`}
-function threadUI(){let p=state.thread==='global'?{name:t('general'),nick:'world',id:'global'}:person(state.thread);let messages=state.messages[state.thread]||[{mine:false,text:state.thread==='global'?'Salom hammaga!':'Salom!'}];return `<section class="panel chat-screen"><div class="chat-head"><button class="go-back" data-action="chatBack" aria-label="${t('back')}">${ic('back',25)}</button>${ident(p,p.id==='global'?'':`data-person="${p.id}"`)}</div><div class="messages" id="messages">${messages.map(x=>`<div class="bubble ${x.mine?'mine':''}">${esc(x.text)}<small>00:27</small></div>`).join('')}</div><form id="chatForm" class="compose"><input class="field" name="text" required maxlength="1500" placeholder="${t('send')}..."><button class="btn" aria-label="${t('send')}" type="submit">${ic('send')}</button></form></section>`}
+
+function groupById(id){return state.groups.find(g=>g.id===id)}
+function groupIdentity(g){
+  return {id:g.id,name:g.name,nick:g.username,avatar:g.avatar||null};
+}
+function chatContacts(query=''){
+  const q=query.trim().toLocaleLowerCase();
+  const filtered=people.filter(p=>(p.name+' '+p.nick).toLocaleLowerCase().includes(q));
+  const foundGroups=state.groups.filter(g=>(g.name+' '+g.username).toLocaleLowerCase().includes(q));
+  return (q?'':`<button type="button" class="chat-contact" data-chat="global">${ic('globe',31)}
+    <span class="contact-body"><strong>${t('general')}</strong><small>Minecraft World</small></span></button>`)+
+    (foundGroups.length?`<div class="contact-category">${t('groups')}</div>`+
+      foundGroups.map(g=>`<button type="button" class="chat-contact" data-chat="${esc(g.id)}">
+        ${avat(groupIdentity(g))}
+        <span class="contact-body"><strong>${esc(g.name)}</strong>
+        <small>@${esc(g.username)} · ${g.members.length+1} ${t('membersCount')}</small></span>
+        ${ic('chat',18)}</button>`).join(''):
+      (!q&&state.groups.length===0?`<div class="mini-empty">${t('emptyGroups')}</div>` : ''))+
+    `<div class="contact-category">${t('users')}</div>`+
+    (filtered.length?filtered.map(p=>`<button type="button" class="chat-contact" data-chat="${esc(p.id)}">
+       ${avat(p)}<span class="contact-body"><strong>${esc(p.name)} ${verified(p)}</strong>
+       <small>@${esc(p.nick)} · ${esc(p.last)}</small></span>
+       ${p.unread?'<span class="badge">1</span>':''}
+       </button>`).join(''):`<div class="mini-empty">${t('emptyUsers')}</div>`);
+}
+function chat(){
+  if(state.thread)return threadUI();
+  return `<section class="panel chat-inbox">
+      <div class="headrow"><h2>${ic('chat')} ${t('chat')}</h2></div>
+      <label class="chat-search">
+        ${ic('chat',19)}
+        <input class="field" id="chatFind" type="search" autocomplete="off"
+          placeholder="${esc(t('chatHint'))}" value="${esc(state.chatQuery)}"
+          aria-label="${esc(t('searchPeople'))}">
+      </label>
+      <div class="chat-list" id="chatContacts">${chatContacts(state.chatQuery)}</div>
+    </section>`;
+}
+function threadUI(){
+  const g=groupById(state.thread);
+  const global=state.thread==='global';
+  const p=g?groupIdentity(g):global?{name:t('general'),nick:'world',id:'global'}:person(state.thread);
+  const messages=state.messages[state.thread]||[{mine:false,text:global?'Salom hammaga!':g?t('groupCreated'):'Salom!'}];
+  const tap=g?`data-action="groupInfo" data-id="${esc(g.id)}"`:global?'':`data-person="${esc(p.id)}"`;
+  return `<section class="panel chat-screen">
+    <div class="chat-head">
+      <button type="button" class="go-back" data-action="chatBack" aria-label="${t('back')}">${ic('back',25)}</button>
+      <button type="button" class="chat-header-profile" ${tap}>
+        ${avat(p)}
+        <span><strong>${esc(p.name)} ${verified(p)}</strong>
+          <small>${g?g.members.length+1+' '+t('membersCount'):'@'+esc(p.nick)}</small></span>
+      </button>
+    </div>
+    <div class="messages" id="messages">
+      ${messages.map(m=>`<div class="bubble ${m.mine?'mine':''}">${esc(m.text)}<small>00:27</small></div>`).join('')}
+    </div>
+    <form id="chatForm" class="compose">
+      <input class="field" name="text" required maxlength="1500"
+        placeholder="${esc(t('newMessages'))}">
+      <button class="btn" aria-label="${t('send')}" type="submit">${ic('send')}</button>
+    </form>
+  </section>`;
+}
+function groupInfoUI(id){
+  const g=groupById(id);if(!g)return `<p>${t('emptyGroups')}</p>`;
+  return `<h2>${t('groupInfo')}</h2>
+    <div class="group-summary">${avat(groupIdentity(g),true)}
+      <div><strong>${esc(g.name)}</strong><small>@${esc(g.username)}</small>
+      <small>${g.members.length+1} ${t('membersCount')}</small></div></div>
+    <h3 class="spaced">${t('members')}</h3>
+    <div class="group-members">
+      ${[person('world'),...g.members.map(person)].map(p=>`
+        <button type="button" class="member-row" data-person="${esc(p.id)}">
+          ${avat(p)}<span><strong>${esc(p.name)}</strong><small>@${esc(p.nick)}</small></span></button>`).join('')}
+    </div>
+    <div class="row spaced">
+      <button type="button" class="btn" data-action="editGroup" data-id="${esc(g.id)}">
+       ${ic('edit')} ${t('editGroupInfo')}</button>
+      <button type="button" class="btn secondary" data-action="close">${t('back')}</button>
+    </div>
+    <p class="footnote">${t('demoGroup')}</p>`;
+}
+function groupFormUI(id=''){
+  const g=groupById(id);const chosen=g?.members||[];
+  return `<h2>${t(g?'editGroup':'createGroup')}</h2>
+    <p class="small muted">${t('demoGroup')}</p>
+    <form id="groupForm" data-group-id="${esc(g?.id||'')}">
+      <label>${t('groupName')}</label>
+      <input class="field" name="groupName" maxlength="48" required value="${esc(g?.name||'')}"
+        placeholder="${esc(t('groupName'))}">
+      <label>${t('groupUsername')}</label>
+      <input class="field" name="groupUsername" minlength="3" maxlength="25" required
+        pattern="[A-Za-z0-9_]{3,25}" autocapitalize="off" spellcheck="false"
+        value="${esc(g?.username||'')}" placeholder="minecraft_team">
+      <label>${t('groupPhoto')}</label>
+      ${g?.avatar?`<div class="group-avatar-preview">${avat(groupIdentity(g),true)}</div>`:''}
+      <input class="field" name="groupAvatar" type="file"
+        accept="image/png,image/jpeg,image/webp">
+      <h3 class="spaced">${t('selectMembers')}</h3>
+      <div class="group-member-picks">
+      ${people.map(p=>`<label class="member-pick">
+        <input type="checkbox" name="members" value="${esc(p.id)}" ${chosen.includes(p.id)?'checked':''}>
+        ${avat(p)}<span><strong>${esc(p.name)}</strong><small>@${esc(p.nick)}</small></span>
+        </label>`).join('')}</div>
+      <div class="row spaced">
+        <button class="btn" type="submit">${ic('check')} ${t('save')}</button>
+        <button class="btn secondary" type="button" data-action="close">${t('cancel')}</button>
+      </div>
+    </form>`;
+}
 function notifyUI(){return `<h2>${ic('bell')} ${t('notifications')}</h2><div class="list"><div class="item notif">${avat(person('anzecraft'))}<div><strong data-person="anzecraft">${esc(person('anzecraft').name)}</strong><div class="small muted">@anzecraft</div><div class="small">${t('yours')}</div></div><button class="btn secondary" data-person="anzecraft">${t('profile')}</button></div></div><p class="footnote">${t('testing')}</p>`}
 function settingsUI(){return `<h2>${ic('settings')} ${t('settings')}</h2><div class="checkrow"><div><strong>${t('turnbg')}</strong><div class="small muted">Minecraft pixel art + kuzgi xazon</div></div><button type="button" id="bgToggle" class="switch ${state.bg?'on':''}" data-action="toggleBg" aria-pressed="${state.bg}" aria-label="${t('turnbg')}"></button></div><div class="sep"></div><h3>${t('lang')}</h3><div class="language-buttons spaced">${['uz','ru','en'].map(l=>`<button class="tab ${state.lang===l?'active':''}" data-lang="${l}">${{uz:'O‘zbek',ru:'Русский',en:'English'}[l]}</button>`).join('')}</div><p class="footnote">${t('testing')}</p>`}
 function profileEditUI(){return `<h2>${ic('edit')} ${t('edit')}</h2><form id="profileForm"><label>${t('name')}</label><input class="field" maxlength="45" name="name" required value="${esc(state.name)}"><label>Username</label><input class="field" readonly value="@world"><label>${t('bio')}</label><textarea name="bio" maxlength="280">${esc(state.bio)}</textarea><label>${t('photo')}</label><input class="field" type="file" id="avatarUpload" accept="image/png,image/jpeg,image/webp"><div class="row"><button class="btn" type="submit">${t('save')}</button><button type="button" class="btn secondary" data-action="close">${t('cancel')}</button></div></form><p class="footnote">${t('testing')}</p>`}
 function modal(content){document.getElementById('overlay').classList.remove('hidden');document.getElementById('overlay').innerHTML=`<div class="modal"><div class="row between"><div></div><button type="button" class="icon-btn" data-action="close" aria-label="${t('cancel')}">${ic('back')}</button></div>${content}</div>`}
 function closeModal(){state.modal=null;document.getElementById('overlay').classList.add('hidden');document.getElementById('overlay').innerHTML=''}
-function render(){document.documentElement.lang=state.lang;renderBg();renderHeader();renderBottom();document.getElementById('main').innerHTML=state.section==='home'?home():state.section==='community'?community():state.section==='add'?add():state.section==='chat'?chat():profile();if(state.modal){modal(state.modal==='settings'?settingsUI():state.modal==='notifications'?notifyUI():state.modal==='edit'?profileEditUI():`<h2>${t('newchat')}</h2><div class="list">${people.map(p=>`<div class="item clickable" data-chat="${p.id}">${ident(p)}</div>`).join('')}</div>`)}else closeModal();if(state.thread){let m=document.getElementById('messages');if(m)m.scrollTop=m.scrollHeight}}
+function render(){
+  document.documentElement.lang=state.lang;
+  renderBg();renderHeader();renderBottom();
+  document.getElementById('main').innerHTML=
+    state.section==='home'?home():state.section==='community'?community():
+    state.section==='add'?add():state.section==='chat'?chat():profile();
+  if(state.modal){
+    const kind=state.modal;
+    modal(kind==='settings'?settingsUI():
+      kind==='notifications'?notifyUI():
+      kind==='edit'?profileEditUI():
+      kind==='newgroup'?groupFormUI():
+      kind==='groupinfo'?groupInfoUI(state.groupModalId):
+      kind==='editgroup'?groupFormUI(state.groupModalId):
+      `<h2>${t('chat')}</h2>`);
+  }else closeModal();
+  if(state.thread){
+    const m=document.getElementById('messages');
+    if(m)m.scrollTop=m.scrollHeight;
+  }
+}
 function navigate(section,thread=null,historyFlag=true){state.section=section;state.thread=thread;if(section==='profile'&&!state.viewed)state.viewed='world';state.modal=null;if(historyFlag)history.pushState({section,thread,viewed:state.viewed},'',`#${section}${thread?'/'+thread:''}`);render();window.scrollTo(0,0)}
 let exitTap=0;
 window.addEventListener('popstate',ev=>{if(state.modal){closeModal();return}if(state.thread){navigate('chat',null,false);return}if(ev.state?.section){state.viewed=ev.state.viewed||'world';navigate(ev.state.section,ev.state.thread||null,false);return}if(Date.now()-exitTap>1800){exitTap=Date.now();toast('Chiqish uchun yana bir marta orqaga bosing');history.pushState({section:'home'},'','#home')}else{toast('Sinov sahifasidan chiqilyapti')}});
-document.body.addEventListener('click',ev=>{const x=ev.target.closest('button,[data-person],[data-chat]');if(!x)return;const n=x.dataset.nav,action=x.dataset.action,who=x.dataset.person,chatId=x.dataset.chat,follow=x.dataset.follow,lang=x.dataset.lang;if(n){state.viewed='world';navigate(n);return}if(action==='profile'){state.viewed='world';navigate('profile');return}if(who){state.viewed=who;closeModal();navigate('profile');return}if(follow){state.follows[follow]=!state.follows[follow];safeSet('follows',state.follows);toast(state.follows[follow]?t('unfollow'):t('follow'));render();return}if(chatId){closeModal();navigate('chat',chatId);return}if(lang){state.lang=lang;safeSet('lang',lang);render();return}if(action==='chatBack'){navigate('chat');return}if(action==='close'){closeModal();return}if(action==='toggleBg'){state.bg=!state.bg;safeSet('bg',state.bg);render();return}if(action==='notifications'||action==='settings'||action==='editProfile'||action==='newChat'){state.modal={notifications:'notifications',settings:'settings',editProfile:'edit',newChat:'newchat'}[action];render();return}if(action==='filter'){state.filter=x.dataset.value;render();return}if(action==='modPreview'){toast('TEST: modlar bazasi alohida ulanmagan');return}if(action==='joinDemo'){toast(t('testing'));return}});
-document.body.addEventListener('submit',ev=>{if(!['profileForm','chatForm','modform'].includes(ev.target.id))return;ev.preventDefault();let fd=new FormData(ev.target);if(ev.target.id==='profileForm'){state.name=String(fd.get('name')||'World').trim()||'World';state.bio=String(fd.get('bio')||'').trim();safeSet('name',state.name);safeSet('bio',state.bio);const img=document.getElementById('avatarUpload')?.files?.[0];if(img&&img.size<=900000&&img.type.startsWith('image/')){const reader=new FileReader();reader.onload=()=>{state.avatar=reader.result;safeSet('avatar',state.avatar);closeModal();render();toast(t('save'))};reader.readAsDataURL(img)}else{closeModal();render();toast(t('save'))}return}if(ev.target.id==='chatForm'){if(!state.thread)return;state.messages[state.thread]??=[{mine:false,text:'Salom!'}];state.messages[state.thread].push({mine:true,text:String(fd.get('text')||'').trim()});render();return}if(ev.target.id==='modform'){state.posts.unshift({title:String(fd.get('title')||'Mod'),details:String(fd.get('desc')||''),version:String(fd.get('version')||''),author:'world'});safeSet('posts',state.posts);toast(t('testing'));navigate('profile');return}});
-document.getElementById('overlay').addEventListener('click',ev=>{if(ev.target.id==='overlay')closeModal()});
+document.body.addEventListener('click',ev=>{
+  const x=ev.target.closest('button,[data-person],[data-chat]');
+  if(!x)return;
+  const n=x.dataset.nav,action=x.dataset.action,who=x.dataset.person;
+  const chatId=x.dataset.chat,follow=x.dataset.follow,lang=x.dataset.lang;
+  if(n){state.viewed='world';state.chatQuery='';navigate(n);return}
+  if(action==='profile'){state.viewed='world';navigate('profile');return}
+  if(who){state.viewed=who;closeModal();navigate('profile');return}
+  if(follow){
+    state.follows[follow]=!state.follows[follow];
+    safeSet('follows',state.follows);
+    toast(state.follows[follow]?t('unfollow'):t('follow'));render();return;
+  }
+  if(chatId){closeModal();navigate('chat',chatId);return}
+  if(lang){state.lang=lang;safeSet('lang',lang);render();return}
+  if(action==='chatBack'){navigate('chat');return}
+  if(action==='groupInfo'||action==='editGroup'){
+    state.groupModalId=x.dataset.id||state.thread;
+    if(!groupById(state.groupModalId))return;
+    state.modal=action==='editGroup'?'editgroup':'groupinfo';render();return;
+  }
+  if(action==='newGroup'){
+    state.groupModalId=null;state.modal='newgroup';render();return;
+  }
+  if(action==='close'){closeModal();return}
+  if(action==='toggleBg'){state.bg=!state.bg;safeSet('bg',state.bg);render();return}
+  if(action==='notifications'||action==='settings'||action==='editProfile'||action==='newChat'){
+    state.modal={notifications:'notifications',settings:'settings',editProfile:'edit',newChat:'newgroup'}[action];
+    render();return;
+  }
+  if(action==='filter'){state.filter=x.dataset.value;render();return}
+  if(action==='modPreview'){toast('TEST: modlar bazasi alohida ulanmagan');return}
+  if(action==='joinDemo'){toast(t('testing'));return}
+});
+document.body.addEventListener('submit',ev=>{if(!['profileForm','chatForm','modform','groupForm'].includes(ev.target.id))return;ev.preventDefault();let fd=new FormData(ev.target);
+if(ev.target.id==='groupForm'){
+  const id=ev.target.dataset.groupId;
+  const name=String(fd.get('groupName')||'').trim();
+  const username=String(fd.get('groupUsername')||'').trim().replace(/^@/,'').toLowerCase();
+  if(!name){toast(t('groupName'));return}
+  if(!/^[a-z0-9_]{3,25}$/.test(username)){toast(t('badGroup'));return}
+  if(state.groups.some(g=>g.username===username&&g.id!==id)){
+    toast(t('uniqueGroup'));return;
+  }
+  const file=ev.target.querySelector('[name="groupAvatar"]')?.files?.[0];
+  if(file&&(file.size>350000||!['image/jpeg','image/png','image/webp'].includes(file.type))){
+    toast(t('maxPhoto'));return;
+  }
+  const members=fd.getAll('members').map(String).filter(member=>people.some(p=>p.id===member));
+  const previous=groupById(id);
+  const group={id:previous?.id||'group_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),
+    name:name.slice(0,48),username,members,avatar:previous?.avatar||null};
+  const save=avatar=>{
+    group.avatar=avatar;
+    if(previous)state.groups=state.groups.map(g=>g.id===id?group:g);
+    else state.groups.push(group);
+    safeSet('groups',state.groups);
+    closeModal();
+    if(previous){render();toast(t('groupSaved'))}
+    else {navigate('chat',group.id);toast(t('groupCreated'))}
+  };
+  if(file){const reader=new FileReader();
+    reader.onload=()=>save(String(reader.result));
+    reader.onerror=()=>toast(t('maxPhoto'));
+    reader.readAsDataURL(file);
+  }else save(group.avatar);
+  return;
+}
+if(ev.target.id==='profileForm'){state.name=String(fd.get('name')||'World').trim()||'World';state.bio=String(fd.get('bio')||'').trim();safeSet('name',state.name);safeSet('bio',state.bio);const img=document.getElementById('avatarUpload')?.files?.[0];if(img&&img.size<=900000&&img.type.startsWith('image/')){const reader=new FileReader();reader.onload=()=>{state.avatar=reader.result;safeSet('avatar',state.avatar);closeModal();render();toast(t('save'))};reader.readAsDataURL(img)}else{closeModal();render();toast(t('save'))}return}if(ev.target.id==='chatForm'){if(!state.thread)return;state.messages[state.thread]??=[{mine:false,text:'Salom!'}];state.messages[state.thread].push({mine:true,text:String(fd.get('text')||'').trim()});render();return}if(ev.target.id==='modform'){state.posts.unshift({title:String(fd.get('title')||'Mod'),details:String(fd.get('desc')||''),version:String(fd.get('version')||''),author:'world'});safeSet('posts',state.posts);toast(t('testing'));navigate('profile');return}});
+document.body.addEventListener('input',ev=>{
+  if(ev.target.id==='chatFind'){
+    state.chatQuery=ev.target.value.slice(0,60);
+    const list=document.getElementById('chatContacts');
+    if(list)list.innerHTML=chatContacts(state.chatQuery);
+  }
+});
+document.getElementById('overlay').addEventListener('click',ev=>{
+  if(ev.target.id==='overlay')closeModal()
+});
 function init(){document.getElementById('fab').innerHTML=ic('plus');state.viewed='world';history.replaceState({section:'home',viewed:'world'},'',location.pathname+'#home');render();}
 init();
 </script></body></html>
