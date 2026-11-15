@@ -2635,70 +2635,127 @@ async function download(id){
   link.remove();
   toast('Yuklab olish boshlandi');
 }
-async function community(){
-  if(S.tab==='play'){
-    let r=await DB.from('play_posts').select('*')
-      .order('play_at',{ascending:true}).limit(50);
-    check(r);
-    let mp=await users(r.data.map(x=>x.author_id));
-    let joins=S.u?
-      check(await DB.from('play_joins').select('play_id')
-        .eq('user_id',S.u.id)).map(x=>x.play_id):[];
+let communityReq=0;
+const COMMUNITY_TTL=20000;
+function communityShell(tab){
+  if(tab==='play'){
     $('#app').innerHTML=`
-      <div class="hero" style="padding:30px">
-        <h1>${ico('users',34)} ${t('community')}</h1>
+      <div class="hero" style="padding:25px">
+        <h1>${ico('users',32)} ${t('community')}</h1>
         <p>${t('intro')}</p>
       </div>
       <div class="tabs">
-        <button class="on" data-act="tab"
-          data-tab="play">${t('play')}</button>
-        <button data-act="tab"
-          data-tab="accounts">${t('accounts')}</button>
+        <button class="on" data-act="tab" data-tab="play">${t('play')}</button>
+        <button data-act="tab" data-tab="accounts">${t('accounts')}</button>
       </div>
       <div class="bar">
         <h2>${t('play')}</h2>
         ${btn('invite',t('invite'))}
       </div>
-      <div class="list">
-      ${r.data.length?r.data.map(x=>`
-        <div class="item">
-          <h3>${e(x.title)}</h3>
-          <div class="muted">
-            ${ico('gamepad',16)} ${e(x.play_mode)} · ${e(x.game_version)}
-            · ${ico('clock',16)} ${when(x.play_at)}
-            · ${ico('users',16)} ${count(x.joins_count)}
-          </div>
-          <p class="wrap">${e(x.details)}</p>
-          <div class="row">
-            ${avatar(mp[x.author_id])}
-            ${miniUser(mp[x.author_id])}
-          </div>
-          <div class="buttons play-buttons">
-            ${S.u?.id===x.author_id?
-              btn('removeInvite',t('delete'),x.id,'danger'):
-              btn('startChat','Yozish',x.author_id,'ghost')+
-              (joins.includes(x.id)?btn('leavePlay','Chiqish',x.id,'ghost'):
-              btn('join','Qo‘shilish',x.id))}
-            ${btn('playMembers','Qatnashchilar · '+count(x.joins_count),x.id,'ghost')}
-          </div>
-        </div>`).join(''):blank()}
-      </div>`
+      <div class="list" id="communityResults">
+        <div class="fast-skeleton-line"></div>
+        <div class="fast-skeleton-line half"></div>
+      </div>`;
   }else{
-    let r=await DB.from('profiles').select('*')
-      .order('public_id',{ascending:false}).limit(80);
-    check(r);
-    S.accounts=r.data;
     $('#app').innerHTML=`
       <h2>${ico('globe',25)} ${t('community')}</h2>
       <div class="tabs">
         <button data-act="tab" data-tab="play">${t('play')}</button>
-        <button class="on" data-act="tab"
-          data-tab="accounts">${t('accounts')}</button>
+        <button class="on" data-act="tab" data-tab="accounts">${t('accounts')}</button>
       </div>
       <input class="field" id="accountSearch"
         placeholder="Username qidirish...">
-      <div id="accountRows" class="list" style="margin-top:15px"></div>`;
-    filterAccounts()
+      <div id="accountRows" class="list" style="margin-top:15px">
+        <div class="fast-skeleton-line"></div>
+      </div>`;
+  }
+}
+function cachedPeople(ids){
+  const map={};
+  for(const id of ids){
+    const c=knownProfiles.get(id);
+    if(c?.p)map[id]=c.p;
+  }
+  return map;
+}
+function renderCommunityPlays(posts,joined,mp){
+  const view=$('#communityResults');
+  if(!view)return;
+  view.innerHTML=posts.length?posts.map(x=>`
+    <div class="item">
+      <h3>${e(x.title)}</h3>
+      <div class="muted">
+        ${ico('gamepad',16)} ${e(x.play_mode)} · ${e(x.game_version)}
+        · ${ico('clock',16)} ${when(x.play_at)}
+        · ${ico('users',16)} ${count(x.joins_count)}
+      </div>
+      <p class="wrap">${e(x.details)}</p>
+      <div class="row">
+        ${avatar(mp[x.author_id])}
+        ${miniUser(mp[x.author_id])}
+      </div>
+      <div class="buttons play-buttons">
+        ${S.u?.id===x.author_id?
+          btn('removeInvite',t('delete'),x.id,'danger'):
+          btn('startChat','Yozish',x.author_id,'ghost')+
+          (joined.has(x.id)?btn('leavePlay','Chiqish',x.id,'ghost'):
+          btn('join','Qo‘shilish',x.id))}
+        ${btn('playMembers','Qatnashchilar · '+count(x.joins_count),x.id,'ghost')}
+      </div>
+    </div>`).join(''):blank();
+}
+async function community(){
+  const request=++communityReq;
+  const tab=S.tab;
+  const uid=S.u?.id||null;
+  const stillHere=()=>S.page==='community'&&S.tab===tab&&communityReq===request;
+  if(tab==='play'){
+    communityShell(tab);
+    const old=S.communityData;
+    if(old?.uid===uid&&Date.now()-old.at<COMMUNITY_TTL){
+      renderCommunityPlays(old.posts,old.joined,old.people);
+      saveScreen('community',null);
+      return;
+    }
+    const [postsResult,joinsResult]=await Promise.all([
+      DB.from('play_posts')
+        .select('id,author_id,title,details,game_version,play_mode,play_at,joins_count')
+        .order('play_at',{ascending:true}).limit(40),
+      uid?DB.from('play_joins').select('play_id').eq('user_id',uid):
+        Promise.resolve({data:[]})
+    ]);
+    check(postsResult);check(joinsResult);
+    if(!stillHere())return;
+    const posts=postsResult.data||[];
+    const joined=new Set((joinsResult.data||[]).map(x=>x.play_id));
+    const ids=posts.map(x=>x.author_id);
+    const people=cachedPeople(ids);
+    S.communityData={uid,at:Date.now(),posts,joined,people};
+    renderCommunityPlays(posts,joined,people);
+    saveScreen('community',null);
+    if(ids.length){
+      users(ids).then(mp=>{
+        if(!stillHere())return;
+        Object.assign(S.communityData.people,mp);
+        renderCommunityPlays(posts,joined,S.communityData.people);
+        saveScreen('community',null);
+      }).catch(console.warn);
+    }
+  }else{
+    communityShell(tab);
+    if(S.accounts&&S.accountsAt&&Date.now()-S.accountsAt<COMMUNITY_TTL){
+      filterAccounts();saveScreen('community',null);return;
+    }
+    const r=await DB.from('profiles')
+      .select('id,username,avatar_url,public_id,verified,verified_until,display_name,bio,banned_permanently,banned_until')
+      .order('public_id',{ascending:false}).limit(80);
+    check(r);
+    if(!stillHere())return;
+    S.accounts=r.data;
+    S.accountsAt=Date.now();
+    setCachedProfiles(r.data);
+    filterAccounts();
+    saveScreen('community',null);
   }
 }
 function filterAccounts(){
@@ -3507,7 +3564,7 @@ window.addEventListener('click',async event=>{
     }
     else if(act==='tab'){
       S.tab=a.dataset.tab;
-      await community()
+      await community();
     }
     else if(act==='invite')inviteBox();
     else if(act==='join'){
@@ -3516,12 +3573,14 @@ window.addEventListener('click',async event=>{
         play_id:id,user_id:S.u.id
       }));
       toast('Taklifga qo‘shildingiz. Qatnashchilarga xabar yuborildi.');
+      S.communityData=null;clearScreenCache();
       await community();
     }
     else if(act==='leavePlay'){
       if(!requireUser())return;
       check(await DB.from('play_joins').delete()
         .eq('play_id',id).eq('user_id',S.u.id));
+      S.communityData=null;clearScreenCache();
       await community();
     }
     else if(act==='playMembers')await playMembers(id);
