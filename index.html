@@ -739,6 +739,40 @@ border-color:#ef9892;color:#fff}
 }
 .tick .verified-mark{width:21px;height:21px;display:block;flex:none}
 
+
+/* Release 1.0 finishing */
+.version-pill{display:inline-flex;margin-left:9px;padding:3px 7px;
+ border:1px solid #d6ae70;color:#eccc8a;background:#473221;
+ border-radius:4px;vertical-align:middle;font-size:10px;letter-spacing:.03em}
+.tick{display:inline-flex!important;vertical-align:middle!important;
+ margin-left:4px!important;width:16px!important;height:16px!important;
+ min-width:16px!important;min-height:16px!important;padding:0!important;
+ background:transparent!important;border:0!important;border-radius:50%!important}
+.tick svg{display:block!important;width:16px!important;height:16px!important}
+#leaves{position:fixed!important;inset:0!important;z-index:0!important;
+ background:none!important;pointer-events:none!important;overflow:hidden!important}
+#leaves .leaf{position:absolute!important;top:-40px;display:block!important;
+ color:#f0c459!important;opacity:.4!important;pointer-events:none!important;
+ animation:releaseLeafFall var(--leaf-duration,25s) linear var(--leaf-delay,0s) infinite!important;
+ will-change:transform}
+#leaves .leaf svg{width:100%;height:100%;display:block}
+@keyframes releaseLeafFall{
+  0%{transform:translate3d(0,-10vh,0) rotate(-30deg)}
+  50%{transform:translate3d(var(--leaf-drift),53vh,0) rotate(var(--leaf-spin))}
+  100%{transform:translate3d(0,110vh,0) rotate(500deg)}
+}
+.shell{position:relative;z-index:2}
+@media(prefers-reduced-motion:reduce){#leaves .leaf{animation:none!important;opacity:.18!important}}
+.mod-view-stat{display:inline-flex;align-items:center;gap:5px;color:#dfbb78;font-size:13px}
+.saved-modal-list{display:grid;gap:9px;min-height:60px}
+.saved-modal-row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+ background:#36271b;color:#f3e1c4;border:1px solid #7b5938;
+ border-radius:8px;padding:10px;min-height:66px;cursor:pointer}
+.saved-modal-row:hover{background:#513721;border-color:#daad6c}
+.saved-modal-row img{height:48px;width:68px;object-fit:cover;border-radius:5px}
+.saved-modal-row span{display:grid;gap:4px;flex:1;min-width:0;overflow-wrap:anywhere}
+.saved-modal-row small{color:#cfb18a;font-size:12px}
+.profile-bio{white-space:pre-wrap;line-height:1.6}
 </style>
 </head>
 <body>
@@ -746,7 +780,7 @@ border-color:#ef9892;color:#fff}
 <div class="shell">
   <header class="top">
     <button class="logo" data-go="home">
-      <span class="brand-icon" data-icon="world" data-size="24"></span><span>MINECRAFT <b>WORLD</b></span>
+      <span class="brand-icon" data-icon="world" data-size="24"></span><span>MINECRAFT <b>WORLD</b><span class="version-pill">V1.0</span></span>
     </button>
     <div class="head-actions">
       <button class="iconbtn" data-act="notifications">
@@ -960,9 +994,10 @@ function tick(p){
   return p?.verified&&(!p.verified_until||
     new Date(p.verified_until)>new Date())
     ?'<span class="tick" title="Tasdiqlangan akkaunt" aria-label="Tasdiqlangan akkaunt">'+
-      '<svg class="verified-mark" viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">'+
-      '<path d="m12 1.5 3 1.7 3.5.4.6 3.4 2.4 2.5-1.1 3.3.6 3.5-3 1.8-2 3.2-3.5-.5-3.5.5-2-3.2-3-1.8.6-3.5-1.1-3.3L4.9 7l.6-3.4L9 3.2Z" fill="#2998ef" stroke="#d5f1ff" stroke-width="1"/>'+
-      '<path d="m7.4 12.2 3.1 3.1 6.1-6.4" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>':''
+      '<svg class="verified-mark" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">'+
+      '<circle cx="10" cy="10" r="9" fill="#2699ee"/>'+
+      '<path d="m5.4 10 3.1 3.2 6.2-6.4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'+
+      '</svg></span>':''
 }
 function label(p){return '@'+e(nick(p))+tick(p)}
 function avatar(p,large=false){
@@ -1034,6 +1069,12 @@ function miniUser(p){
   return `<button class="linkbtn" data-act="user"
     data-id="${e(p?.id)}">${label(p)}</button>`
 }
+function localModTitle(m){
+  return m['title_'+S.lang]||m.title||'';
+}
+function localModDesc(m){
+  return m['description_'+S.lang]||m.description||'';
+}
 function card(m,p,own=false){
   cacheMod(m);
   return `<article class="card clickable-mod" data-act="mod" data-id="${e(m.id)}">
@@ -1051,6 +1092,7 @@ function card(m,p,own=false){
       <p class="muted smalltext">${e(m.description.slice(0,125))}</p>
       <div class="row mini muted">
         ${ico('heart',14)} ${count(m.likes_count)}
+        · ${ico('eye',14)} <span data-view-count="${e(m.id)}">${count(m.views_count)}</span>
         · ${ico('download',14)} ${count(m.downloads_count)}
         · ${e(m.game_version)}
       </div>
@@ -1129,10 +1171,8 @@ function saveFeedCache(){
 function homeShell(){
   $('#app').innerHTML=`
     <section class="hero compact-hero">
-      <span class="eyebrow">${ico('sparkles',15)} MINECRAFT WORLD 1.0</span>
       <h1>O‘yin dunyongni<br><span>kengaytir.</span></h1>
       <p>Eng qiziqarli Minecraft modlarini kashf et, saqla va do‘stlaring bilan bo‘lish.</p>
-      <span class="version-block">VERSION 1.0</span>
       <span class="autumn">${ico('pickaxe',112)}</span>
     </section>
     <section class="explore">
@@ -1196,7 +1236,7 @@ async function home(){
     filterMods();
   }
   const query=DB.from('mods')
-    .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,created_at')
+    .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
     .eq('status','approved')
     .order(S.sort==='popular'?'likes_count':'created_at',{ascending:false}).limit(60);
   const savedPromise=S.homeView==='saved'?loadSavedIds():Promise.resolve();
@@ -1227,7 +1267,7 @@ async function loadExtraSavedMods(){
   const missing=[...S.savedIds].filter(id=>!existing.has(id)).slice(0,80);
   if(!missing.length)return;
   const r=await DB.from('mods')
-    .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,created_at')
+    .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
     .in('id',missing).eq('status','approved').limit(80);
   check(r);
   S.feed.push(...r.data);
@@ -1241,7 +1281,7 @@ async function fetchMoreFeed(){
   const from=S.feedOffset||0;
   try{
     const r=await DB.from('mods')
-      .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,created_at')
+      .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
       .eq('status','approved')
       .order(S.sort==='popular'?'likes_count':'created_at',{ascending:false})
       .range(from,from+59);
@@ -1298,7 +1338,7 @@ async function profile(id){
     .select('*').eq('id',id).single());
   let mine=S.u?.id===id;
   let [mods,pc,fc,gc,f]=await Promise.all([
-    DB.from('mods').select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,comments_count,created_at')
+    DB.from('mods').select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
       .eq('author_id',id)
       .order('created_at',{ascending:false}).limit(36),
     DB.from('mods').select('id',{count:'exact',head:true})
@@ -1323,8 +1363,8 @@ async function profile(id){
         ${p.is_admin?'<span class="status">ADMIN</span>':''}
       </div>
     </div>
-    <p class="wrap">${e(banned(p)?'Akkaunt cheklangan':
-      p.bio||'Minecraft World jamoasi a’zosi')}</p>
+    ${banned(p)?'<p class="wrap">Akkaunt cheklangan</p>':
+      p.bio?`<p class="wrap profile-bio">${e(p.bio)}</p>`:''}
     <div class="counters">
       <button class="count" data-act="posts">
         <b>${count(pc.count)}</b><span>${t('posts')}</span>
@@ -1814,7 +1854,7 @@ async function getMod(id){
   if(modOpenPending.has(id))return modOpenPending.get(id);
   const load=(async()=>{
     const result=await DB.from('mods')
-      .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,created_at')
+      .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
       .eq('id',id).single();
     return cacheMod(check(result));
   })().finally(()=>modOpenPending.delete(id));
@@ -1842,6 +1882,7 @@ function renderMod(m){
       <div class="mod-headline">
         <h2>${e(m.title)}</h2>
         <span class="status">${e(m.game_version)} · ${e(m.category)}</span>
+        <span class="mod-view-stat">${ico('eye',17)} <span data-mod-view-count>${count(m.views_count)}</span></span>
       </div>
       <p class="wrap mod-description">${e(m.description)}</p>
       <div id="modAuthor" class="mod-author"></div>
@@ -1885,6 +1926,22 @@ async function updateModToggleStates(id){
     if(button)button.setAttribute('aria-pressed',String(!!saves.data));
   }
 }
+async function registerModView(id){
+  if(!S.u)return;
+  const storageKey='mw_view_'+S.u.id+'_'+id;
+  try{if(sessionStorage.getItem(storageKey))return}catch{}
+  const r=await DB.rpc('register_mod_view',{p_mod:id});
+  if(r.error){console.warn('Mod views:',r.error);return}
+  try{sessionStorage.setItem(storageKey,'1')}catch{}
+  const m=getCachedMod(id);
+  if(m)m.views_count=r.data;
+  document.querySelectorAll('[data-view-count]').forEach(node=>{
+    if(node.dataset.viewCount===id)node.textContent=count(r.data);
+  });
+  if(activeModId===id){
+    const el=$('[data-mod-view-count]');if(el)el.textContent=count(r.data);
+  }
+}
 async function openMod(id){
   const cached=getCachedMod(id);
   const generation=++modalGeneration;
@@ -1911,6 +1968,7 @@ async function openMod(id){
     }).catch(console.warn);
   }
   if(m.status==='approved'){
+    registerModView(id).catch(console.warn);
     updateModToggleStates(id).catch(console.warn);
     comments(id).catch(err=>{
       const box=$('#commentList');
@@ -2525,6 +2583,37 @@ async function toggleNotifications(){
   toast(next?'Bildirishnomalar yoqildi':'Bildirishnomalar o‘chirildi');
   settings();
 }
+async function savedModal(){
+  if(!requireUser())return;
+  dialog(t('saved'),`<div id="savedModalList" class="saved-modal-list">
+    <p class="muted">${t('loadingSaved')||'Yuklanmoqda...'}</p>
+  </div>`);
+  const holder=$('#savedModalList');
+  try{
+    await loadSavedIds();
+    if(!holder.isConnected)return;
+    const ids=[...S.savedIds];
+    if(!ids.length){
+      holder.innerHTML=`<div class="empty">${ico('bookmark',30)}
+        <p>${t('noSaved')||'Saqlangan modlar yo‘q'}</p></div>`;
+      return;
+    }
+    const result=await DB.from('mods')
+      .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
+      .in('id',ids.slice(0,90)).eq('status','approved').limit(90);
+    check(result);
+    if(!holder.isConnected)return;
+    result.data.forEach(cacheMod);
+    holder.innerHTML=result.data.map(m=>`<button class="saved-modal-row" data-act="mod"
+      data-id="${e(m.id)}">
+      ${m.cover_path?`<img src="${e(cover(m.cover_path))}" loading="lazy" alt="">`:ico('package',26)}
+      <span>${e(localModTitle(m))}<small>${e(m.game_version)} · ${e(m.category)}</small></span>
+      ${ico('arrow',18)}
+    </button>`).join('')||blank();
+  }catch(err){
+    if(holder.isConnected)holder.textContent=err.message;
+  }
+}
 function settings(){
   if(!requireUser())return;
   const on=notificationEnabled();
@@ -2832,13 +2921,7 @@ window.addEventListener('click',async event=>{
     else if(act==='mod')await openMod(id);
     else if(act==='settings')settings();
     else if(act==='notificationToggle')toggleNotifications();
-    else if(act==='savedFromSettings'){
-      close();
-      if(!requireUser())return;
-      S.homeView='saved';
-      S.visibleMods=12;
-      await go('home');
-    }
+    else if(act==='savedFromSettings')await savedModal();
     else if(act==='notifications')await notifications();
     else if(act==='sort'){
       S.sort=a.dataset.sort;
@@ -3154,25 +3237,26 @@ function leaves(){
   const layer=$('#leaves');
   if(!layer)return;
   layer.replaceChildren();
-  const mobile=window.innerWidth<760;
-  const amount=mobile?7:11;
-  const fragment=document.createDocumentFragment();
-  for(let i=0;i<amount;i++){
-    const leaf=document.createElement('span');
-    const size=mobile?(13+i%4*3):(16+i%5*3);
-    leaf.className='leaf';
-    leaf.innerHTML=ico('leaf',size);
-    leaf.style.left=((i*37+11)%100)+'%';
-    leaf.style.top='-42px';
-    leaf.style.setProperty('--leaf-drift',((i%2?1:-1)*(20+i%4*14))+'px');
-    leaf.style.setProperty('--leaf-rotate',(i%2?1:-1)*(260+i%3*70)+'deg');
-    leaf.style.setProperty('--leaf-duration',(17+i%5*3)+'s');
-    leaf.style.setProperty('--leaf-delay',(-i*3.7)+'s');
-    leaf.style.width=size+'px';
-    leaf.style.height=size+'px';
-    fragment.appendChild(leaf);
+  const count=window.matchMedia('(max-width:760px)').matches?6:10;
+  const frag=document.createDocumentFragment();
+  const leafSvg='<svg viewBox="0 0 32 32" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">'+
+    '<path fill="currentColor" d="M16 2 20 9l5-2-2 6 6 4-7 3 1 6-7-3-7 3 1-6-7-3 6-4-2-6 5 2Z"/>'+
+    '<path d="M16 12v17" fill="none" stroke="#88521f" stroke-width="1.2"/></svg>';
+  for(let i=0;i<count;i++){
+    const el=document.createElement('span');
+    const size=15+i%4*4;
+    el.className='leaf';
+    el.innerHTML=leafSvg;
+    el.style.left=((i*41+12)%100)+'%';
+    el.style.width=size+'px';
+    el.style.height=size+'px';
+    el.style.setProperty('--leaf-drift',((i%2?1:-1)*(30+i%3*15))+'px');
+    el.style.setProperty('--leaf-spin',(i%2?-1:1)*(190+i%4*70)+'deg');
+    el.style.setProperty('--leaf-duration',(21+i%6*3)+'s');
+    el.style.setProperty('--leaf-delay',(-i*4.7)+'s');
+    frag.appendChild(el);
   }
-  layer.appendChild(fragment);
+  layer.append(frag);
 }
 
 // PWA - only public website shell is cached by the service worker.
