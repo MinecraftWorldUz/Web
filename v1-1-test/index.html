@@ -100,7 +100,7 @@ const safeGet=(k,def)=>{try{let v=localStorage.getItem('mw_v11test_'+k);return v
 const safeSet=(k,v)=>{try{localStorage.setItem('mw_v11test_'+k,JSON.stringify(v))}catch{}};
 const state={lang:safeGet('lang','uz'),bg:safeGet('bg',true),name:safeGet('name','World'),nick:'world',bio:safeGet('bio','Minecraft World hamjamiyatiga xush kelibsiz!'),avatar:safeGet('avatar',null),section:'home',thread:null,modal:null,account:'world',follows:safeGet('follows',{}),messages:{},groups:safeGet('groups',[]),chatQuery:'',posts:safeGet('posts',[]),viewed:'all',followed:false,filter:'all',tab:'all'};
 const people=[{id:'anzecraft',name:'Anzecraft',nick:'anzecraft',last:'Salom hammaga',unread:1},{id:'minecraft',name:'Minecraft Player',nick:'minecraft',last:'Salom, nima gaplar?',unread:0},{id:'admin',name:'Minecraft Admin',nick:'admin',last:'Salom',verified:true,unread:0}];
-const person=id=>id==='world'?{id:'world',name:state.name||'World',nick:'world',bio:state.bio,avatar:state.avatar}:people.find(x=>x.id===id)||people[0];
+const person=id=>id==='world'?{id:'world',name:state.name||'World',nick:state.username||'world',bio:state.bio,avatar:state.avatar}:people.find(x=>x.id===id)||people[0];
 const avat=(p,large=false)=>p.avatar?`<img class="avatar ${large?'large':''}" src="${esc(p.avatar)}" alt="" style="object-fit:cover">`:`<span class="avatar ${large?'large':''}">${esc((p.name||p.nick||'?').charAt(0).toUpperCase())}</span>`;
 const verified=p=>p.verified?'<svg class="verify" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#2699ee"/><path d="m5 10 3.2 3.2L15 6.9" stroke="#fff" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" fill="none"/></svg>':'';
 const ident=(p,extra='')=>`<div class="identity" ${extra}>${avat(p)}<div style="min-width:0"><strong>${esc(p.name)} ${verified(p)}</strong><small>@${esc(p.nick)}</small></div></div>`;
@@ -344,7 +344,6 @@ ru:{privacy:'Приватность чата',public:'Публичный',privat
 en:{privacy:'Chat privacy',public:'Public',private:'Private',publicInfo:'Everyone can discover public accounts in search',privateInfo:'Reachable through existing conversations',groupPrivacy:'Group privacy',allowInvites:'Approve group invitations',allowInfo:'Invitations require your approval',inviteSent:'Join approval request sent',approve:'Approve',reject:'Decline',leave:'Leave group',deleteGroup:'Delete group',available:'Username available',taken:'Username taken',newMessage:'New message',create:'Create group',selectPerson:'Find contacts',onlyOwner:'Only the owner can edit this group',chooseAvatar:'Change avatar',pending:'Group invitation',groupDetails:'Group information',searchUsername:'Search names or @usernames',requestJoin:'Group invitation'}
 };
 const oldT=t;
-function person(id){return id==='world'?{id:'world',name:state.name||'World',nick:state.username||'world',bio:state.bio,avatar:state.avatar}:people.find(x=>x.id===id)||people[0]}
 
 const tt=k=>extraTrans[state.lang]?.[k]||extraTrans.uz[k]||oldT(k);
 state.username=safeGet('account_username','world');
