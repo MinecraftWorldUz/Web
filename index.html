@@ -8,6 +8,7 @@
 <title>Minecraft World | Mods & Community</title>
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="manifest" href="./manifest.webmanifest">
+<script src="https://telegram.org/js/telegram-web-app.js?65" defer></script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -1246,6 +1247,21 @@ body:before,.hero:after{display:none!important}
   }
 }
 
+
+/* Telegram Mini App safe areas; ordinary website layout is unchanged. */
+.telegram-mini-app .bottom{
+  bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;
+}
+.telegram-mini-app .shell{
+  padding-bottom:calc(130px + env(safe-area-inset-bottom,0px))!important;
+}
+.telegram-mini-app .top{
+  margin-top:env(safe-area-inset-top,0px)!important;
+}
+.telegram-mini-app .btn[data-act="download"]:disabled{
+  opacity:.72;cursor:progress;
+}
+
 </style>
 </head>
 <body>
@@ -1295,6 +1311,25 @@ const DB=window.supabase.createClient(
   'sb_publishable_L3WnUsSn6GBh16nqZTxisQ_eJu8uIrw'
 );
 const $=s=>document.querySelector(s);
+
+// Telegram bridge is optional: the website stays fully functional in a normal browser.
+// Telegram user IDs are NEVER trusted here; the Edge Function verifies initData HMAC.
+function telegramApp(){
+  const tg=window.Telegram?.WebApp;
+  return tg?.initData?tg:null;
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const tg=telegramApp();
+  if(!tg)return;
+  document.body.classList.add('telegram-mini-app');
+  try{
+    tg.ready();
+    tg.expand();
+    tg.setHeaderColor('#302419');
+    tg.setBackgroundColor('#1a180f');
+  }catch(error){console.warn('Telegram Mini App theme:',error)}
+});
+
 
 const ICONS={
 world:'<path d="m12 2 9 5-9 5-9-5 9-5Z M3 7v10l9 5 9-5V7M12 12v10"/><path d="m7 8 5 3 5-3M7 13l5 3 5-3"/>',
@@ -2855,7 +2890,7 @@ async function getMod(id){
 function renderMod(m){
   const isApproved=m.status==='approved';
   const actions=isApproved?`
-    ${btn('download',t('downloads')+' · '+count(m.downloads_count),m.id)}
+    ${btn('download',(telegramApp()?'Telegramga yuborish':t('downloads'))+' · '+count(m.downloads_count),m.id)}
     <button class="btn small ghost mod-toggle" data-act="like" data-id="${e(m.id)}"
       data-mod-toggle="like" aria-pressed="false">
       ${ico('heart',18)} <span>Like · ${count(m.likes_count)}</span></button>
@@ -3083,7 +3118,51 @@ async function toggleTable(table,id,detail=true){
     modToggleLocks.delete(key);
   }
 }
+const sendingTelegramMods=new Set();
+async function sendModToTelegram(id,tg){
+  if(sendingTelegramMods.has(id))return;
+  sendingTelegramMods.add(id);
+  const button=[...document.querySelectorAll('[data-act="download"]')]
+    .find(el=>el.dataset.id===id);
+  if(button)button.disabled=true;
+  try{
+    toast('Mod Telegramga yuborilmoqda...');
+    const res=await fetch('https://ruovdgyfcucspffrvijh.supabase.co/functions/v1/telegram-mod',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':'sb_publishable_L3WnUsSn6GBh16nqZTxisQ_eJu8uIrw'
+      },
+      body:JSON.stringify({initData:tg.initData,modId:id}),
+      signal:AbortSignal.timeout(65000),
+    });
+    const result=await res.json().catch(()=>({ok:false,error:'Server javobini o‘qib bo‘lmadi.'}));
+    if(!res.ok||!result.ok)throw Error(result.error||'Telegramga yuborishda xato');
+    const m=getCachedMod(id);
+    if(m)m.downloads_count=(m.downloads_count||0)+1;
+    toast('Mod fayli botdan shaxsiy Telegram chatingizga yuborildi.');
+    tg.HapticFeedback?.notificationOccurred?.('success');
+    if(button?.isConnected){
+      const text=button.querySelector('span');
+      if(text)text.textContent='Telegramga yuborish · '+count(m?.downloads_count||0);
+    }
+  }catch(error){
+    console.warn('Telegram file send:',error);
+    toast(error.name==='TimeoutError'?
+      'Telegramga yuborish vaqti tugadi. Bot chatini tekshiring.':
+      (error.message||'Telegramga yuborishda xato'));
+    tg.HapticFeedback?.notificationOccurred?.('error');
+  }finally{
+    sendingTelegramMods.delete(id);
+    if(button?.isConnected)button.disabled=false;
+  }
+}
 async function download(id){
+  const tg=telegramApp();
+  if(tg){
+    await sendModToTelegram(id,tg);
+    return;
+  }
   const mod=check(await DB.from('mods').select('status')
     .eq('id',id).single());
   if(mod.status!=='approved'){
