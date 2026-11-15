@@ -21,7 +21,7 @@ function bytesToHex(buf:ArrayBuffer){
   return Array.from(new Uint8Array(buf)).map(x=>x.toString(16).padStart(2,"0")).join("");
 }
 async function hmac(key:Uint8Array,data:string):Promise<ArrayBuffer>{
-  const k=await crypto.subtle.importKey("raw",key,"HMAC",false,["sign"]);
+  const k=await crypto.subtle.importKey("raw",key,{name:"HMAC",hash:"SHA-256"},false,["sign"]);
   return await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(data));
 }
 async function validatedTelegramUser(initData:string,token:string):Promise<number|null>{
