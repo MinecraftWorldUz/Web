@@ -893,6 +893,14 @@ border-color:#ef9892;color:#fff}
  .filters select.field{font-size:13px;padding:10px 7px}
 }
 
+
+.fast-profile{min-height:175px}
+.fast-profile .row{display:flex;gap:14px;align-items:center}
+.fast-profile h2{font-size:20px}
+.fast-skeleton-line{height:17px;width:75%;margin:15px 0;
+ border-radius:6px;background:#5a4530;opacity:.55}
+.fast-skeleton-line.half{width:42%}
+
 </style>
 </head>
 <body>
@@ -1531,23 +1539,80 @@ function card(m,p,own=false){
     </div>
   </article>`
 }
+let navigationSeq=0;
+const fastScreens=new Map();
+const SCREEN_TTL=25000;
+function screenKey(page,id){
+  return [page,id||'',S.u?.id||'public',S.lang,page==='community'?S.tab:''].join('|');
+}
+function saveScreen(page,id){
+  if(S.page!==page||(page==='profile'&&S.profileId!==id))return;
+  fastScreens.set(screenKey(page,id),{html:$('#app').innerHTML,at:Date.now()});
+  // Keep this private data only in memory; never persist profiles/chats on disk.
+  if(fastScreens.size>12)fastScreens.delete(fastScreens.keys().next().value);
+}
+function clearScreenCache(){
+  fastScreens.clear();
+}
+function fastLoadingShell(page,id){
+  if(page==='profile'){
+    const known=(S.u?.id===id?S.me:null)||knownProfiles.get(id)?.p;
+    $('#app').innerHTML=`<section class="banner fast-profile">
+      <div class="row">${avatar(known,true)}
+        <div><h2>${e(known?.display_name||known?.username||'Profil')}</h2>
+        <p class="muted">${e(known?.bio||'')}</p></div>
+      </div>
+      <div class="fast-skeleton-line"></div>
+      <div class="fast-skeleton-line half"></div>
+    </section><div class="grid" id="profilePreview"></div>`;
+  }else if(page==='community'){
+    $('#app').innerHTML=`<div class="hero" style="padding:22px">
+        <h1>${ico('users',30)} ${t('community')}</h1></div>
+      <div class="tabs">
+        <button data-act="tab" data-tab="play" class="${S.tab==='play'?'on':''}">${t('play')}</button>
+        <button data-act="tab" data-tab="accounts" class="${S.tab==='accounts'?'on':''}">${t('accounts')}</button>
+      </div><div id="communityPreview" class="list">
+        <div class="fast-skeleton-line"></div><div class="fast-skeleton-line half"></div>
+      </div>`;
+  }else{
+    $('#app').innerHTML='<div class="empty">'+ico('package',25)+'</div>';
+  }
+}
 async function go(page='home',id=null){
-  S.page=page;S.profileId=id;
-  document.querySelectorAll('[data-go]').forEach(
-    x=>x.classList.toggle('on',x.dataset.go===page)
-  );
-  $('#app').innerHTML='<div class="empty">'+ico('package',30)+'</div>';
+  const target=page==='profile'?(id||S.u?.id||null):id;
+  const nav=++navigationSeq;
+  S.page=page;
+  S.profileId=target;
+  document.querySelectorAll('[data-go]').forEach(x=>
+    x.classList.toggle('on',x.dataset.go===page));
+  const useCache=page==='community'||page==='profile';
+  const key=screenKey(page,target);
+  const cached=useCache?fastScreens.get(key):null;
+  if(cached){
+    $('#app').innerHTML=cached.html;
+    translateUi($('#app'));
+    if(Date.now()-cached.at<SCREEN_TTL)return;
+  }else if(page==='home'){
+    // homeShell() paints immediately without waiting for Supabase.
+  }else if(page==='create'){
+    create();return;
+  }else if(page==='chat'){
+    // chats() paints the inbox immediately, then loads messages.
+  }else{
+    fastLoadingShell(page,target);
+  }
   try{
     if(page==='home')await home();
-    else if(page==='profile')await profile(id||S.u?.id);
-    else if(page==='create')create();
+    else if(page==='profile')await profile(target);
     else if(page==='community')await community();
     else if(page==='chat')await chats();
-    else await home()
+    else if(page==='create')create();
+    else await home();
   }catch(err){
     console.error(err);
-    $('#app').innerHTML=`<div class="empty">${e(err.message)}</div>`;
-    toast(err.message)
+    if(nav!==navigationSeq||S.page!==page)return;
+    if(!cached)$('#app').innerHTML=`<div class="empty">${e(err.message)}</div>`;
+    toast(err.message);
   }
 }
 const FEED_CACHE_KEY='mw_public_feed_v4';
@@ -1759,10 +1824,9 @@ async function profile(id){
       `<div class="buttons">${btn('auth',t('login'))}</div>`;
     return
   }
-  let p=check(await DB.from('profiles')
-    .select('*').eq('id',id).single());
-  let mine=S.u?.id===id;
-  let [mods,pc,fc,gc,f]=await Promise.all([
+  const mine=S.u?.id===id;
+  const [person,mods,pc,fc,gc,f]=await Promise.all([
+    DB.from('profiles').select('*').eq('id',id).single(),
     DB.from('mods').select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
       .eq('author_id',id)
       .order('created_at',{ascending:false}).limit(36),
@@ -1776,7 +1840,10 @@ async function profile(id){
       .eq('follower_id',S.u.id).eq('following_id',id)
       .maybeSingle():Promise.resolve({data:null})
   ]);
+  if(S.page!=='profile'||S.profileId!==id)return;
+  const p=check(person);
   check(mods);
+  setCachedProfiles([p]);
   $('#app').innerHTML=`
   <section class="banner">
     <div class="row">
@@ -1818,7 +1885,8 @@ async function profile(id){
   <div class="grid">
     ${mods.data.length?
       mods.data.map(m=>card(m,p,mine)).join(''):blank()}
-  </div>`
+  </div>`;
+  saveScreen('profile',id);
 }
 async function followList(type,id){
   let key=type==='followers'?'following_id':'follower_id';
