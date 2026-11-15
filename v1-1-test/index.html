@@ -344,6 +344,8 @@ ru:{privacy:'Приватность чата',public:'Публичный',privat
 en:{privacy:'Chat privacy',public:'Public',private:'Private',publicInfo:'Everyone can discover public accounts in search',privateInfo:'Reachable through existing conversations',groupPrivacy:'Group privacy',allowInvites:'Approve group invitations',allowInfo:'Invitations require your approval',inviteSent:'Join approval request sent',approve:'Approve',reject:'Decline',leave:'Leave group',deleteGroup:'Delete group',available:'Username available',taken:'Username taken',newMessage:'New message',create:'Create group',selectPerson:'Find contacts',onlyOwner:'Only the owner can edit this group',chooseAvatar:'Change avatar',pending:'Group invitation',groupDetails:'Group information',searchUsername:'Search names or @usernames',requestJoin:'Group invitation'}
 };
 const oldT=t;
+function person(id){return id==='world'?{id:'world',name:state.name||'World',nick:state.username||'world',bio:state.bio,avatar:state.avatar}:people.find(x=>x.id===id)||people[0]}
+
 const tt=k=>extraTrans[state.lang]?.[k]||extraTrans.uz[k]||oldT(k);
 state.username=safeGet('account_username','world');
 state.visibility=safeGet('visibility','public');
@@ -457,7 +459,7 @@ document.body.addEventListener('click',ev=>{
  if(a==='inviteToggle'){state.approveInvites=!state.approveInvites;safeSet('approve_invites',state.approveInvites);render()}
  if(a==='leaveGlobal'){navigate('chat')}
  if(a==='leaveGroup'){let g=groupById(b.dataset.id);if(!g)return;if(!confirm(tt('leave')+'?'))return;g.joined=false;safeSet('groups',state.groups);closeModal();navigate('chat')}
- if(a==='deleteGroup'){let g=groupById(b.dataset.id);if(!g||g.owner!=='world')return;if(!confirm(tt('deleteGroup')+'?'))return;state.groups=state.groups.filter(x=>x.id!==g.id);safeSet('groups',state.groups);closeModal();navigate('chat')}
+ if(a==='deleteGroup'){let g=groupById(b.dataset.id);if(!g||(g.owner&&g.owner!=='world'))return;if(!confirm(tt('deleteGroup')+'?'))return;state.groups=state.groups.filter(x=>x.id!==g.id);safeSet('groups',state.groups);closeModal();navigate('chat')}
  if(a==='acceptInvite'||a==='rejectInvite'){let idx=Number(b.dataset.index);let req=state.pendingInvites.splice(idx,1)[0];if(a==='acceptInvite'&&req){let g=groupById(req.id);if(g){g.members=[...new Set([...g.members,'world'])];g.joined=true;safeSet('groups',state.groups)}}safeSet('pending_invites',state.pendingInvites);render()}
 },true);
 document.body.addEventListener('submit',ev=>{
@@ -468,7 +470,7 @@ document.body.addEventListener('submit',ev=>{
  const visibility=fd.get('visibility')||'public';let username=String(fd.get('username')||state.username).trim().toLowerCase();if(visibility==='public'&&(!validNick(username)||(username!==state.username&&nameTaken(username)))){toast(tt('taken'));return}
  readAvatar(f.querySelector('[name="avatar"]')?.files?.[0],avatar=>{state.name=String(fd.get('name')||'World').trim()||'World';state.bio=String(fd.get('bio')||'').trim();state.visibility=visibility;state.username=username;if(avatar)state.avatar=avatar;['name','bio','visibility','avatar'].forEach(k=>safeSet(k,state[k]));safeSet('account_username',state.username);closeModal();render()});return;
  }
- const id=f.dataset.groupId,old=groupById(id);if(old&&old.owner!=='world'){toast(tt('onlyOwner'));return}
+ const id=f.dataset.groupId,old=groupById(id);if(old&&old.owner&&old.owner!=='world'){toast(tt('onlyOwner'));return}
  const name=String(fd.get('groupName')||'').trim(),username=String(fd.get('groupUsername')||'').trim().replace(/^@/,'').toLowerCase();
  if(!name||!validNick(username)||nameTaken(username,id)){toast(!validNick(username)?t('badGroup'):tt('taken'));return}
  const wanted=fd.getAll('members').map(String).filter(id=>people.some(p=>p.id===id));
