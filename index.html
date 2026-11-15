@@ -901,6 +901,351 @@ border-color:#ef9892;color:#fff}
  border-radius:6px;background:#5a4530;opacity:.55}
 .fast-skeleton-line.half{width:42%}
 
+
+/* MINECRAFT WORLD — AUTUMN PIXEL EDITION
+   Inspired by the chosen mockup. No blur, GPU shaders, continuously animated
+   gradients, remote fonts or heavy graphics. Hero is one tiny static SVG. */
+:root{
+  --bg:#18150f;--panel:#30261b;--panel2:#3b2c20;
+  --text:#f5e9d1;--muted:#cabba2;--gold:#f5c65e;
+  --orange:#d69e3f;--green:#a4a73f;--edge:#816042a8;
+}
+body{
+  background:#1a180f!important;
+  color:var(--text)!important;
+  font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif!important;
+  background-image:radial-gradient(ellipse at 48% -5%,#56412248,transparent 65%)!important;
+}
+body:before,.hero:after{display:none!important}
+.shell{max-width:1120px;padding:0 16px 120px}
+.top{
+  top:8px!important;
+  background:#302419f2!important;
+  border:1px solid #876643!important;
+  border-radius:13px!important;
+  padding:13px 17px!important;
+  margin-top:8px;
+  box-shadow:0 3px 0 #140e08!important;
+  backdrop-filter:none!important;
+}
+.top .logo{display:flex!important;gap:9px!important;align-items:center!important;font-weight:950}
+.top .brand-icon{
+  width:43px!important;height:43px!important;
+  background:#96703d!important;border:2px solid #f4c977!important;
+  color:#fff1bf!important;border-radius:5px!important;
+  box-shadow:inset 0 2px #ffe19d,3px 3px 0 #1b130b!important;
+}
+.top .brand-word{font-family:ui-monospace,Consolas,monospace;font-size:16px!important;
+ letter-spacing:.02em!important;color:#fff2da!important}
+.top .brand-word b{color:#f7bb4b!important}
+.top .version-pill{font-weight:900;border-color:#caa453!important;
+  background:#544022!important;color:#ffe199!important;font-size:10px!important;
+  box-shadow:none!important;border-radius:7px!important}
+.head-actions{gap:9px}
+.top .head-actions>.iconbtn{
+  background:#67503a!important;
+  border:1px solid #92704d!important;
+  box-shadow:inset 0 2px #9b7852,inset 0 -3px #38281b!important;
+  color:#fbe0ae!important;
+  border-radius:9px!important;
+  flex-basis:44px!important;width:44px!important;min-width:44px!important;
+  max-width:44px!important;height:44px!important;min-height:44px!important;
+  max-height:44px!important;
+}
+.top .head-actions>.iconbtn:hover{background:#796044!important;transform:none!important}
+.top .dot{background:#e94e4a!important;color:#fff!important;font-size:11px!important;
+  min-width:18px!important;line-height:18px!important;padding:1px 4px!important}
+.autumn-world-hero{
+  background-image:
+    linear-gradient(90deg,rgba(36,24,15,.96) 0%,rgba(37,25,17,.91) 24%,rgba(37,25,17,.65) 46%,rgba(37,25,17,.02) 90%),
+    url("./hero-autumn.svg")!important;
+  background-position:center center!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
+  position:relative;
+  overflow:hidden!important;
+  isolation:isolate;
+  border-radius:17px!important;
+  border:1px solid #ad8155!important;
+  margin:22px 0 15px!important;
+  padding:40px 37px!important;
+  min-height:320px!important;
+  box-shadow:0 4px 0 #100d09!important;
+}
+.autumn-world-hero .hero-copy{max-width:620px;position:relative;z-index:1}
+.autumn-world-hero h1{font-size:clamp(35px,4.8vw,55px)!important;
+  line-height:1.13;letter-spacing:-.035em!important;margin:0 0 14px!important;
+  color:#fff6e4!important}
+.autumn-world-hero h1 span{color:#ffca59!important;text-shadow:none!important}
+.autumn-world-hero p{font-size:clamp(14px,1.9vw,18px);max-width:445px!important;
+  line-height:1.55!important;color:#f0e2cd!important;margin:0 0 23px!important;
+  text-shadow:none!important}
+.hero-cta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn.hero-primary,.btn.hero-secondary{min-height:45px!important;padding:11px 18px!important;
+ font-size:14px!important;white-space:nowrap;border-radius:9px!important;
+ box-shadow:inset 0 2px #ffe2a4,inset 0 -3px #83561b!important}
+.btn.hero-primary{background:#eab143!important;border:1px solid #f8c45b!important;
+ color:#402605!important}
+.btn.hero-secondary{background:#624b32d9!important;border:1px solid #a88b64!important;
+ color:#fff1d9!important;box-shadow:inset 0 2px #8b6b4e,inset 0 -3px #3b291b!important}
+.btn.hero-primary:hover,.btn.hero-secondary:hover{filter:none!important;transform:none!important}
+.autumn-categories{
+  background:linear-gradient(180deg,#31291b,#2b2319);
+  border:1px solid #5e482e;
+  border-radius:17px;
+  padding:15px;
+  margin:15px 0 18px;
+}
+.autumn-heading{display:flex;align-items:center;justify-content:space-between;
+ gap:12px;flex-wrap:wrap;margin:0 0 13px}
+.autumn-heading h2{display:inline-flex;align-items:center;gap:10px;
+  font-size:clamp(20px,2.7vw,26px)!important;letter-spacing:0!important;
+  color:#fff3de;margin:0!important}
+.autumn-heading h2 .svg-icon{color:#f1b940;stroke-width:2.4}
+.autumn-see-all{display:inline-flex;align-items:center;gap:7px;background:transparent!important;
+  border:0;color:#f3c35e!important;font-size:13px;font-weight:800;
+  padding:8px 3px}
+.autumn-see-all:hover{color:#ffe293!important}
+.autumn-categories #quickCategories{
+  display:grid!important;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:10px!important;
+  overflow:visible!important;
+  padding:0 0 1px!important;
+  max-width:100%!important;
+}
+.autumn-categories #quickCategories.expanded{
+  grid-template-columns:repeat(auto-fill,minmax(116px,1fr));
+}
+.autumn-categories .category-tile{
+  min-width:0;min-height:93px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:9px;
+  padding:12px 5px;
+  border:1px solid #82634a;border-radius:13px;
+  background:#493726;
+  box-shadow:inset 0 2px #624b35,inset 0 -3px #332318;
+  color:#f6e3bf;font-weight:800;font-size:14px;
+  text-align:center;cursor:pointer;
+}
+.autumn-categories .category-tile .svg-icon{color:#f7e1b9;width:28px;height:28px}
+.autumn-categories .category-tile span{max-width:100%;overflow-wrap:anywhere}
+.autumn-categories .category-tile.selected{
+  background:#77792d;color:#fff4be;border-color:#d9cc5c;
+  box-shadow:inset 0 2px #9da34b,inset 0 -3px #51511e;
+}
+.autumn-categories .category-tile:hover{border-color:#eec17d}
+.explore{padding-bottom:25px}
+.autumn-mod-heading{
+  background:linear-gradient(90deg,#3f3320,#2d251a);
+  border:1px solid #5e482e;border-radius:15px;
+  padding:13px 16px;
+  margin:0 0 12px;
+}
+.autumn-mod-heading h2{white-space:nowrap}
+.autumn-mod-heading .sort-tabs{display:flex;gap:7px;margin:0}
+.autumn-mod-heading .sort-tabs button{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  min-height:40px;min-width:100px;
+  background:#59412c!important;border:1px solid #95734c!important;
+  color:#f4e6c9!important;border-radius:10px!important;
+  padding:8px 13px!important;font-size:13px!important;font-weight:750;
+}
+.autumn-mod-heading .sort-tabs button.on{
+  color:#fff8d9!important;background:#77782d!important;
+  border-color:#e1d765!important;
+  box-shadow:inset 0 2px #989b41,inset 0 -2px #55511c!important;
+}
+.autumn-filter-shell{margin-bottom:11px}
+.autumn-filter-shell .filters{padding:10px 0 4px;gap:8px}
+.autumn-filter-shell .search-wrap{flex:2}
+.autumn-filter-shell .field{border-radius:9px!important;background:#302519!important;
+  color:#f4e7d0!important;border-color:#70523a!important;min-height:40px;padding:9px 12px}
+.autumn-filter-shell .search-wrap .field{padding-left:42px}
+.autumn-filter-shell .search-wrap .svg-icon{color:#ecc579}
+.results-label{display:block;color:#bcad91;font-size:12px;margin:4px 3px}
+.autumn-mod-list{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:13px!important;
+}
+.autumn-mod-list>.card{
+  display:grid!important;
+  grid-template-columns:minmax(0,38%) minmax(0,62%);
+  background:linear-gradient(120deg,#443020,#31251d)!important;
+  border:1px solid #826447!important;
+  border-radius:15px!important;
+  min-height:172px;
+  box-shadow:0 3px 0 #16120c!important;
+  overflow:hidden!important;
+  transform:none!important;
+}
+.autumn-mod-list>.card:hover{border-color:#e5b867!important;
+  transform:none!important;box-shadow:0 3px 0 #16120c!important}
+.autumn-mod-list>.card .art{
+  width:100%;min-width:0;height:100%!important;min-height:174px!important;
+  background:#65523b!important;overflow:hidden;position:relative;
+}
+.autumn-mod-list>.card .art img{width:100%;height:100%;object-fit:cover}
+.autumn-mod-list>.card .art .chip{
+  top:9px;left:9px;color:#e7f48f;background:#50711ded!important;
+  border:1px solid #a0c052!important;border-radius:7px!important;
+  font-size:12px;font-weight:800;padding:5px 10px
+}
+.autumn-mod-list>.card .art .quick-save{
+  top:9px;right:9px;background:#422d1feb!important;
+  color:#fbd17b!important;border-radius:7px!important;
+  width:38px;height:38px;border:1px solid #e3b766!important;
+}
+.autumn-mod-list>.card .art .quick-save.saved{
+  color:#4c2c12!important;background:#fbedd1!important
+}
+.autumn-mod-list>.card .cardbody{
+  min-width:0;
+  display:flex;flex-direction:column;justify-content:center;
+  gap:7px;padding:15px 19px!important;
+}
+.autumn-mod-list>.card .cardbody h3{font-size:clamp(19px,2.5vw,27px)!important;
+  font-weight:900;margin:0!important;line-height:1.15;letter-spacing:-.02em}
+.autumn-mod-list>.card .cardbody h3 .linkbtn{
+  color:#fff6e6!important;font-weight:900
+}
+.autumn-mod-list>.card .cardbody p{
+  min-height:0!important;line-height:1.4;margin:0!important;
+  color:#ead6b4!important;display:-webkit-box;
+  -webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
+}
+.autumn-mod-list>.card .cardbody .row.mini{
+  display:flex;align-items:center;gap:7px;
+  color:#eddbbc!important;margin:4px 0 0;font-size:12px
+}
+.autumn-mod-list>.card .cardbody .row.mini .svg-icon{color:#f4ce99!important}
+.autumn-mod-list>.card .divider{display:none}
+.autumn-mod-list>.card .cardbody>.row:last-child{font-size:12px;min-height:24px}
+.autumn-mod-list>.card .cardbody>.row:last-child .av{width:24px;height:24px;font-size:11px}
+.autumn-mod-list .skeleton-card{height:180px!important;min-height:0!important}
+.autumn-mod-list .skeleton-card .skeleton-art{height:100%!important;width:38%!important}
+.autumn-mod-list .skeleton-card .skeleton-lines{margin:-155px 0 0 42%;width:51%!important}
+.bottom{
+  background:#2d231af5!important;
+  border:1px solid #856744!important;
+  border-radius:17px!important;
+  box-shadow:0 4px 0 #130f0a!important;
+  backdrop-filter:none!important;
+  padding:7px!important;
+  gap:4px!important;
+}
+.bottom button{border-radius:11px!important;color:#f3ddbb!important;
+  min-height:55px;gap:4px;font-size:11px!important;position:relative}
+.bottom button .navicon{color:#f5d6a4}
+.bottom button.on{
+  background:#808133!important;border:1px solid #d2c65b!important;
+  color:#fff8d6!important;
+}
+.bottom button.on .navicon{color:#ffe78d!important}
+.bottom .svg-icon{width:24px;height:24px}
+#leaves{pointer-events:none!important;z-index:0!important}
+#leaves .leaf{opacity:.20!important}
+.top,.bottom,.dialog,.card,.autumn-categories,.autumn-mod-heading{
+  backdrop-filter:none!important;filter:none!important;text-shadow:none!important
+}
+@media(max-width:850px){
+  .autumn-world-hero{min-height:290px!important;padding:30px 24px!important}
+  .autumn-world-hero .hero-copy{max-width:77%}
+  .autumn-world-hero h1{font-size:38px!important}
+  .autumn-world-hero p{max-width:340px!important}
+  .autumn-categories #quickCategories{gap:7px!important}
+  .autumn-categories .category-tile{font-size:12px;min-height:78px;padding:8px 3px}
+  .autumn-categories .category-tile .svg-icon{width:24px;height:24px}
+  .autumn-mod-heading .sort-tabs button{min-width:0;padding:8px 10px!important}
+}
+@media(max-width:650px){
+  .shell{padding:0 11px 102px}
+  .top{padding:10px!important}
+  .top .brand-icon{width:34px!important;height:34px!important}
+  .top .brand-word{font-size:11px!important}
+  .top .head-actions>.iconbtn{
+    flex-basis:38px!important;width:38px!important;min-width:38px!important;
+    max-width:38px!important;height:38px!important;
+    min-height:38px!important;max-height:38px!important;padding:0!important
+  }
+  .autumn-world-hero{
+    margin:13px 0!important;min-height:265px!important;
+    padding:29px 21px!important;
+    border-radius:14px!important;
+    background-position:60% center!important;
+    background-image:linear-gradient(90deg,rgba(32,21,14,.96),rgba(32,21,14,.84) 40%,rgba(32,21,14,.10) 100%),
+      url("./hero-autumn.svg")!important;
+  }
+  .autumn-world-hero h1{font-size:34px!important}
+  .autumn-world-hero .hero-copy{max-width:91%}
+  .autumn-world-hero p{max-width:295px!important;font-size:13px!important;margin-bottom:17px!important}
+  .hero-cta{gap:7px;flex-wrap:nowrap}
+  .hero-cta .btn{min-width:0;flex:1 1 50%;white-space:normal!important;
+    padding:8px 9px!important;min-height:46px!important;font-size:11px!important;
+    gap:5px}
+  .hero-cta .btn .svg-icon{width:16px;height:16px;flex:none}
+  .autumn-categories{padding:11px;margin:13px 0;border-radius:13px}
+  .autumn-heading{gap:7px}
+  .autumn-heading h2{font-size:19px!important}
+  .autumn-heading h2 .svg-icon{width:20px;height:20px}
+  .autumn-see-all{font-size:11px!important}
+  .autumn-categories #quickCategories{
+    grid-template-columns:repeat(6,minmax(66px,1fr))!important;
+    overflow-x:auto!important;gap:6px!important;padding-bottom:7px!important;
+    scrollbar-width:none;
+  }
+  .autumn-categories #quickCategories.expanded{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;overflow:visible!important
+  }
+  .autumn-categories .category-tile{
+    min-height:75px!important;padding:8px 3px;font-size:11px!important;
+    border-radius:10px!important;gap:6px
+  }
+  .autumn-categories .category-tile .svg-icon{width:22px;height:22px}
+  .autumn-mod-heading{
+    flex-direction:column;align-items:stretch;padding:11px;border-radius:12px
+  }
+  .autumn-mod-heading h2{align-self:flex-start}
+  .autumn-mod-heading .sort-tabs{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+  .autumn-mod-heading .sort-tabs button{font-size:11px!important;gap:4px;
+    min-height:39px!important;padding:6px!important}
+  .autumn-mod-heading .sort-tabs .svg-icon{width:14px;height:14px}
+  .autumn-filter-shell .filters{gap:7px}
+  .autumn-filter-shell .filters .search-wrap{min-width:100%;flex:1 1 100%}
+  .autumn-filter-shell .filters select{min-width:0;max-width:calc(50% - 4px);flex:1 1 calc(50% - 4px)}
+  .autumn-mod-list>.card{grid-template-columns:minmax(0,42%) minmax(0,58%);
+    min-height:143px;border-radius:11px}
+  .autumn-mod-list>.card .art{min-height:143px!important}
+  .autumn-mod-list>.card .art .chip{font-size:9px!important;padding:4px 6px!important}
+  .autumn-mod-list>.card .art .quick-save{width:32px!important;height:32px!important}
+  .autumn-mod-list>.card .art .quick-save .svg-icon{width:17px;height:17px}
+  .autumn-mod-list>.card .cardbody{padding:10px!important;gap:5px}
+  .autumn-mod-list>.card .cardbody h3{font-size:17px!important}
+  .autumn-mod-list>.card .cardbody p{font-size:12px!important;line-height:1.35!important}
+  .autumn-mod-list>.card .cardbody .row.mini{
+    gap:3px;font-size:10px;flex-wrap:wrap;white-space:normal
+  }
+  .autumn-mod-list>.card .cardbody .row.mini .svg-icon{width:12px;height:12px}
+  .autumn-mod-list>.card .cardbody>.row:last-child{display:none}
+  .bottom{bottom:7px!important;width:calc(100% - 15px)!important}
+  .bottom button{font-size:10px!important;padding:7px 1px!important}
+  .bottom .svg-icon{width:22px;height:22px}
+}
+@media(max-width:375px){
+  .top .version-pill{font-size:8px!important;padding:3px!important}
+  .top .head-actions>.iconbtn{flex-basis:34px!important;width:34px!important;
+    min-width:34px!important;max-width:34px!important;height:34px!important;
+    min-height:34px!important;max-height:34px!important}
+  .autumn-world-hero h1{font-size:30px!important}
+  .autumn-world-hero{min-height:254px!important}
+  .autumn-mod-list>.card .cardbody h3{font-size:15px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .autumn-categories .category-tile,.autumn-mod-heading .sort-tabs button{
+    transition:none!important
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1726,6 +2071,7 @@ function refreshFeedCounters(){
   if(!el)return;
   const key=S.lang+'|'+S.category+'|'+!!S.categoriesExpanded;
   if(el.dataset.renderKey===key)return;
+  el.classList.toggle('expanded',!!S.categoriesExpanded);
   const cats=S.categoriesExpanded?['all',...C]:FEATURED_CATEGORIES;
   el.innerHTML=cats.map(c=>{
     const title=c==='all'?ux('Barchasi'):categoryName(c);
