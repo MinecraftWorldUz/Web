@@ -1089,8 +1089,79 @@ const EXTRA_WORDS={
     'Mute':'Mute','Qayta qo‘shilish':'Rejoin'
   }
 };
+
+const MORE_UI_TRANSLATIONS={
+ ru:{
+  'Modlar':'Моды','Tekshiruvda':'На проверке','Tasdiqlangan':'Подтверждено',
+  'Rad etilgan':'Отклонено','Tavsif':'Описание','Qo‘shish':'Добавить',
+  'Yuklab olish':'Скачать','Izohlar':'Комментарии','Layklar':'Лайки',
+  'Yuborish':'Отправить','Xabar yozish...':'Напишите сообщение...',
+  'Bosh sahifa':'Главная','Hamjamiyat':'Сообщество',
+  'Mod topilmadi':'Мод не найден','Boshqa so‘z yoki kategoriya bilan qidiring.':'Попробуйте другой запрос или категорию.',
+  'Saqlangan modlar yo‘q':'Нет сохранённых модов','Modlar yuklanmoqda...':'Загрузка модов...',
+  'Mod tekshiruvda':'Мод на проверке','Yana modlar':'Больше модов',
+  'Akkauntlar':'Аккаунты','Akkauntlarni almashtirish':'Переключить аккаунт',
+  'Hozirgi akkaunt':'Текущий аккаунт','Bosib almashtiring':'Нажмите для переключения',
+  'Akkaunt qo‘shish':'Добавить аккаунт',
+  'O‘ynashga taklif':'Пригласить поиграть',
+  'Taklif egasi':'Автор приглашения','Qatnashchi':'Участник',
+  'Ro‘yxatga qaytish':'К списку',
+  'Mod tekshirilmoqda':'Проверка мода',
+  'Qayta sinash':'Повторить',
+  'O‘zgarishlarni saqlash':'Сохранить изменения',
+  'O‘ynash':'Играть','O‘chirish':'Удалить',
+  'Ko‘rishlar':'Просмотры',
+  'Profilim':'Мой профиль','Fayl':'Файл',
+  'Birinchi xabarni yuboring.':'Отправьте первое сообщение.',
+  'Suhbatni tanlang':'Выберите беседу',
+  'Suhbat yuklanmoqda...':'Загрузка беседы...',
+  'Umumiy chat yuklanmoqda...':'Загрузка общего чата...',
+  'Hozircha xabar yo‘q.':'Пока нет сообщений.',
+  'Profilni o‘zgartirish':'Редактировать профиль',
+  'Bio yozilmagan':'О себе не заполнено',
+  'Mod rasmini tanlash':'Выбрать изображение мода',
+  'Mod faylini tanlash':'Выбрать файл мода',
+  'Avatar rasmini tanlash':'Выбрать аватар',
+  'Izoh yozish mod tasdiqlangach ochiladi.':'Комментарии откроются после одобрения мода.',
+  'Fayllarni faqat ishonchli manbadan yuklab oling.':'Скачивайте файлы только из надёжных источников.',
+  'Boshqa so‘z yoki kategoriya bilan qidiring.':'Попробуйте другой запрос или категорию.',
+  'Hozircha saqlangan mod yo‘q':'Пока нет сохранённых модов'
+ },
+ en:{
+  'Modlar':'Mods','Tekshiruvda':'Under review','Tasdiqlangan':'Verified',
+  'Rad etilgan':'Rejected','Tavsif':'Description','Qo‘shish':'Add',
+  'Yuklab olish':'Download','Izohlar':'Comments','Layklar':'Likes',
+  'Yuborish':'Send','Xabar yozish...':'Write a message...',
+  'Bosh sahifa':'Home','Hamjamiyat':'Community',
+  'Mod topilmadi':'Mod not found','Boshqa so‘z yoki kategoriya bilan qidiring.':'Try a different search or category.',
+  'Modlar yuklanmoqda...':'Loading mods...',
+  'Mod tekshiruvda':'Mod under review','Yana modlar':'More mods',
+  'Akkauntlar':'Accounts','Akkauntlarni almashtirish':'Switch accounts',
+  'Hozirgi akkaunt':'Current account','Bosib almashtiring':'Tap to switch',
+  'Akkaunt qo‘shish':'Add account',
+  'O‘ynashga taklif':'Invite to play',
+  'Taklif egasi':'Invite creator','Qatnashchi':'Participant',
+  'Ro‘yxatga qaytish':'Back to list',
+  'Mod tekshirilmoqda':'Reviewing mod',
+  'Qayta sinash':'Retry',
+  'O‘zgarishlarni saqlash':'Save changes',
+  'O‘ynash':'Play','O‘chirish':'Delete',
+  'Ko‘rishlar':'Views',
+  'Profilim':'My profile','Fayl':'File',
+  'Suhbatni tanlang':'Select a conversation',
+  'Suhbat yuklanmoqda...':'Loading conversation...',
+  'Umumiy chat yuklanmoqda...':'Loading global chat...',
+  'Hozircha xabar yo‘q.':'No messages yet.',
+  'Profilni o‘zgartirish':'Edit profile',
+  'Bio yozilmagan':'No bio',
+  'Mod rasmini tanlash':'Choose mod image',
+  'Mod faylini tanlash':'Choose mod file',
+  'Avatar rasmini tanlash':'Choose avatar',
+  'Izoh yozish mod tasdiqlangach ochiladi.':'Comments open after mod approval.'
+ }
+};
 function ux(text){
-  return EXTRA_WORDS[S.lang]?.[text]||text;
+  return EXTRA_WORDS[S.lang]?.[text]||MORE_UI_TRANSLATIONS[S.lang]?.[text]||text;
 }
 const uiObserver = new MutationObserver(records=>{
   if(S.lang==='uz')return;
@@ -2762,7 +2833,7 @@ async function toggleNotifications(){
 async function savedModal(){
   if(!requireUser())return;
   dialog(t('saved'),`<div id="savedModalList" class="saved-modal-list">
-    <p class="muted">${t('loadingSaved')||'Yuklanmoqda...'}</p>
+    <p class="muted">${ux('Yuklanmoqda...')}</p>
   </div>`);
   const holder=$('#savedModalList');
   try{
@@ -2771,7 +2842,7 @@ async function savedModal(){
     const ids=[...S.savedIds];
     if(!ids.length){
       holder.innerHTML=`<div class="empty">${ico('bookmark',30)}
-        <p>${t('noSaved')||'Saqlangan modlar yo‘q'}</p></div>`;
+        <p>${ux('Saqlangan modlar yo‘q')}</p></div>`;
       return;
     }
     const result=await DB.from('mods')
