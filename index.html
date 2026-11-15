@@ -1832,18 +1832,19 @@ function filterMods(){
   more.innerHTML=more.hidden?'':`<button class="btn ghost" data-act="moreMods">
     ${ico('plus',18)} ${label}</button>`;
 }
-async function profile(id){
-  if(!id){
-    $('#app').innerHTML=blank()+
-      `<div class="buttons">${btn('auth',t('login'))}</div>`;
-    return
-  }
-  const mine=S.u?.id===id;
-  const [person,mods,pc,fc,gc,f]=await Promise.all([
+const profileDataCache=new Map();
+function invalidateProfileData(){
+  profileDataCache.clear();
+  clearScreenCache();
+}
+function getProfileData(id){
+  const key=(S.u?.id||'guest')+'|'+id;
+  const recent=profileDataCache.get(key);
+  if(recent&&Date.now()-recent.at<45000)return recent.promise;
+  const promise=Promise.all([
     DB.from('profiles').select('*').eq('id',id).single(),
     DB.from('mods').select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
-      .eq('author_id',id)
-      .order('created_at',{ascending:false}).limit(36),
+      .eq('author_id',id).order('created_at',{ascending:false}).limit(36),
     DB.from('mods').select('id',{count:'exact',head:true})
       .eq('author_id',id).eq('status','approved'),
     DB.from('follows').select('follower_id',{count:'exact',head:true})
@@ -1854,6 +1855,54 @@ async function profile(id){
       .eq('follower_id',S.u.id).eq('following_id',id)
       .maybeSingle():Promise.resolve({data:null})
   ]);
+  profileDataCache.set(key,{at:Date.now(),promise});
+  promise.catch(()=>{
+    if(profileDataCache.get(key)?.promise===promise)profileDataCache.delete(key);
+  });
+  return promise;
+}
+let prefetchedFor=null;
+async function prefetchCommunity(){
+  const uid=S.u?.id;
+  if(!uid)return;
+  if(S.communityData?.uid===uid&&
+    Date.now()-S.communityData.at<COMMUNITY_TTL)return;
+  const [posts,joins]=await Promise.all([
+    DB.from('play_posts')
+      .select('id,author_id,title,details,game_version,play_mode,play_at,joins_count')
+      .order('play_at',{ascending:true}).limit(40),
+    DB.from('play_joins').select('play_id').eq('user_id',uid)
+  ]);
+  check(posts);check(joins);
+  if(S.u?.id!==uid)return;
+  const rows=posts.data||[];
+  const ids=rows.map(x=>x.author_id);
+  const people=await users(ids);
+  if(S.u?.id!==uid)return;
+  S.communityData={uid,at:Date.now(),posts:rows,
+    joined:new Set((joins.data||[]).map(x=>x.play_id)),people};
+}
+function scheduleFastPrefetch(){
+  const uid=S.u?.id;
+  if(!uid||prefetchedFor===uid||navigator.connection?.saveData)return;
+  prefetchedFor=uid;
+  const task=()=>{
+    if(S.u?.id!==uid)return;
+    getProfileData(uid).catch(console.warn);
+    prefetchCommunity().catch(console.warn);
+  };
+  if('requestIdleCallback' in window)
+    requestIdleCallback(task,{timeout:3500});
+  else setTimeout(task,1400);
+}
+async function profile(id){
+  if(!id){
+    $('#app').innerHTML=blank()+
+      `<div class="buttons">${btn('auth',t('login'))}</div>`;
+    return
+  }
+  const mine=S.u?.id===id;
+  const [person,mods,pc,fc,gc,f]=await getProfileData(id);
   if(S.page!=='profile'||S.profileId!==id)return;
   const p=check(person);
   check(mods);
@@ -1925,6 +1974,7 @@ async function toggleFollow(id){
       follower_id:S.u.id,following_id:id
     })
   );
+  invalidateProfileData();
   await go('profile',id)
 }
 
@@ -2017,6 +2067,7 @@ async function switchAccount(id){
   close();
   await refreshUser();
   await go('home');
+  scheduleFastPrefetch();
   toast('@'+target.username+' akkauntiga o‘tildi');
 }
 function authBox(register=false,adding=false){
@@ -2108,6 +2159,7 @@ async function submitAuth(f){
   toast('Xush kelibsiz, @'+username);
   await refreshUser();
   await go('home');
+  scheduleFastPrefetch();
 }
 
 async function refreshUser(){
@@ -2115,7 +2167,7 @@ async function refreshUser(){
   let s=await DB.auth.getUser();
   S.u=s.data?.user||null;
   if(previousId!==S.u?.id){
-    clearScreenCache();
+    invalidateProfileData();
     S.communityData=null;S.accountsAt=0;
     S.chatId=null;S.chatUnread=new Set();S.chatPeers=[];
     S.chatUsers={};S.worldUnread=0;S.worldPref=null;
@@ -2221,6 +2273,7 @@ async function saveProfile(f){
     .update({username,display_name,bio,avatar_url}).eq('id',S.u.id);
   if(r.error?.code==='23505')throw Error('Bu username band');
   check(r);
+  invalidateProfileData();
   await refreshUser();
   close();
   await go('profile',S.u.id)
@@ -2349,6 +2402,7 @@ async function saveMod(f){
   }
   toast(adminEdit?'Mod tahrirlandi':t('pending'));
   close();
+  invalidateProfileData();feedLoadedAt=0;feedLoaded=false;
   if(adminEdit)await adminModDetail(id);
   else await go('profile',S.u.id)
 }
@@ -2366,6 +2420,7 @@ async function removeMod(id){
   check(await DB.from('mods').delete()
     .eq('id',id).eq('author_id',S.u.id));
   modCache.delete(id);
+  invalidateProfileData();feedLoadedAt=0;feedLoaded=false;
   S.feed=S.feed.filter(m=>m.id!==id);
   await go('profile',S.u.id);
 }
@@ -2652,7 +2707,7 @@ async function download(id){
   toast('Yuklab olish boshlandi');
 }
 let communityReq=0;
-const COMMUNITY_TTL=20000;
+const COMMUNITY_TTL=60000;
 function communityShell(tab){
   if(tab==='play'){
     $('#app').innerHTML=`
@@ -3951,6 +4006,7 @@ if('serviceWorker'in navigator){
   uiObserver.observe($('#app'),{childList:true,subtree:true});
   uiObserver.observe($('#overlay'),{childList:true,subtree:true});
   await Promise.allSettled([go('home'),refreshUser()]);
+  scheduleFastPrefetch();
   const deepId=new URLSearchParams(location.search).get('mod');
   if(deepId&&/^[0-9a-f-]{36}$/i.test(deepId)){
     openMod(deepId).catch(err=>console.warn('Mod havolasi:',err));
