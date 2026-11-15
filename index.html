@@ -773,6 +773,10 @@ border-color:#ef9892;color:#fff}
 .saved-modal-row span{display:grid;gap:4px;flex:1;min-width:0;overflow-wrap:anywhere}
 .saved-modal-row small{color:#cfb18a;font-size:12px}
 .profile-bio{white-space:pre-wrap;line-height:1.6}
+.translation-fields{margin:10px 0 18px;padding:13px;border:1px solid #8a6842;border-radius:7px;background:#33251b}
+.translation-fields>summary{cursor:pointer;font-weight:700;color:#ebc584;margin-bottom:8px}
+.translation-fields .formgroup{margin-top:9px}
+
 </style>
 </head>
 <body>
@@ -973,6 +977,151 @@ noChats:'You can message people you follow'
 }
 };
 function t(k){return words[S.lang]?.[k]||words.uz[k]||k}
+
+const EXTRA_WORDS={
+  uz:{
+    'Mod tarjimalari (RU / EN)':'Mod tarjimalari (RU / EN)',
+    'Asosiy nom va tavsif o‘zbekcha. Boshqa tillar uchun tarjimalarni kiriting.':'Asosiy nom va tavsif o‘zbekcha. Boshqa tillar uchun tarjimalarni kiriting.',
+    'nom':'nom','tavsif':'tavsif',
+    'loadingSaved':'Yuklanmoqda...','noSaved':'Saqlangan modlar yo‘q'
+  },
+  ru:{
+    'Mod tarjimalari (RU / EN)':'Переводы мода (RU / EN)',
+    'Asosiy nom va tavsif o‘zbekcha. Boshqa tillar uchun tarjimalarni kiriting.':'Основное название и описание на узбекском. Добавьте переводы для других языков.',
+    'nom':'название','tavsif':'описание',
+    'loadingSaved':'Загрузка...','noSaved':'Нет сохранённых модов',
+    'Modlar olami':'Мир модов','Saqlangan modlar':'Сохранённые моды',
+    'Saqlanganlarni ko‘rish':'Посмотреть сохранённые',
+    'Yuklanmoqda...':'Загрузка...',
+    'Saqlangan modlar yo‘q':'Нет сохранённых модов',
+    'KASHF ETISH':'ИССЛЕДОВАТЬ',
+    'Mod nomi yoki tavsifini qidiring...':'Поиск по названию или описанию мода...',
+    'Barcha kategoriyalar':'Все категории',
+    'Barcha versiyalar':'Все версии',
+    'O‘yin dunyongni':'Расширь свой',
+    'kengaytir.':'игровой мир.',
+    'Eng qiziqarli Minecraft modlarini kashf et, saqla va do‘stlaring bilan bo‘lish.':'Находите моды Minecraft, сохраняйте и делитесь с друзьями.',
+    'Yangi':'Новые','Mashhur':'Популярные',
+    'Mod qo‘shish':'Добавить мод','Qidirish':'Поиск',
+    'Yana modlar':'Ещё моды',
+    'Modlar tekshiruvi':'Модерация модов',
+    'Tasdiqlash uchun modni oching':'Откройте мод для проверки',
+    'Ko‘k belgi so‘rovlari':'Заявки на галочку',
+    'Shikoyatlar':'Жалобы',
+    'Barcha modlar':'Все моды','Foydalanuvchilar':'Пользователи',
+    'Tahrirlash':'Изменить','Ko‘rish':'Просмотр',
+    'Saqlash':'Сохранить','Yozish':'Написать',
+    'Qo‘shilish':'Присоединиться','Chiqish':'Выйти',
+    'Qatnashchilar':'Участники','Tasdiqlash':'Одобрить',
+    'Rad etish':'Отклонить',
+    'Sozlamalar':'Настройки',
+    'Profilni tahrirlash':'Редактировать профиль',
+    'Bildirishnomalar':'Уведомления',
+    'Yoqilgan':'Включены','O‘chirilgan':'Выключены',
+    'Yoqish':'Включить','O‘chirish':'Выключить',
+    'Ko‘k belgi so‘rovi':'Заявка на подтверждение',
+    'Ilova sifatida':'Как приложение',
+    'O‘rnatish':'Установить','Chiqish':'Выйти',
+    'Admin boshqaruvi':'Управление админа',
+    'Admin panelini ochish':'Открыть админ-панель',
+    'Hozircha hech narsa yo‘q':'Пока ничего нет',
+    'Saqlanganlarni ko‘rish':'Просмотр сохранённых',
+    'Akkauntdan chiqmoqchimisiz?':'Выйти из аккаунта?',
+    'Izohlar yuklanmoqda...':'Загрузка комментариев...',
+    'Fayllarni faqat ishonchli manbadan yuklab oling.':'Скачивайте файлы только из надёжных источников.',
+    'Hozircha saqlangan mod yo‘q':'Пока нет сохранённых модов',
+    'Mod tekshiruvda. Tasdiqlangach like, saqlash va yuklab olish mumkin.':'Мод на проверке. После одобрения станут доступны лайки, сохранение и скачивание.',
+    'Mod tarjimalari (RU / EN)':'Переводы мода (RU / EN)',
+    'Asosiy nom va tavsif o‘zbekcha. Boshqa tillar uchun tarjimalarni kiriting.':'Основное название и описание на узбекском. Добавьте переводы.',
+    'Ko‘rinadigan ism':'Отображаемое имя','Profil rasmi (2 MB)':'Аватар (2 МБ)',
+    'Birinchi xabarni yuboring.':'Отправьте первое сообщение.',
+    'Umumiy chat':'Общий чат',
+    'Minecraft World jamoasi':'Сообщество Minecraft World',
+    'Shaxsiy suhbat':'Личный чат',
+    'Yangi chat':'Новый чат',
+    'Xabarlar':'Сообщения',
+    'Xabar yozing...':'Напишите сообщение...',
+    'Hamma uchun xabar...':'Сообщение для всех...',
+    'Mute':'Без звука','Qayta qo‘shilish':'Вступить снова'
+  },
+  en:{
+    'Mod tarjimalari (RU / EN)':'Mod translations (RU / EN)',
+    'Asosiy nom va tavsif o‘zbekcha. Boshqa tillar uchun tarjimalarni kiriting.':'The primary title and description are in Uzbek. Add translations for other languages.',
+    'nom':'title','tavsif':'description',
+    'loadingSaved':'Loading...','noSaved':'No saved mods',
+    'Modlar olami':'Explore mods',
+    'Saqlangan modlar':'Saved mods','Saqlanganlarni ko‘rish':'View saved mods',
+    'Yuklanmoqda...':'Loading...','Saqlangan modlar yo‘q':'No saved mods',
+    'KASHF ETISH':'EXPLORE',
+    'Mod nomi yoki tavsifini qidiring...':'Search by mod title or description...',
+    'Barcha kategoriyalar':'All categories','Barcha versiyalar':'All versions',
+    'O‘yin dunyongni':'Expand your','kengaytir.':'game world.',
+    'Eng qiziqarli Minecraft modlarini kashf et, saqla va do‘stlaring bilan bo‘lish.':'Discover Minecraft mods, save them, and share with friends.',
+    'Yangi':'New','Mashhur':'Popular','Mod qo‘shish':'Add a mod',
+    'Qidirish':'Search','Yana modlar':'More mods',
+    'Modlar tekshiruvi':'Mod review',
+    'Tasdiqlash uchun modni oching':'Open a mod to review it',
+    'Ko‘k belgi so‘rovlari':'Verification requests',
+    'Shikoyatlar':'Reports','Barcha modlar':'All mods','Foydalanuvchilar':'Users',
+    'Tahrirlash':'Edit','Ko‘rish':'View',
+    'Saqlash':'Save','Yozish':'Message',
+    'Qo‘shilish':'Join','Chiqish':'Leave',
+    'Qatnashchilar':'Participants','Tasdiqlash':'Approve','Rad etish':'Reject',
+    'Sozlamalar':'Settings','Profilni tahrirlash':'Edit profile',
+    'Bildirishnomalar':'Notifications',
+    'Yoqilgan':'Enabled','O‘chirilgan':'Disabled',
+    'Yoqish':'Turn on','O‘chirish':'Turn off',
+    'Ko‘k belgi so‘rovi':'Verification request',
+    'Ilova sifatida':'Install as app','O‘rnatish':'Install',
+    'Admin boshqaruvi':'Admin controls','Admin panelini ochish':'Open admin panel',
+    'Hozircha hech narsa yo‘q':'Nothing here yet',
+    'Akkauntdan chiqmoqchimisiz?':'Log out of this account?',
+    'Izohlar yuklanmoqda...':'Loading comments...',
+    'Fayllarni faqat ishonchli manbadan yuklab oling.':'Only download files from trustworthy sources.',
+    'Hozircha saqlangan mod yo‘q':'No saved mods yet',
+    'Mod tekshiruvda. Tasdiqlangach like, saqlash va yuklab olish mumkin.':'Mod under review. Likes, saving, and downloading will be enabled after approval.',
+    'Ko‘rinadigan ism':'Display name','Profil rasmi (2 MB)':'Profile image (2 MB)',
+    'Birinchi xabarni yuboring.':'Send your first message.',
+    'Umumiy chat':'Global chat','Minecraft World jamoasi':'Minecraft World community',
+    'Shaxsiy suhbat':'Private conversation','Yangi chat':'New chat',
+    'Xabarlar':'Messages','Xabar yozing...':'Write a message...',
+    'Hamma uchun xabar...':'Message everyone...',
+    'Mute':'Mute','Qayta qo‘shilish':'Rejoin'
+  }
+};
+function ux(text){
+  return EXTRA_WORDS[S.lang]?.[text]||text;
+}
+const uiObserver = new MutationObserver(records=>{
+  if(S.lang==='uz')return;
+  for(const record of records){
+    for(const node of record.addedNodes){
+      if(node.nodeType===1)translateUi(node);
+      else if(node.nodeType===3)translateTextNode(node);
+    }
+  }
+});
+function translateTextNode(n){
+  const parent=n.parentElement;
+  if(!parent||parent.closest('.bubble-body,.mod-description,.profile-bio,.linkbtn[data-act="user"],.saved-modal-row,.mod-content,.mod-title'))return;
+  const v=n.nodeValue;
+  const trim=v.trim();
+  const translated=ux(trim);
+  if(trim && trim!==translated)n.nodeValue=v.replace(trim,translated);
+}
+function translateUi(root){
+  if(S.lang==='uz'||!root)return;
+  if(root.nodeType===3){translateTextNode(root);return}
+  if(root.nodeType!==1&&root.nodeType!==9)return;
+  if(root.nodeType===1&&root.matches('input,textarea')&&root.hasAttribute('placeholder')){
+    root.placeholder=ux(root.placeholder);
+  }
+  const walk=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  let t;while(t=walk.nextNode())translateTextNode(t);
+  for(const item of root.querySelectorAll?.('input[placeholder],textarea[placeholder]')||[])
+    item.placeholder=ux(item.placeholder);
+}
+
 function e(v){
   return String(v??'').replace(/[&<>"']/g,x=>({
     '&':'&amp;','<':'&lt;','>':'&gt;',
@@ -1035,7 +1184,8 @@ function dialog(title,html){
     </div>
     <div class="dialogbody">${html}</div>
   </div>`;
-  $('#overlay').classList.add('open')
+  $('#overlay').classList.add('open');
+  translateUi($('#overlay'))
 }
 function close(){
   modalGeneration++;
@@ -1088,8 +1238,8 @@ function card(m,p,own=false){
     </div>
     <div class="cardbody">
       <h3><button class="linkbtn" data-act="mod"
-        data-id="${m.id}">${e(m.title)}</button></h3>
-      <p class="muted smalltext">${e(m.description.slice(0,125))}</p>
+        data-id="${m.id}">${e(localModTitle(m))}</button></h3>
+      <p class="muted smalltext">${e(localModDesc(m).slice(0,125))}</p>
       <div class="row mini muted">
         ${ico('heart',14)} ${count(m.likes_count)}
         · ${ico('eye',14)} <span data-view-count="${e(m.id)}">${count(m.views_count)}</span>
@@ -1308,7 +1458,7 @@ function filterMods(){
     (S.category==='all'||m.category===S.category)&&
     (!S.gameVersion||S.gameVersion==='all'||m.game_version===S.gameVersion)&&
     (view!=='saved'||S.savedIds?.has(m.id))&&
-    (!q||`${m.title} ${m.description} ${m.category}`.toLocaleLowerCase().includes(q))
+    (!q||`${localModTitle(m)} ${localModDesc(m)} ${m.category}`.toLocaleLowerCase().includes(q))
   );
   if(S.sort==='popular')result.sort((a,b)=>(b.likes_count||0)-(a.likes_count||0));
   else result.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
@@ -1727,6 +1877,26 @@ function modFields(m,adminEdit=false){
       <textarea class="field" name="description"
         maxlength="6000" required>${e(m?.description||'')}</textarea>
     </div>
+    <details class="translation-fields">
+      <summary>${ux('Mod tarjimalari (RU / EN)')}</summary>
+      <p class="muted mini">${ux('Asosiy nom va tavsif o‘zbekcha. Boshqa tillar uchun tarjimalarni kiriting.')}</p>
+      <div class="formgroup">
+        <label>Русский — ${ux('nom')}</label>
+        <input class="field" name="title_ru" maxlength="160" value="${e(m?.title_ru||'')}">
+      </div>
+      <div class="formgroup">
+        <label>Русский — ${ux('tavsif')}</label>
+        <textarea class="field" name="description_ru" maxlength="6000">${e(m?.description_ru||'')}</textarea>
+      </div>
+      <div class="formgroup">
+        <label>English — ${ux('nom')}</label>
+        <input class="field" name="title_en" maxlength="160" value="${e(m?.title_en||'')}">
+      </div>
+      <div class="formgroup">
+        <label>English — ${ux('tavsif')}</label>
+        <textarea class="field" name="description_en" maxlength="6000">${e(m?.description_en||'')}</textarea>
+      </div>
+    </details>
     <div class="two">
       <div class="formgroup">
         <label>${t('category')}</label>
@@ -1797,6 +1967,12 @@ async function saveMod(f){
   let data={
     title:String(x.get('title')).trim(),
     description:String(x.get('description')).trim(),
+    title_uz:String(x.get('title')).trim(),
+    description_uz:String(x.get('description')).trim(),
+    title_ru:String(x.get('title_ru')||'').trim()||null,
+    description_ru:String(x.get('description_ru')||'').trim()||null,
+    title_en:String(x.get('title_en')||'').trim()||null,
+    description_en:String(x.get('description_en')||'').trim()||null,
     category:x.get('category'),
     game_version:x.get('version'),
     cover_path,file_path
@@ -1874,17 +2050,17 @@ function renderMod(m){
     ${btn('reportMod',t('report'),m.id,'ghost')}`:
     `<div class="note mod-review-message">${ico('clock',19)}
       Mod tekshiruvda. Tasdiqlangach like, saqlash va yuklab olish mumkin.</div>`;
-  dialog(m.title,`
+  dialog(localModTitle(m),`
     <section class="mod-detail" data-mod-id="${e(m.id)}">
       <div class="mod-hero-art">
         ${cover(m.cover_path)?`<img loading="eager" decoding="async" src="${e(cover(m.cover_path))}" alt="">`:ico('package',66)}
       </div>
       <div class="mod-headline">
-        <h2>${e(m.title)}</h2>
+        <h2>${e(localModTitle(m))}</h2>
         <span class="status">${e(m.game_version)} · ${e(m.category)}</span>
         <span class="mod-view-stat">${ico('eye',17)} <span data-mod-view-count>${count(m.views_count)}</span></span>
       </div>
-      <p class="wrap mod-description">${e(m.description)}</p>
+      <p class="wrap mod-description">${e(localModDesc(m))}</p>
       <div id="modAuthor" class="mod-author"></div>
       <div class="buttons mod-actions">${actions}</div>
       ${isApproved?`
@@ -3115,7 +3291,8 @@ window.addEventListener('change',async ev=>{
     document.querySelectorAll('[data-tr]').forEach(
       x=>x.textContent=t(x.dataset.tr)
     );
-    await go(S.page,S.profileId)
+    await go(S.page,S.profileId);
+    translateUi($('#app'))
   }
 });
 
@@ -3288,6 +3465,8 @@ if('serviceWorker'in navigator){
   document.querySelectorAll('[data-tr]').forEach(
     x=>x.textContent=t(x.dataset.tr)
   );
+  uiObserver.observe($('#app'),{childList:true,subtree:true});
+  uiObserver.observe($('#overlay'),{childList:true,subtree:true});
   await Promise.allSettled([go('home'),refreshUser()]);
   const deepId=new URLSearchParams(location.search).get('mod');
   if(deepId&&/^[0-9a-f-]{36}$/i.test(deepId)){
