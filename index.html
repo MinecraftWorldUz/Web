@@ -1618,6 +1618,7 @@ async function go(page='home',id=null){
 const FEED_CACHE_KEY='mw_public_feed_v4';
 const FEED_TTL=5*60*1000;
 let searchTimer=null, homeRequest=0;
+let feedLoadedAt=0,feedLoadedOrder='',feedLoaded=false;
 const knownProfiles=new Map();
 function setCachedProfiles(rows){
   const now=Date.now();
@@ -1628,7 +1629,7 @@ async function users(ids){
   const now=Date.now(), result={},missing=[];
   for(const id of distinct){
     const c=knownProfiles.get(id);
-    if(c&&now-c.at<90*1000)result[id]=c.p;
+    if(c&&now-c.at<5*60*1000)result[id]=c.p;
     else missing.push(id);
   }
   if(missing.length){
@@ -1699,12 +1700,15 @@ function homeShell(){
   $('#gameVersion').value=S.gameVersion||'all';
 }
 function refreshFeedCounters(){
-  if(!$('#quickCategories'))return;
-  // Counters removed from homepage.
-  $('#quickCategories').innerHTML=C.map(c=>
+  const el=$('#quickCategories');
+  if(!el)return;
+  const key=S.lang+'|'+S.category;
+  if(el.dataset.renderKey===key)return;
+  el.innerHTML=C.map(c=>
     `<button class="category-chip ${S.category===c?'selected':''}"
       data-act="quickCategory" data-category="${e(c)}"
       title="${e(categoryName(c))}">${e(categoryName(c))}</button>`).join('');
+  el.dataset.renderKey=key;
 }
 async function loadSavedIds(){
   if(!S.u){S.savedIds=new Set();return}
@@ -1716,14 +1720,21 @@ async function loadSavedIds(){
 async function home(){
   const request=++homeRequest;
   homeShell();
-  const cached=readFeedCache();
-  if(cached){
-    S.feed=cached.items;
-    S.hasMore=S.feed.length>=60;
-    S.feedOffset=S.feed.length;
-    setCachedProfiles(cached.profiles);
-    S.cache=Object.fromEntries(cached.profiles.map(p=>[p.id,p]));
+  // Switching tabs should not trigger a full network refresh every time.
+  const hasMemory=feedLoaded&&feedLoadedOrder===S.sort;
+  if(hasMemory){
     filterMods();
+    if(Date.now()-feedLoadedAt<30000)return;
+  }else{
+    const cached=readFeedCache();
+    if(cached){
+      S.feed=cached.items;
+      S.hasMore=S.feed.length>=60;
+      S.feedOffset=S.feed.length;
+      setCachedProfiles(cached.profiles);
+      S.cache=Object.fromEntries(cached.profiles.map(p=>[p.id,p]));
+      filterMods();
+    }
   }
   const query=DB.from('mods')
     .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
@@ -1741,6 +1752,9 @@ async function home(){
   S.feed=res.value.data||[];
   S.hasMore=S.feed.length===60;
   S.feedOffset=S.feed.length;
+  feedLoaded=true;
+  feedLoadedAt=Date.now();
+  feedLoadedOrder=S.sort;
   if(S.homeView==='saved')await loadExtraSavedMods();
   filterMods();
   saveFeedCache();
@@ -2101,6 +2115,8 @@ async function refreshUser(){
   let s=await DB.auth.getUser();
   S.u=s.data?.user||null;
   if(previousId!==S.u?.id){
+    clearScreenCache();
+    S.communityData=null;S.accountsAt=0;
     S.chatId=null;S.chatUnread=new Set();S.chatPeers=[];
     S.chatUsers={};S.worldUnread=0;S.worldPref=null;
     S.savedIds=new Set();
@@ -3791,6 +3807,7 @@ window.addEventListener('submit',async ev=>{
         play_at:date.toISOString()
       }));
       close();
+      S.communityData=null;clearScreenCache();
       await go('community')
     }
     else if(f.id==='msgForm'){
