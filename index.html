@@ -1367,6 +1367,64 @@ body:before,.hero:after{display:none!important}
  .mw-profile-mods .art{height:168px!important}
 }
 
+
+/* V1.1 messenger (scoped: no impact on mods, admin or community) */
+.chat-peer[hidden],#mw11NoResults[hidden]{display:none!important}
+.mw11-inbox-controls{display:grid;gap:9px;padding:0 0 13px}
+.mw11-inbox-controls>.field{border-radius:24px;padding:12px 16px;background:#28251e}
+.mw11-tabs{display:flex;gap:7px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.mw11-tabs button{border:1px solid var(--edge);border-radius:30px;background:#3b2d20;color:#d7c5ad;padding:9px 12px;white-space:nowrap;cursor:pointer;font-size:12px}
+.mw11-tabs button.active{background:var(--orange);border-color:var(--orange);color:#2c1e11;font-weight:800}
+#chatRows{min-width:0}.chat-peer{position:relative;padding-right:37px!important;min-height:63px}
+.chat-peer .peer-text{overflow:hidden}
+.chat-peer .peer-text b{overflow-wrap:anywhere}
+.mw11-chat-options{position:absolute;right:7px;top:19px;z-index:3;padding:4px 8px;border-radius:9px;color:var(--orange);font-size:21px;line-height:1;cursor:pointer}
+.mw11-chat-options:hover,.mw11-chat-options:focus{background:#ffffff16;outline:1px solid #ffffff33}
+.mw11-chat-flag{position:absolute;top:4px;right:8px;font-size:11px}
+.mw11-no-results{text-align:center;padding:18px 7px}
+.chat-window{border-radius:14px}
+.mw11-bubble{min-width:100px;max-width:min(83%,560px)!important;position:relative;border:1px solid #ffffff12}
+.mw11-bubble .bubble-body{line-height:1.45;overflow-wrap:anywhere;white-space:pre-wrap}
+.mw11-bubble .mw11-footer{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:5px}
+.mw11-bubble .mw11-footer small{font-size:10px;opacity:.83}
+.mw11-message-tools{display:inline-flex}
+.mw11-message-tools button{border:0;background:#ffffff16;color:#f2cf9a;border-radius:8px;padding:1px 9px;font-size:19px;cursor:pointer}
+.mw11-reaction-list{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.mw11-react-chip{border:1px solid #9d7a53;background:#ffffff16;color:var(--text);border-radius:25px;font-size:12px;padding:3px 9px;cursor:pointer}
+.mw11-react-chip.mine{background:#ae843e55;border-color:var(--orange)}
+.mw11-quote{border-left:3px solid var(--orange);background:#ffffff12;border-radius:5px;padding:5px 10px;font-size:12px;margin:0 0 7px;max-height:75px;overflow:hidden;text-overflow:ellipsis;white-space:normal}
+.mw11-reply-bar{flex-basis:100%;display:flex;gap:9px;align-items:center;justify-content:space-between;border-left:3px solid var(--orange);background:#443223;padding:8px 11px;border-radius:9px}
+.mw11-reply-bar span{display:grid;gap:3px;min-width:0;flex:1}
+.mw11-reply-bar strong{font-size:12px;color:var(--orange)}
+.mw11-reply-bar small{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mw11-reply-bar button{font-size:21px;padding:3px 8px;color:var(--text);border:0;background:transparent}
+#conversation .chat-compose{flex-wrap:wrap;align-items:center}
+#conversation .chat-compose>input.field{flex:1 1 150px}
+.mw11-emoji-row{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.mw11-emoji-row button{font-size:24px;cursor:pointer;background:#4d3b2c;border:1px solid var(--edge);border-radius:12px;padding:9px}
+.mw11-actions{display:grid;gap:7px;margin:13px 0}
+.mw11-actions>button{display:flex;align-items:center;gap:12px;padding:12px;text-align:left;color:var(--text);background:#443226;border:1px solid #725638;border-radius:12px;cursor:pointer}
+.mw11-actions>button:hover{background:#59422d}
+.mw11-actions .danger-text{color:#ffbdab}
+.mw11-menu-text{padding:11px;background:#ffffff0b;border-left:3px solid var(--orange);white-space:pre-wrap;overflow-wrap:anywhere;max-height:150px;overflow:auto;border-radius:9px}
+#mw11EditMessage textarea{width:100%;margin-bottom:14px;resize:vertical}
+.mw11-thread-search{padding:11px 2px}
+.mw11-thread-search .field{border-radius:24px}
+.mw11-group-message{display:flex;flex-direction:column;align-items:flex-start;margin-bottom:8px}
+.mw11-group-message:has(.bubble.mine){align-items:flex-end}
+.mw11-group-sender{color:var(--orange);font-size:11px;margin-left:8px;font-weight:750}
+@media(max-width:760px){
+ .chatlayout{gap:10px}
+ .chatlist{max-height:250px}
+ .chat-window{padding:9px}
+ .messages{max-height:50dvh;min-height:270px}
+ .mw11-bubble{max-width:90%!important}
+ .mw11-tabs button{padding:8px 10px;font-size:12px}
+}
+
+.chat-title{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chat-title>.btn{font-size:12px;min-height:37px;padding:8px 10px}
+@media(max-width:460px){.chat-title h2{flex-basis:100%;margin:0 0 4px}}
 </style>
 </head>
 <body>
@@ -1374,7 +1432,7 @@ body:before,.hero:after{display:none!important}
 <div class="shell">
   <header class="top">
     <button class="logo" data-go="home">
-      <span class="brand-icon" data-icon="world" data-size="24"></span><span class="brand-word">MINECRAFT <b>WORLD</b></span><span class="version-pill">V1.0</span>
+      <span class="brand-icon" data-icon="world" data-size="24"></span><span class="brand-word">MINECRAFT <b>WORLD</b></span><span class="version-pill">V1.1</span>
     </button>
     <div class="head-actions">
       <button class="iconbtn" data-act="notifications">
@@ -2113,7 +2171,7 @@ async function go(page='home',id=null){
     if(page==='home')await home();
     else if(page==='profile')await profile(target);
     else if(page==='community')await community();
-    else if(page==='chat'){await chats();await window.MWChat?.load?.();}
+    else if(page==='chat'){await chats();await window.MWChat?.load?.();await window.MWV11?.loadPrefs?.();}
     else if(page==='create')create();
     else await home();
   }catch(err){
@@ -3608,6 +3666,7 @@ function chatRows(){
       chatPeer(id,S.chatUsers?.[id],S.chatId===id,S.chatUnread?.has(id)?1:0)
     ).join('');
   window.MWChat?.renderGroups?.();
+  window.MWV11?.decorateInbox?.();
 }
 let chatListRequest=0, chatThreadRequest=0;
 const recentThreads=new Map();
@@ -3703,17 +3762,16 @@ async function conversation(id){
   if(recent?.rows?.length){
     const msgs=$('#msgs');
     if(msgs){
-      msgs.innerHTML=recent.rows.map(m=>
-        chatBubble(m.body,m.sender_id===S.u.id,chatTime(m.created_at),
-          `<button class="linkbtn" data-act="reportMsg" data-id="${e(m.id)}">${ico('flag',12)}</button>`)
-      ).join('');
+      msgs.innerHTML=recent.rows.map(m=>window.MWV11?.bubble?.(m,'dm',recent.rows)||
+        chatBubble(m.body,m.sender_id===S.u.id,chatTime(m.created_at))).join('');
+      window.MWV11?.afterRender?.(recent.rows,'dm');
       msgs.scrollTop=msgs.scrollHeight;
     }
   }
   const uid=S.u.id;
   const [pResult,msgResult]=await Promise.all([
     users([id]),
-    DB.from('messages').select('id,sender_id,recipient_id,body,created_at')
+    DB.from('messages').select('id,sender_id,recipient_id,body,created_at,edited_at,reply_to')
       .or(`and(sender_id.eq.${uid},recipient_id.eq.${id}),and(sender_id.eq.${id},recipient_id.eq.${uid})`)
       .order('created_at',{ascending:false}).limit(55)
   ]);
@@ -3726,14 +3784,15 @@ async function conversation(id){
   recentThreads.set(key,{rows,at:Date.now()});
   const msgs=$('#msgs');
   if(msgs){
-    msgs.innerHTML=rows.map(m=>
-      chatBubble(m.body,m.sender_id===uid,chatTime(m.created_at),
-        `<button class="linkbtn" data-act="reportMsg" data-id="${e(m.id)}">${ico('flag',12)}</button>`)
-    ).join('')||'<p class="muted">Birinchi xabarni yuboring.</p>';
+    msgs.innerHTML=rows.map(m=>window.MWV11?.bubble?.(m,'dm',rows)||
+      chatBubble(m.body,m.sender_id===uid,chatTime(m.created_at))).join('')||'<p class="muted">Birinchi xabarni yuboring.</p>';
+    window.MWV11?.afterRender?.(rows,'dm');
+    window.MWV11?.addThreadSearch?.();
     msgs.scrollTop=msgs.scrollHeight;
   }
   markChatSeen(id);
   chatRows();
+  window.MWV11?.markRead?.('u:'+id).catch(console.warn);
 }
 async function worldConversation(){
   if(!requireUser())return;
@@ -3753,12 +3812,13 @@ async function worldConversation(){
     if(msgs){
       msgs.innerHTML=renderWorldMessages(recent.rows,names);
       msgs.scrollTop=msgs.scrollHeight;
+      window.MWV11?.afterRender?.(recent.rows,'world');
     }
   }
   // Start both requests simultaneously instead of waiting for room settings first.
   const [prefResult,rowsResult]=await Promise.all([
     prefPromise,
-    DB.from('world_chat_messages').select('id,author_id,body,created_at')
+    DB.from('world_chat_messages').select('id,author_id,body,created_at,edited_at,reply_to')
       .order('created_at',{ascending:false}).limit(55)
   ]);
   if(S.page!=='chat'||S.chatId!=='world'||seq!==chatThreadRequest||!$('#conversation'))return;
@@ -3778,8 +3838,11 @@ async function worldConversation(){
   if(msgs){
     msgs.innerHTML=renderWorldMessages(rows,names);
     msgs.scrollTop=msgs.scrollHeight;
+    window.MWV11?.afterRender?.(rows,'world');
+    window.MWV11?.addThreadSearch?.();
   }
   S.worldUnread=0;
+  window.MWV11?.markRead?.('world').catch(console.warn);
   worldUpdate({last_seen_at:new Date().toISOString()}).catch(console.warn);
   chatRows();updateChatBadge();
   // Names can be requested afterwards, without blocking the messages.
@@ -3789,6 +3852,7 @@ async function worldConversation(){
       const existingScroll=$('#msgs').scrollTop;
       $('#msgs').innerHTML=renderWorldMessages(rows,mp);
       $('#msgs').scrollTop=existingScroll;
+      window.MWV11?.afterRender?.(rows,'world');
     }).catch(console.warn);
   }
 }
@@ -3797,9 +3861,7 @@ function renderWorldMessages(rows,names){
     <button class="linkbtn" data-act="user" data-id="${e(m.author_id)}">
       ${avatar(names[m.author_id])} ${label(names[m.author_id])}
     </button>
-    ${chatBubble(m.body,m.author_id===S.u?.id,chatTime(m.created_at),
-      m.author_id!==S.u?.id?`<button class="linkbtn" data-act="reportUser"
-        data-id="${e(m.author_id)}" title="Shikoyat">${ico('flag',12)}</button>`:'')}
+    ${window.MWV11?.bubble?.(m,'world',rows)||chatBubble(m.body,m.author_id===S.u?.id,chatTime(m.created_at))}
   </div>`).join('')||'<p class="muted">Hozircha xabar yo‘q.</p>';
 }
 function chooseChat(){
@@ -3834,20 +3896,25 @@ async function findChatUsers(term){
   ).join('')||'<p class="muted">Foydalanuvchi topilmadi.</p>';
 }
 async function notificationCount(){
-  if(!S.u){
-    $('#alertCount').hidden=true;
-    return
-  }
-  let r=await DB.from('notifications')
-    .select('id',{count:'exact',head:true})
-    .eq('user_id',S.u.id).eq('is_read',false);
-  if(r.error)return;
-  $('#alertCount').hidden=!r.count;
-  $('#alertCount').textContent=r.count>99?'99+':r.count
+  if(!S.u){$('#alertCount').hidden=true;return}
+  const uid=S.u.id;
+  const [base,invites]=await Promise.all([
+    DB.from('notifications').select('id',{count:'exact',head:true})
+      .eq('user_id',uid).eq('is_read',false),
+    DB.from('mw_group_invitations').select('id',{count:'exact',head:true})
+      .eq('recipient_id',uid).eq('status','pending')
+  ]);
+  if(S.u?.id!==uid)return;
+  const count=(base.count||0)+(invites.count||0);
+  $('#alertCount').hidden=!count;
+  $('#alertCount').textContent=count>99?'99+':String(count);
 }
 async function onIncomingDirect(msg){
   if(!S.u||msg.sender_id===S.u.id)return;
   const sender=msg.sender_id;
+  S.mwDirectTimes=S.mwDirectTimes||{};
+  S.mwDirectTimes[sender]=new Date(msg.created_at).getTime()||Date.now();
+  if(S.page==='chat')chatRows();
   if(S.page==='chat'&&!S.chatPeers?.includes(sender)){
     S.chatPeers=[sender,...(S.chatPeers||[])];
     users([sender]).then(mp=>{
@@ -3856,8 +3923,9 @@ async function onIncomingDirect(msg){
     }).catch(console.warn);
   }
   if(S.page==='chat'&&S.chatId===sender&&$('#msgs')){
-    $('#msgs').insertAdjacentHTML('beforeend',chatBubble(msg.body,false,chatTime(msg.created_at),
-      `<button class="linkbtn" data-act="reportMsg" data-id="${e(msg.id)}">${ico('flag',12)}</button>`));
+    $('#msgs').insertAdjacentHTML('beforeend',window.MWV11?.bubble?.(msg,'dm',[msg])||
+      chatBubble(msg.body,false,chatTime(msg.created_at)));
+    window.MWV11?.afterRender?.([msg],'dm');
     const container=$('#msgs');container.scrollTop=container.scrollHeight;
     markChatSeen(sender);
   }else{
@@ -3871,6 +3939,8 @@ async function onIncomingDirect(msg){
 async function onIncomingWorld(msg){
   if(!S.u||msg.author_id===S.u.id)return;
   if(S.worldPref?.joined===false)return;
+  S.mwWorldTime=new Date(msg.created_at).getTime()||Date.now();
+  if(S.page==='chat')chatRows();
   if(S.page==='chat'&&S.chatId==='world'&&$('#msgs')){
     const mp=await users([msg.author_id]);
     if(S.chatId!=='world'||!$('#msgs'))return;
@@ -3878,18 +3948,18 @@ async function onIncomingWorld(msg){
     $('#msgs').insertAdjacentHTML('beforeend',`<div class="world-message">
       <button class="linkbtn" data-act="user" data-id="${e(msg.author_id)}">
       ${avatar(p)} ${label(p)}</button>
-      ${chatBubble(msg.body,false,chatTime(msg.created_at),
-        `<button class="linkbtn" data-act="reportUser" data-id="${e(msg.author_id)}"
-        title="Shikoyat">${ico('flag',12)}</button>`)}
+      ${window.MWV11?.bubble?.(msg,'world',[msg])||
+       chatBubble(msg.body,false,chatTime(msg.created_at))}
     </div>`);
     const container=$('#msgs');container.scrollTop=container.scrollHeight;
+    window.MWV11?.afterRender?.([msg],'world');
     S.worldUnread=0;
     worldUpdate({last_seen_at:new Date().toISOString()}).catch(console.warn);
   }else if(!S.worldPref?.muted){
     S.worldUnread=Math.min(99,(S.worldUnread||0)+1);
     updateChatBadge();
   }
-  if(!S.worldPref?.muted&&notificationEnabled()&&document.visibilityState==='hidden'&&
+  if(!S.worldPref?.muted&&!window.MWV11?.isMuted?.('world')&&notificationEnabled()&&document.visibilityState==='hidden'&&
      'Notification'in window&&Notification.permission==='granted')
     new Notification('Umumiy chat',{body:msg.body.slice(0,120)});
 }
@@ -3900,10 +3970,19 @@ function listen(){
     .on('postgres_changes',{event:'INSERT',schema:'public',
       table:'notifications',filter:`user_id=eq.${S.u.id}`},p=>{
       notificationCount();
-      if(notificationEnabled())toast(p.new.title);
-      if(notificationEnabled()&&document.visibilityState==='hidden'&&
+      if(notificationEnabled()&&!window.MWV11?.isMuted?.('u:'+p.new.actor_id))toast(p.new.title);
+      if(notificationEnabled()&&!window.MWV11?.isMuted?.('u:'+p.new.actor_id)&&document.visibilityState==='hidden'&&
         'Notification'in window&&Notification.permission==='granted')
         new Notification(p.new.title,{body:p.new.body});
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',
+      table:'mw_group_invitations',filter:`recipient_id=eq.${S.u.id}`},p=>{
+      notificationCount().catch(console.warn);
+      if(p.new?.status==='pending'&&notificationEnabled())toast('Sizga guruh taklifi keldi');
+    })
+    .on('postgres_changes',{event:'UPDATE',schema:'public',
+      table:'mw_group_invitations',filter:`recipient_id=eq.${S.u.id}`},()=>{
+      notificationCount().catch(console.warn);
     })
     .on('postgres_changes',{event:'INSERT',schema:'public',
       table:'messages',filter:`recipient_id=eq.${S.u.id}`},
@@ -3915,11 +3994,17 @@ function listen(){
 }
 async function notifications(){
   if(!requireUser())return;
-  let r=await DB.from('notifications').select('*')
-    .eq('user_id',S.u.id)
-    .order('created_at',{ascending:false}).limit(35);
-  check(r);
+  const uid=S.u.id;
+  const [r,invites]=await Promise.all([
+    DB.from('notifications').select('*').eq('user_id',uid)
+      .order('created_at',{ascending:false}).limit(35),
+    DB.from('mw_group_invitations').select('id',{count:'exact',head:true})
+      .eq('recipient_id',uid).eq('status','pending')
+  ]);
+  check(r);if(S.u?.id!==uid)return;
+  const pending=invites.count||0;
   dialog(t('notifications'),`
+    ${pending?'<button class="btn" data-mw="invites">'+ico('users',17)+' Guruh takliflari ('+pending+')</button>':''}
     ${btn('markRead',t('mark'))}
     <div class="divider"></div>
     ${r.data.map(n=>`
@@ -3928,9 +4013,9 @@ async function notifications(){
         <b>${e(n.title)}</b>
         <p>${e(n.body)}</p>
         <small class="muted">${when(n.created_at)}</small>
-      </div>`).join('')||blank()}`)
+      </div>`).join('')||(!pending?blank():'')}
+  `);
 }
-
 function notificationEnabled(){
   return localStorage.getItem('mw_notifs_ui')!=='off';
 }
@@ -4390,6 +4475,7 @@ window.addEventListener('click',async event=>{
     }
     else if(act==='worldLeave'){
       if(!confirm('Umumiy chatdan chiqmoqchimisiz?'))return;
+      if(!confirm('Tasdiqlang: umumiy chat ro‘yxatdan chiqadi, keyin qayta qo‘shilishingiz mumkin.'))return;
       await worldUpdate({joined:false});
       await worldConversation();
     }
@@ -4532,15 +4618,21 @@ window.addEventListener('submit',async ev=>{
       const text=String(new FormData(f).get('body')||'').trim();
       if(!text)return;
       const result=check(await DB.from('messages').insert({
-        sender_id:S.u.id,recipient_id:f.dataset.id,body:text
-      }).select('id,body,created_at').single());
+        sender_id:S.u.id,recipient_id:f.dataset.id,body:text,
+        reply_to:window.MWV11?.replyId?.('dm','u:'+f.dataset.id)||null
+      }).select('id,sender_id,recipient_id,body,created_at,reply_to,edited_at').single());
       f.reset();
+      window.MWV11?.clearReply?.();
       const msgs=$('#msgs');
       if(msgs&&S.chatId===f.dataset.id){
-        msgs.insertAdjacentHTML('beforeend',chatBubble(result.body,true,chatTime(result.created_at)));
+        msgs.insertAdjacentHTML('beforeend',window.MWV11?.bubble?.(result,'dm',[result])||
+          chatBubble(result.body,true,chatTime(result.created_at)));
         msgs.scrollTop=msgs.scrollHeight;
+        window.MWV11?.afterRender?.([result],'dm');
       }
+      S.mwDirectTimes=S.mwDirectTimes||{};S.mwDirectTimes[f.dataset.id]=Date.now();
       markChatSeen(f.dataset.id);
+      chatRows();
       if(!S.chatPeers?.includes(f.dataset.id)){
         S.chatPeers=[f.dataset.id,...(S.chatPeers||[])];
         const mp=await users([f.dataset.id]);
@@ -4553,15 +4645,19 @@ window.addEventListener('submit',async ev=>{
       const text=String(new FormData(f).get('body')||'').trim();
       if(!text)return;
       const result=check(await DB.from('world_chat_messages').insert({
-        author_id:S.u.id,body:text
-      }).select('id,author_id,body,created_at').single());
+        author_id:S.u.id,body:text,
+        reply_to:window.MWV11?.replyId?.('world','world')||null
+      }).select('id,author_id,body,created_at,reply_to,edited_at').single());
       f.reset();
+      window.MWV11?.clearReply?.();
       const msgs=$('#msgs');
       if(msgs&&S.chatId==='world'){
         msgs.insertAdjacentHTML('beforeend',`<div class="world-message">
-          ${chatBubble(result.body,true,chatTime(result.created_at))}</div>`);
+          ${window.MWV11?.bubble?.(result,'world',[result])||chatBubble(result.body,true,chatTime(result.created_at))}</div>`);
         msgs.scrollTop=msgs.scrollHeight;
+        window.MWV11?.afterRender?.([result],'world');
       }
+      S.mwWorldTime=Date.now();chatRows();
       worldUpdate({last_seen_at:new Date().toISOString()}).catch(console.warn);
     }
     else if(f.id==='badgeForm'){
@@ -4653,7 +4749,7 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=11').catch(console.warn);
   });
 }
 
@@ -4695,7 +4791,8 @@ if('serviceWorker'in navigator){
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=1"></script>
+<script src="./mw-live-chat.js?v=2"></script>
 <script src="./mw-social.js?v=2"></script>
+<script src="./mw-v11.js?v=1"></script>
 </body>
 </html>
