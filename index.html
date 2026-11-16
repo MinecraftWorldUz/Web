@@ -1282,12 +1282,7 @@ body:before,.hero:after{display:none!important}
 #mwUsernameWrap[hidden]{display:none}#mwUsernameState.ok{color:var(--green)}#mwUsernameState.bad{color:var(--red)}
 .mw-group-item .account-avatar img{width:42px;height:42px;object-fit:cover;border-radius:50%}
 .mw-mini{background:#ffffff15;color:var(--text);border-radius:8px;border:0;padding:4px;margin-left:4px}
-.mw-instagram-profile .counters .count{border:0;background:transparent}
-.mw-instagram-profile .row .av.large{width:85px;height:85px;border-radius:50%;object-fit:cover}
-.mw-instagram-profile+div+.grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
-.mw-instagram-profile+div+.grid .art{height:120px}
-.mw-instagram-profile+div+.grid .cardbody{padding:8px}
-.mw-instagram-profile+div+.grid .cardbody p{display:none}
+/* Retired: too-wide global profile overrides removed. */
 
 
 /* Real social posts: independent from mod publishing and moderation */
@@ -1303,10 +1298,74 @@ body:before,.hero:after{display:none!important}
 .mw-post-image{display:block;width:100%;max-height:400px;object-fit:contain;border-radius:12px}
 .mw-comments{display:grid;gap:7px;max-height:260px;overflow:auto}
 .mw-comment{border-bottom:1px solid var(--edge);padding:9px}
-#profileMods+.grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-#profileMods+.grid .art{height:120px}
-#profileMods+.grid .cardbody{padding:8px}
-@media(max-width:580px){#profileMods+.grid .art{height:95px}}
+/* Retired: too-wide global profile overrides removed. */
+
+
+/* Minecraft World profile and social: fully scoped, responsive, does not affect other sections. */
+.mw-instagram-profile{padding:22px!important;display:block}
+.mw-profile-heading{display:flex;align-items:center;gap:9px;margin:0 0 19px}
+.mw-profile-heading>strong{font-size:clamp(16px,3.6vw,21px);overflow-wrap:anywhere}
+.mw-profile-summary{display:flex;align-items:center;gap:clamp(14px,4vw,30px)}
+.mw-profile-avatar{display:flex;flex:none}
+.mw-profile-avatar .av.large{width:88px!important;height:88px!important;min-width:88px!important;object-fit:cover!important;border-radius:50%!important;font-size:34px}
+.mw-profile-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:1;min-width:0;gap:5px}
+.mw-profile-stats .mw-stat{background:transparent;border:0;color:var(--text);font:inherit;padding:6px 2px;min-width:0;display:grid;justify-items:center;gap:6px;cursor:pointer}
+.mw-profile-stats .mw-stat b{font-size:clamp(17px,4vw,24px)}
+.mw-profile-stats .mw-stat span{font-size:clamp(10px,2.5vw,13px)}
+.mw-profile-details{display:grid;justify-items:start;gap:5px;margin-top:17px}
+.mw-profile-display-name{font-size:18px;color:var(--text)}
+.mw-profile-details .profile-bio{margin:5px 0 0;max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere}
+.mw-profile-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.mw-profile-actions .btn{flex:1;min-width:0;white-space:normal;justify-content:center;font-size:13px;padding:11px 9px}
+.mw-social-section{margin:18px 0 24px}
+.mw-social-section>.bar{margin-bottom:13px;gap:8px}
+.mw-social-section>.bar h2{margin:0;font-size:21px}
+.mw-social-section>.bar .btn{font-size:13px;min-height:40px}
+.mw-social-empty{border:1px dashed var(--edge);background:linear-gradient(155deg,#283a2d,#34281f);border-radius:18px;padding:25px 18px;display:grid;justify-items:center;gap:10px;color:var(--muted);text-align:center}
+.mw-social-empty .empty-icon{display:grid;place-items:center;width:55px;height:55px;border:1px solid var(--edge);border-radius:50%;color:var(--orange);font-size:30px}
+.mw-social-empty h3{margin:0;color:var(--text);font-size:17px}
+.mw-social-empty p{margin:0;font-size:13px}
+.mw-social-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mw-social-grid .mw-social-tile{border-radius:7px}
+.mw-profile-mods-heading{margin-top:20px;gap:9px;flex-wrap:wrap}
+.mw-profile-mods-heading h2{font-size:21px}
+#profileMods+.mw-profile-mods{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,295px),1fr))!important;gap:14px!important}
+.mw-profile-mods .card{min-width:0!important;width:100%}
+.mw-profile-mods .art{height:190px!important}
+.mw-profile-mods .cardbody{padding:15px!important;min-width:0}
+.mw-profile-mods .cardbody h3{overflow-wrap:anywhere}
+.mw-profile-mods .cardbody p{display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;min-height:0!important;overflow-wrap:anywhere}
+.mw-profile-edit-form .formgroup{margin:15px 0}
+.mw-edit-top{display:flex;gap:17px;align-items:center;padding:8px 0 12px}
+.mw-edit-name{flex:1;min-width:0;display:grid;gap:7px}
+.mw-edit-name .field{width:100%}
+.mw-edit-name small{font-size:11px;line-height:1.5}
+.mw-avatar-edit{width:90px;height:90px;flex:none;position:relative;border-radius:50%;display:grid;place-items:center;background:#705235;cursor:pointer;border:2px solid #b98f58}
+.mw-avatar-edit #avatarPreview,.mw-avatar-edit .av.large{width:86px!important;height:86px!important;min-width:86px!important;border-radius:50%!important;display:grid;place-items:center;object-fit:cover!important}
+.mw-avatar-edit input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.mw-avatar-edit .mw-photo-plus{position:absolute;right:-3px;bottom:-2px;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--orange);border:2px solid #33271b;color:#392618}
+.mw-edit-username{display:flex;align-items:center;border-radius:11px;border:1px solid var(--edge);background:#1b241e;overflow:hidden}
+.mw-edit-username span{padding:0 0 0 14px;color:var(--orange);font-size:20px}
+.mw-edit-username .field{border:0!important;background:transparent!important;min-width:0;flex:1}
+.mw-username-hint{display:block;min-height:16px;font-size:12px;margin-top:5px}
+.mw-edit-privacy{border:1px solid var(--edge);border-radius:13px;margin:15px 0;padding:12px}
+.mw-edit-privacy legend{padding:0 7px;font-weight:700}
+.mw-edit-privacy .mw-switch-row{background:transparent;display:flex;justify-content:space-between;gap:12px;border:0;border-bottom:1px solid #ffffff18;margin:0;padding:13px 6px}
+.mw-edit-privacy .mw-switch-row:last-child{border-bottom:0}
+.mw-edit-privacy .mw-switch-row>span{display:grid;gap:5px;flex:1}
+.mw-edit-privacy .mw-switch-row small{font-size:11px;color:var(--muted);line-height:1.4}
+.mw-edit-privacy .mw-switch-row input{flex:none;width:20px;height:20px;accent-color:var(--orange)}
+.mw-edit-save{width:100%;justify-content:center;margin-top:17px}
+@media(max-width:420px){
+ .mw-instagram-profile{padding:17px!important}
+ .mw-profile-avatar .av.large{width:75px!important;height:75px!important;min-width:75px!important}
+ .mw-profile-summary{gap:10px}
+ .mw-profile-stats .mw-stat b{font-size:18px}
+ .mw-edit-top{gap:12px}
+ .mw-avatar-edit{width:78px;height:78px}
+ .mw-avatar-edit #avatarPreview,.mw-avatar-edit .av.large{width:74px!important;height:74px!important;min-width:74px!important}
+ .mw-profile-mods .art{height:168px!important}
+}
 
 </style>
 </head>
