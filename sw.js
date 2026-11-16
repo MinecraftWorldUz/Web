@@ -1,4 +1,4 @@
-const CACHE='mw-public-shell-v1';
+const CACHE='mw-public-shell-v1-1';
 const SCOPE=self.registration.scope;
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>
