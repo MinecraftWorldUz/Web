@@ -3909,6 +3909,9 @@ async function notificationCount(){
 async function onIncomingDirect(msg){
   if(!S.u||msg.sender_id===S.u.id)return;
   const sender=msg.sender_id;
+  S.mwDirectTimes=S.mwDirectTimes||{};
+  S.mwDirectTimes[sender]=new Date(msg.created_at).getTime()||Date.now();
+  if(S.page==='chat')chatRows();
   if(S.page==='chat'&&!S.chatPeers?.includes(sender)){
     S.chatPeers=[sender,...(S.chatPeers||[])];
     users([sender]).then(mp=>{
@@ -3933,6 +3936,8 @@ async function onIncomingDirect(msg){
 async function onIncomingWorld(msg){
   if(!S.u||msg.author_id===S.u.id)return;
   if(S.worldPref?.joined===false)return;
+  S.mwWorldTime=new Date(msg.created_at).getTime()||Date.now();
+  if(S.page==='chat')chatRows();
   if(S.page==='chat'&&S.chatId==='world'&&$('#msgs')){
     const mp=await users([msg.author_id]);
     if(S.chatId!=='world'||!$('#msgs'))return;
