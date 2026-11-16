@@ -1,21 +1,36 @@
 /* Minecraft World — authenticated chat groups integration.
    This file is loaded only by production index.html and uses its existing DB, S, $, e, avatar, label, dialog, go helpers. */
 window.MWChat=(()=>{
- const C={groups:[],last:{},members:[],selected:[],group:null,activeId:null,queryTimer:null};
+ const C={groups:[],last:{},members:[],selected:[],group:null,activeId:null,queryTimer:null,userId:null,channel:null};
  const escape=e,icon=ico;
  async function load(){
   if(!S.u||S.page!=='chat')return;
   const uid=S.u.id;
+  if(C.userId!==uid){
+   if(C.channel)DB.removeChannel(C.channel);
+   C.userId=uid;C.groups=[];C.last={};
+   C.channel=DB.channel('mw-groups-'+uid)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'mw_group_messages'},payload=>{
+     if(S.u?.id!==uid)return;
+     const g=payload.new.group_id;
+     if(!C.groups.some(x=>x.id===g))return;
+     C.last[g]=new Date(payload.new.created_at).getTime();
+     renderGroups();
+     if(S.page==='chat'&&S.chatId==='g:'+g&&payload.new.sender_id!==uid)openGroup(g).catch(console.warn);
+    }).subscribe();
+  }
   const member=check(await DB.from('mw_group_members').select('group_id').eq('user_id',uid));
   const ids=member.map(m=>m.group_id);
-  const [groups,recent,invites]=await Promise.all([
+  const [groups,recent,invites,worldRecent]=await Promise.all([
    ids.length?DB.from('mw_groups').select('*').in('id',ids):Promise.resolve({data:[],error:null}),
    ids.length?DB.from('mw_group_messages').select('group_id,created_at').in('group_id',ids).order('created_at',{ascending:false}).limit(150):Promise.resolve({data:[],error:null}),
-   DB.from('mw_group_invitations').select('id',{count:'exact',head:true}).eq('recipient_id',uid).eq('status','pending')
+   DB.from('mw_group_invitations').select('id',{count:'exact',head:true}).eq('recipient_id',uid).eq('status','pending'),
+   DB.from('world_chat_messages').select('created_at').order('created_at',{ascending:false}).limit(1)
   ]);
   check(groups);check(recent);
   if(S.u?.id!==uid||S.page!=='chat')return;
   C.groups=groups.data;
+  S.mwWorldTime=worldRecent.data?.[0]?new Date(worldRecent.data[0].created_at).getTime():0;
   C.last={};
   for(const m of recent.data)if(!C.last[m.group_id])C.last[m.group_id]=new Date(m.created_at).getTime();
   renderGroups();
@@ -224,6 +239,35 @@ window.MWChat=(()=>{
    await openGroup(C.activeId);
   }
  }
+
+ async function loadProfileSettings(){
+  if(!S.u)return;
+  const row=check(await DB.from('mw_chat_settings').select('discoverable,require_group_approval').eq('user_id',S.u.id).maybeSingle());
+  if($('#mwPublicProfile'))$('#mwPublicProfile').checked=row?.discoverable!==false;
+  if($('#mwInviteApproval'))$('#mwInviteApproval').checked=row?.require_group_approval!==false;
+ }
+ async function saveProfileSettings(){
+  if(!S.u)return;
+  const pub=$('#mwPublicProfile'),approval=$('#mwInviteApproval');
+  if(!pub||!approval)return;
+  check(await DB.from('mw_chat_settings').upsert({
+   user_id:S.u.id,discoverable:pub.checked,require_group_approval:approval.checked
+  }));
+ }
+ async function checkAccountUsername(input){
+  if(!S.u||!input)return;
+  const value=input.value.trim().toLowerCase(),id='mwAccountNameCheck';
+  let status=$('#'+id);
+  if(!status){input.insertAdjacentHTML('afterend','<small id="'+id+'"></small>');status=$('#'+id)}
+  if(!/^[a-z0-9_]{3,20}$/.test(value)){status.textContent='Username 3–20 belgi';return}
+  const [p,g]=await Promise.all([
+   DB.from('profiles').select('id').eq('username',value),
+   DB.from('mw_groups').select('id').eq('username',value)
+  ]);
+  if(!status?.isConnected||input.value.trim().toLowerCase()!==value)return;
+  status.textContent=(p.data||[]).some(x=>x.id!==S.u.id)||(g.data||[]).length?'Username band':'Username bo‘sh';
+ }
+
  // Capture handles group actions before legacy catch-all click handler; no other features change.
  window.addEventListener('click',ev=>{
   let button=ev.target.closest('[data-mw]');
@@ -243,6 +287,7 @@ window.MWChat=(()=>{
    C.queryTimer=setTimeout(()=>searchPeople(ev.target.value,id==='mwMemberSearch').catch(err=>toast(err.message)),190);
   }
   if(id==='mwGroupUsername'){clearTimeout(C.nickTimer);C.nickTimer=setTimeout(()=>usernameStatus().catch(console.warn),200)}
+  if(ev.target.closest('#editProfileForm')&&ev.target.name==='username'){clearTimeout(C.profileTimer);C.profileTimer=setTimeout(()=>checkAccountUsername(ev.target).catch(console.warn),230)}
  });
  window.addEventListener('change',ev=>{
   if(ev.target.matches('.mw-check-member')){
@@ -273,5 +318,5 @@ window.MWChat=(()=>{
   }catch(err){console.error(err);toast(err.code==='23505'?'Username band':err.message)}
   finally{if(btn)btn.disabled=false}
  },true);
- return {load,renderGroups,openGroup,worldInfo};
+ return {load,renderGroups,openGroup,worldInfo,loadProfileSettings,saveProfileSettings};
 })();
