@@ -2039,6 +2039,7 @@ async function go(page='home',id=null){
   if(cached){
     $('#app').innerHTML=cached.html;
     translateUi($('#app'));
+    if(page==='profile')window.MWSocial?.renderProfile?.(target).catch(console.warn);
     if(Date.now()-cached.at<SCREEN_TTL)return;
   }else if(page==='home'){
     // homeShell() paints immediately without waiting for Supabase.
@@ -2375,61 +2376,51 @@ function scheduleFastPrefetch(){
 }
 async function profile(id){
   if(!id){
-    $('#app').innerHTML=blank()+
-      `<div class="buttons">${btn('auth',t('login'))}</div>`;
-    return
+    $('#app').innerHTML=blank()+'<div class="buttons">'+btn('auth',t('login'))+'</div>';
+    return;
   }
   const mine=S.u?.id===id;
   const [person,mods,pc,fc,gc,f]=await getProfileData(id);
   if(S.page!=='profile'||S.profileId!==id)return;
-  const p=check(person);
-  check(mods);
-  setCachedProfiles([p]);
+  const p=check(person);check(mods);setCachedProfiles([p]);
   $('#app').innerHTML=`
-  <section class="banner mw-instagram-profile">
-    <div class="row">
-      ${avatar(p,true)}
-      <div>
-        ${p.display_name?`<h2 class="profile-display-name">${e(p.display_name)}</h2>`:''}
-        <h3 style="margin:0">${label(p)}</h3>
-        <span class="status">ID #${p.public_id}</span>
+    <section class="banner mw-instagram-profile">
+      <div class="mw-profile-heading">
+        <strong>@${e(p.username)}</strong>
         ${p.is_admin?'<span class="status">ADMIN</span>':''}
+        ${p.verified?'<span class="status">✓</span>':''}
       </div>
+      <div class="mw-profile-summary">
+        <div class="mw-profile-avatar">${avatar(p,true)}</div>
+        <div class="mw-profile-stats">
+          <button class="mw-stat" data-act="posts"><b id="mwSocialPostCount">0</b><span>${t('posts')}</span></button>
+          <button class="mw-stat" data-act="followers" data-id="${e(id)}"><b>${count(fc.count)}</b><span>${t('followers')}</span></button>
+          <button class="mw-stat" data-act="following" data-id="${e(id)}"><b>${count(gc.count)}</b><span>${t('following')}</span></button>
+        </div>
+      </div>
+      <div class="mw-profile-details">
+        <strong class="mw-profile-display-name">${e(p.display_name||p.username)}</strong>
+        <small class="muted">ID #${e(p.public_id)}</small>
+        ${banned(p)?'<p class="wrap">Akkaunt cheklangan</p>':p.bio?'<p class="wrap profile-bio">'+e(p.bio)+'</p>':''}
+      </div>
+      <div class="mw-profile-actions">
+        ${mine?
+          btn('editProfile',t('editProfile'))+btn('settings',t('settings'),'','ghost'):
+          btn('follow',f.data?t('unfollow'):t('follow'),id)+
+          btn('startChat',t('chat'),id,'ghost')+
+          btn('reportUser',t('report'),id,'ghost')}
+      </div>
+    </section>
+    <section id="mwSocialSection" class="mw-social-section" aria-label="Postlar"></section>
+    <div class="bar mw-profile-mods-heading" id="profileMods">
+      <h2>Modlar</h2>
+      ${mine?'<button class="btn" data-go="create">＋ Mod qo‘shish</button>':''}
     </div>
-    ${banned(p)?'<p class="wrap">Akkaunt cheklangan</p>':
-      p.bio?`<p class="wrap profile-bio">${e(p.bio)}</p>`:''}
-    <div class="counters">
-      <button class="count" data-act="posts">
-        <b>${count(pc.count)}</b><span>${t('posts')}</span>
-      </button>
-      <button class="count" data-act="followers" data-id="${id}">
-        <b>${count(fc.count)}</b><span>${t('followers')}</span>
-      </button>
-      <button class="count" data-act="following" data-id="${id}">
-        <b>${count(gc.count)}</b><span>${t('following')}</span>
-      </button>
-    </div>
-    <div class="buttons">
-      ${mine?
-        btn('editProfile',t('editProfile'))+
-        btn('settings',t('settings'),'','ghost'):
-        btn('follow',f.data?t('unfollow'):t('follow'),id)+
-        btn('startChat',t('chat'),id,'ghost')+
-        btn('reportUser',t('report'),id,'ghost')}
-    </div>
-  </section>
-  <div id="mwSocialSection"></div>
-  <div class="bar" id="profileMods">
-    <h2>${t('posts')}</h2>
-    ${mine?`<button class="btn" data-go="create">
-      ＋ ${t('addMod')}</button>`:''}
-  </div>
-  <div class="grid">
-    ${mods.data.length?
-      mods.data.map(m=>card(m,p,mine)).join(''):blank()}
-  </div>`;
+    <div class="grid mw-profile-mods">
+      ${mods.data.length?mods.data.map(m=>card(m,p,mine)).join(''):blank()}
+    </div>`;
   saveScreen('profile',id);
-  window.MWSocial?.renderProfile?.(id).catch(console.warn);
+  window.MWSocial?.renderProfile?.(id).catch(err=>console.warn('Social posts:',err));
 }
 async function followList(type,id){
   let key=type==='followers'?'following_id':'follower_id';
