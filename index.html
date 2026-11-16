@@ -1422,6 +1422,9 @@ body:before,.hero:after{display:none!important}
  .mw11-tabs button{padding:8px 10px;font-size:12px}
 }
 
+.chat-title{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chat-title>.btn{font-size:12px;min-height:37px;padding:8px 10px}
+@media(max-width:460px){.chat-title h2{flex-basis:100%;margin:0 0 4px}}
 </style>
 </head>
 <body>
@@ -4746,7 +4749,7 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=11').catch(console.warn);
   });
 }
 
@@ -4788,7 +4791,7 @@ if('serviceWorker'in navigator){
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=1"></script>
+<script src="./mw-live-chat.js?v=2"></script>
 <script src="./mw-social.js?v=2"></script>
 <script src="./mw-v11.js?v=1"></script>
 </body>
