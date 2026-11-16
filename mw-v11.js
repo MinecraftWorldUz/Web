@@ -69,6 +69,7 @@ window.MWV11=(()=>{
   async function loadPrefs(){
     if(!authUser())return;
     const uid=authUser();
+    if(V.loadedFor&&V.loadedFor!==uid){V.rows.clear();V.reply=null;V.prefs.clear();V.filter='all';V.search='';}
     const r=await DB.from('mw_chat_preferences').select('thread_key,muted,pinned,archived,last_read_at').eq('user_id',uid);
     if(r.error){console.warn(r.error);return}
     if(uid!==authUser())return;
@@ -100,6 +101,9 @@ window.MWV11=(()=>{
     const rows=document.getElementById('chatRows');
     if(!rows||S.page!=='chat')return;
     const title=document.querySelector('.chat-title');
+    if(title&&!document.getElementById('mw11SavedOpen')){
+      title.insertAdjacentHTML('beforeend','<button type="button" class="btn small ghost" id="mw11SavedOpen" data-v11="saved-open">'+ico('bookmark',17)+' '+T('save')+'</button>');
+    }
     if(title&&!document.getElementById('mw11InboxControls')){
       title.insertAdjacentHTML('afterend','<div class="mw11-inbox-controls" id="mw11InboxControls">'+
         '<input type="search" id="mw11InboxSearch" class="field" placeholder="'+T('search')+'" value="'+esc(V.search)+'">'+
@@ -156,6 +160,7 @@ window.MWV11=(()=>{
       '<button data-v11="reply" data-id="'+esc(id)+'" data-scope="'+scope+'">'+ico('chat',18)+' '+T('reply')+'</button>'+
       '<button data-v11="copy" data-id="'+esc(id)+'" data-scope="'+scope+'">'+ico('bookmark',18)+' '+T('copy')+'</button>'+
       '<button data-v11="forward" data-id="'+esc(id)+'" data-scope="'+scope+'">'+ico('send',18)+' '+T('forward')+'</button>'+
+      '<button data-v11="save" data-id="'+esc(id)+'" data-scope="'+scope+'">'+ico('bookmark',18)+' '+T('save')+'</button>'+
       (own?'<button data-v11="edit" data-id="'+esc(id)+'" data-scope="'+scope+'">'+ico('settings',18)+' '+T('edit')+'</button>'+
         '<button class="danger-text" data-v11="delete" data-id="'+esc(id)+'" data-scope="'+scope+'">'+ico('x',18)+' '+T('remove')+'</button>':'')+'</div>');
   }
@@ -200,6 +205,30 @@ window.MWV11=(()=>{
     if(res.error)throw res.error;
     close();const row=V.rows.get(rxKey(scope,id));if(row)afterRender([row],scope);
   }
+
+  async function saveMessage(scope,id){
+    const m=await fetchMessage(scope,id);
+    if(!m)throw Error('Xabar topilmadi');
+    const r=await DB.from('mw_saved_messages').insert({user_id:authUser(),scope,message_id:id,body_snapshot:m.body||''});
+    if(r.error&&r.error.code!=='23505')throw r.error;
+    close();toast(r.error?.code==='23505'?'Bu xabar avval saqlangan':'Xabar saqlandi');
+  }
+  async function savedMessages(){
+    if(!authUser())return;
+    const r=await DB.from('mw_saved_messages').select('id,scope,message_id,body_snapshot,created_at').eq('user_id',authUser()).order('created_at',{ascending:false}).limit(100);
+    if(r.error)throw r.error;
+    dialog(T('save'),'<div class="mw11-saved-list">'+(r.data||[]).map(row=>
+      '<div class="mw11-saved-item"><span><small>'+esc(row.scope==='dm'?'Shaxsiy':row.scope==='group'?'Guruh':'Umumiy')+' · '+esc(new Date(row.created_at).toLocaleDateString())+'</small>'+
+      '<strong>'+esc(row.body_snapshot||'')+'</strong></span>'+
+      '<button data-v11="saved-delete" data-id="'+esc(row.id)+'" title="'+T('remove')+'">'+ico('x',17)+'</button></div>').join('')+
+      (r.data?.length?'':'<p class="muted">'+T('empty')+'</p>')+'</div>');
+  }
+  async function deleteSaved(id){
+    const res=await DB.from('mw_saved_messages').delete().eq('user_id',authUser()).eq('id',id);
+    if(res.error)throw res.error;
+    await savedMessages();
+  }
+
   async function refreshThread(){
     if(S.page!=='chat')return;
     if(S.chatId?.startsWith('g:'))await window.MWChat?.openGroup?.(S.chatId.slice(2));
@@ -250,6 +279,8 @@ window.MWV11=(()=>{
         document.getElementById('mw11ChatSearch')?.focus();
         return;
       }
+      if(act==='saved-open')return savedMessages();
+      if(act==='saved-delete')return deleteSaved(id);
       if(act==='menu')return menu(scope,id);
       if(act==='options')return chatOptions(a.dataset.thread);
       if(act==='filter'){V.filter=a.dataset.filter;document.querySelectorAll('.mw11-tabs button').forEach(x=>x.classList.toggle('active',x.dataset.filter===V.filter));return decorateInbox()}
@@ -262,6 +293,7 @@ window.MWV11=(()=>{
       if(act==='delete'&&m&&isMine(m,scope))return deleteMessage(scope,id);
       if(act==='copy'&&m){await navigator.clipboard.writeText(m.body||'');close();toast(T('copy'));return}
       if(act==='forward')return forwardMenu(scope,id);
+      if(act==='save'&&m)return saveMessage(scope,id);
       if(act==='forward-send')return forwardTo(a.dataset.dest);
     };
     run().catch(err=>{console.error('MWV11:',err);toast(err.message||'Xatolik')});
