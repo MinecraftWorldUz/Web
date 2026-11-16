@@ -3893,16 +3893,18 @@ async function findChatUsers(term){
   ).join('')||'<p class="muted">Foydalanuvchi topilmadi.</p>';
 }
 async function notificationCount(){
-  if(!S.u){
-    $('#alertCount').hidden=true;
-    return
-  }
-  let r=await DB.from('notifications')
-    .select('id',{count:'exact',head:true})
-    .eq('user_id',S.u.id).eq('is_read',false);
-  if(r.error)return;
-  $('#alertCount').hidden=!r.count;
-  $('#alertCount').textContent=r.count>99?'99+':r.count
+  if(!S.u){$('#alertCount').hidden=true;return}
+  const uid=S.u.id;
+  const [base,invites]=await Promise.all([
+    DB.from('notifications').select('id',{count:'exact',head:true})
+      .eq('user_id',uid).eq('is_read',false),
+    DB.from('mw_group_invitations').select('id',{count:'exact',head:true})
+      .eq('recipient_id',uid).eq('status','pending')
+  ]);
+  if(S.u?.id!==uid)return;
+  const count=(base.count||0)+(invites.count||0);
+  $('#alertCount').hidden=!count;
+  $('#alertCount').textContent=count>99?'99+':String(count);
 }
 async function onIncomingDirect(msg){
   if(!S.u||msg.sender_id===S.u.id)return;
@@ -3966,6 +3968,15 @@ function listen(){
         new Notification(p.new.title,{body:p.new.body});
     })
     .on('postgres_changes',{event:'INSERT',schema:'public',
+      table:'mw_group_invitations',filter:`recipient_id=eq.${S.u.id}`},p=>{
+      notificationCount().catch(console.warn);
+      if(p.new?.status==='pending'&&notificationEnabled())toast('Sizga guruh taklifi keldi');
+    })
+    .on('postgres_changes',{event:'UPDATE',schema:'public',
+      table:'mw_group_invitations',filter:`recipient_id=eq.${S.u.id}`},()=>{
+      notificationCount().catch(console.warn);
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',
       table:'messages',filter:`recipient_id=eq.${S.u.id}`},
       p=>{onIncomingDirect(p.new).catch(console.warn)})
     .on('postgres_changes',{event:'INSERT',schema:'public',
@@ -3975,11 +3986,17 @@ function listen(){
 }
 async function notifications(){
   if(!requireUser())return;
-  let r=await DB.from('notifications').select('*')
-    .eq('user_id',S.u.id)
-    .order('created_at',{ascending:false}).limit(35);
-  check(r);
+  const uid=S.u.id;
+  const [r,invites]=await Promise.all([
+    DB.from('notifications').select('*').eq('user_id',uid)
+      .order('created_at',{ascending:false}).limit(35),
+    DB.from('mw_group_invitations').select('id',{count:'exact',head:true})
+      .eq('recipient_id',uid).eq('status','pending')
+  ]);
+  check(r);if(S.u?.id!==uid)return;
+  const pending=invites.count||0;
   dialog(t('notifications'),`
+    ${pending?'<button class="btn" data-mw="invites">'+ico('users',17)+' Guruh takliflari ('+pending+')</button>':''}
     ${btn('markRead',t('mark'))}
     <div class="divider"></div>
     ${r.data.map(n=>`
@@ -3988,9 +4005,9 @@ async function notifications(){
         <b>${e(n.title)}</b>
         <p>${e(n.body)}</p>
         <small class="muted">${when(n.created_at)}</small>
-      </div>`).join('')||blank()}`)
+      </div>`).join('')||(!pending?blank():'')}
+  `);
 }
-
 function notificationEnabled(){
   return localStorage.getItem('mw_notifs_ui')!=='off';
 }
