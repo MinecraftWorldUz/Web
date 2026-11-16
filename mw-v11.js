@@ -241,6 +241,15 @@ window.MWV11=(()=>{
     e.preventDefault();e.stopImmediatePropagation();
     const act=a.dataset.v11,scope=a.dataset.scope,id=a.dataset.id;
     const run=async()=>{
+      if(act==='search-toggle'){
+        const header=document.querySelector('#conversation .chat-toolbar');
+        if(!header)return;
+        const old=document.getElementById('mw11ChatSearch');
+        if(old){old.closest('.mw11-thread-search')?.remove();document.querySelectorAll('#msgs [data-v11-msg]').forEach(n=>n.style.display='');return}
+        header.insertAdjacentHTML('afterend','<div class="mw11-thread-search"><input id="mw11ChatSearch" class="field" placeholder="'+T('searchMsg')+'"></div>');
+        document.getElementById('mw11ChatSearch')?.focus();
+        return;
+      }
       if(act==='menu')return menu(scope,id);
       if(act==='options')return chatOptions(a.dataset.thread);
       if(act==='filter'){V.filter=a.dataset.filter;document.querySelectorAll('.mw11-tabs button').forEach(x=>x.classList.toggle('active',x.dataset.filter===V.filter));return decorateInbox()}
@@ -281,18 +290,5 @@ window.MWV11=(()=>{
     if(!bar||document.getElementById('mw11SearchToggle'))return;
     bar.insertAdjacentHTML('beforeend','<button type="button" id="mw11SearchToggle" data-v11="search-toggle" aria-label="'+T('searchMsg')+'">'+ico('search',18)+'</button>');
   }
-  // Search is local to visible messages and does not expose other conversations.
-  const baseHandle=handle;
-  window.addEventListener('click',event=>{
-    const a=event.target.closest('[data-v11="search-toggle"]');
-    if(!a)return;
-    event.preventDefault();event.stopImmediatePropagation();
-    const header=document.querySelector('#conversation .chat-toolbar');
-    if(!header)return;
-    const old=document.getElementById('mw11ChatSearch');
-    if(old){old.closest('.mw11-thread-search')?.remove();document.querySelectorAll('#msgs [data-v11-msg]').forEach(n=>n.style.display='');return}
-    header.insertAdjacentHTML('afterend','<div class="mw11-thread-search"><input id="mw11ChatSearch" class="field" placeholder="'+T('searchMsg')+'"></div>');
-    document.getElementById('mw11ChatSearch')?.focus();
-  },true);
   return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch};
 })();
