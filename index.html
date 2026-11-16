@@ -2856,6 +2856,7 @@ function editProfile(){
       <button class="btn mw-edit-save" type="submit">${t('save')}</button>
     </form>`);
   window.MWChat?.loadProfileSettings?.().catch(err=>console.warn('Chat privacy:',err));
+  $('#mwEditUsername')?.dispatchEvent(new Event('input',{bubbles:true}));
 }
 async function saveProfile(f){
   let x=new FormData(f);
@@ -4459,7 +4460,7 @@ window.addEventListener('input',ev=>{
   }
 });
 window.addEventListener('change',async ev=>{
-  if(ev.target.matches('.file-picker input[type="file"]')){
+  if(ev.target.matches('.file-picker input[type="file"], .mw-avatar-edit input[type="file"]')){
     const x=ev.target;
     const label=document.getElementById('pick-label-'+x.name);
     if(label&&x.files?.[0])label.textContent=x.files[0].name;
