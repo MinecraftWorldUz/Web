@@ -3860,8 +3860,9 @@ async function onIncomingDirect(msg){
     }).catch(console.warn);
   }
   if(S.page==='chat'&&S.chatId===sender&&$('#msgs')){
-    $('#msgs').insertAdjacentHTML('beforeend',chatBubble(msg.body,false,chatTime(msg.created_at),
-      `<button class="linkbtn" data-act="reportMsg" data-id="${e(msg.id)}">${ico('flag',12)}</button>`));
+    $('#msgs').insertAdjacentHTML('beforeend',window.MWV11?.bubble?.(msg,'dm',[msg])||
+      chatBubble(msg.body,false,chatTime(msg.created_at)));
+    window.MWV11?.afterRender?.([msg],'dm');
     const container=$('#msgs');container.scrollTop=container.scrollHeight;
     markChatSeen(sender);
   }else{
@@ -3882,18 +3883,18 @@ async function onIncomingWorld(msg){
     $('#msgs').insertAdjacentHTML('beforeend',`<div class="world-message">
       <button class="linkbtn" data-act="user" data-id="${e(msg.author_id)}">
       ${avatar(p)} ${label(p)}</button>
-      ${chatBubble(msg.body,false,chatTime(msg.created_at),
-        `<button class="linkbtn" data-act="reportUser" data-id="${e(msg.author_id)}"
-        title="Shikoyat">${ico('flag',12)}</button>`)}
+      ${window.MWV11?.bubble?.(msg,'world',[msg])||
+       chatBubble(msg.body,false,chatTime(msg.created_at))}
     </div>`);
     const container=$('#msgs');container.scrollTop=container.scrollHeight;
+    window.MWV11?.afterRender?.([msg],'world');
     S.worldUnread=0;
     worldUpdate({last_seen_at:new Date().toISOString()}).catch(console.warn);
   }else if(!S.worldPref?.muted){
     S.worldUnread=Math.min(99,(S.worldUnread||0)+1);
     updateChatBadge();
   }
-  if(!S.worldPref?.muted&&notificationEnabled()&&document.visibilityState==='hidden'&&
+  if(!S.worldPref?.muted&&!window.MWV11?.isMuted?.('world')&&notificationEnabled()&&document.visibilityState==='hidden'&&
      'Notification'in window&&Notification.permission==='granted')
     new Notification('Umumiy chat',{body:msg.body.slice(0,120)});
 }
@@ -3904,8 +3905,8 @@ function listen(){
     .on('postgres_changes',{event:'INSERT',schema:'public',
       table:'notifications',filter:`user_id=eq.${S.u.id}`},p=>{
       notificationCount();
-      if(notificationEnabled())toast(p.new.title);
-      if(notificationEnabled()&&document.visibilityState==='hidden'&&
+      if(notificationEnabled()&&!window.MWV11?.isMuted?.('u:'+p.new.actor_id))toast(p.new.title);
+      if(notificationEnabled()&&!window.MWV11?.isMuted?.('u:'+p.new.actor_id)&&document.visibilityState==='hidden'&&
         'Notification'in window&&Notification.permission==='granted')
         new Notification(p.new.title,{body:p.new.body});
     })
@@ -4537,15 +4538,21 @@ window.addEventListener('submit',async ev=>{
       const text=String(new FormData(f).get('body')||'').trim();
       if(!text)return;
       const result=check(await DB.from('messages').insert({
-        sender_id:S.u.id,recipient_id:f.dataset.id,body:text
-      }).select('id,body,created_at').single());
+        sender_id:S.u.id,recipient_id:f.dataset.id,body:text,
+        reply_to:window.MWV11?.replyId?.('dm','u:'+f.dataset.id)||null
+      }).select('id,sender_id,recipient_id,body,created_at,reply_to,edited_at').single());
       f.reset();
+      window.MWV11?.clearReply?.();
       const msgs=$('#msgs');
       if(msgs&&S.chatId===f.dataset.id){
-        msgs.insertAdjacentHTML('beforeend',chatBubble(result.body,true,chatTime(result.created_at)));
+        msgs.insertAdjacentHTML('beforeend',window.MWV11?.bubble?.(result,'dm',[result])||
+          chatBubble(result.body,true,chatTime(result.created_at)));
         msgs.scrollTop=msgs.scrollHeight;
+        window.MWV11?.afterRender?.([result],'dm');
       }
+      S.mwDirectTimes=S.mwDirectTimes||{};S.mwDirectTimes[f.dataset.id]=Date.now();
       markChatSeen(f.dataset.id);
+      chatRows();
       if(!S.chatPeers?.includes(f.dataset.id)){
         S.chatPeers=[f.dataset.id,...(S.chatPeers||[])];
         const mp=await users([f.dataset.id]);
@@ -4558,15 +4565,19 @@ window.addEventListener('submit',async ev=>{
       const text=String(new FormData(f).get('body')||'').trim();
       if(!text)return;
       const result=check(await DB.from('world_chat_messages').insert({
-        author_id:S.u.id,body:text
-      }).select('id,author_id,body,created_at').single());
+        author_id:S.u.id,body:text,
+        reply_to:window.MWV11?.replyId?.('world','world')||null
+      }).select('id,author_id,body,created_at,reply_to,edited_at').single());
       f.reset();
+      window.MWV11?.clearReply?.();
       const msgs=$('#msgs');
       if(msgs&&S.chatId==='world'){
         msgs.insertAdjacentHTML('beforeend',`<div class="world-message">
-          ${chatBubble(result.body,true,chatTime(result.created_at))}</div>`);
+          ${window.MWV11?.bubble?.(result,'world',[result])||chatBubble(result.body,true,chatTime(result.created_at))}</div>`);
         msgs.scrollTop=msgs.scrollHeight;
+        window.MWV11?.afterRender?.([result],'world');
       }
+      S.mwWorldTime=Date.now();chatRows();
       worldUpdate({last_seen_at:new Date().toISOString()}).catch(console.warn);
     }
     else if(f.id==='badgeForm'){
