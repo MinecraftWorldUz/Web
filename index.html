@@ -4330,7 +4330,7 @@ window.addEventListener('click',async event=>{
     }
     else if(act==='follow')await toggleFollow(id);
     else if(act==='posts')
-      $('#profileMods')?.scrollIntoView({behavior:'smooth'});
+      $('#mwSocialSection')?.scrollIntoView({behavior:'smooth',block:'start'});
     else if(act==='followers'||act==='following')
       await followList(act,id);
     else if(act==='editProfile')editProfile();
