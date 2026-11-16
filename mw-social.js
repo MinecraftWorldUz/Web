@@ -10,12 +10,19 @@ window.MWSocial=(()=>{
     .order('created_at',{ascending:false}).limit(80);
   const result=check(await r);
   if(S.page!=='profile'||S.profileId!==id||!host.isConnected)return;
-  host.innerHTML='<div class="bar"><h2>Postlar</h2>'+(S.u.id===id?'<button class="btn small" data-social="new">'+ico('plus',17)+' Yangi post</button>':'')+'</div>'+
-   '<div class="mw-social-grid">'+result.map(p=>'<button type="button" class="mw-social-tile" data-social="open" data-id="'+escape(p.id)+'">'+
-    (p.image_url?'<img loading="lazy" src="'+escape(p.image_url)+'" alt="">':'<div class="mw-social-text">'+escape(p.body.slice(0,90))+'</div>')+
-    '</button>').join('')+
-    (S.u.id===id?'<button type="button" class="mw-social-tile mw-social-new" data-social="new">'+ico('plus',36)+'</button>':'')+
-    '</div>'+(result.length?'':'<p class="muted">Hozircha postlar yo‘q.</p>');
+  const countEl=$('#mwSocialPostCount');
+  if(countEl)countEl.textContent=String(result.length);
+  const addButton=S.u.id===id?'<button class="btn small" data-social="new">'+ico('plus',16)+' Yangi post</button>':'';
+  host.innerHTML='<div class="bar mw-social-heading"><h2>Postlar</h2>'+addButton+'</div>'+
+    (result.length?
+      '<div class="mw-social-grid">'+result.map(p=>
+        '<button type="button" class="mw-social-tile" data-social="open" data-id="'+escape(p.id)+'">'+
+        (p.image_url?'<img loading="lazy" src="'+escape(p.image_url)+'" alt="">':
+          '<div class="mw-social-text">'+escape(p.body.slice(0,90))+'</div>')+
+        '</button>').join('')+'</div>':
+      '<div class="mw-social-empty"><span class="empty-icon">▧</span>'+
+      '<h3>Hozircha postlar yo‘q</h3>'+
+      '<p>Rasm yoki matn bilan ilk postingizni ulashing.</p></div>');
  }
  function newPost(){
   dialog('Yangi post','<form id="mwSocialPostForm">'+
