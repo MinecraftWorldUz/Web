@@ -2756,8 +2756,15 @@ function editProfile(){
       <label>Profil rasmi (2 MB)</label>
       <label class="mw-avatar-edit"><span id="avatarPreview">${avatar(S.me,true)}</span><span class="mw-photo-plus">＋</span><input id="pick-avatar" type="file" name="avatar" accept="image/jpeg,image/png,image/webp,image/gif"></label>
     </div>
+    <div class="formgroup">
+      <label>Chatdagi maxfiylik</label>
+      <label class="mw-switch-row"><input type="checkbox" id="mwPublicProfile" checked> Ommaviy — boshqa odamlar chat qidiruvida topa oladi</label>
+      <label class="mw-switch-row"><input type="checkbox" id="mwInviteApproval" checked> Guruhlarga faqat roziligim bilan qo‘shilsin</label>
+      <p class="muted mini">Bu sozlama mavjud modlaringiz va profilingizning ko‘rinishini o‘zgartirmaydi.</p>
+    </div>
     <button class="btn">${t('save')}</button>
   </form>`)
+  window.MWChat?.loadProfileSettings?.().catch(console.warn);
 }
 async function saveProfile(f){
   let x=new FormData(f);
@@ -2780,6 +2787,7 @@ async function saveProfile(f){
     .update({username,display_name,bio,avatar_url}).eq('id',S.u.id);
   if(r.error?.code==='23505')throw Error('Bu username band');
   check(r);
+  await window.MWChat?.saveProfileSettings?.();
   invalidateProfileData();
   await refreshUser();
   close();
