@@ -1374,7 +1374,7 @@ body:before,.hero:after{display:none!important}
 <div class="shell">
   <header class="top">
     <button class="logo" data-go="home">
-      <span class="brand-icon" data-icon="world" data-size="24"></span><span class="brand-word">MINECRAFT <b>WORLD</b></span><span class="version-pill">V1.0</span>
+      <span class="brand-icon" data-icon="world" data-size="24"></span><span class="brand-word">MINECRAFT <b>WORLD</b></span><span class="version-pill">V1.1</span>
     </button>
     <div class="head-actions">
       <button class="iconbtn" data-act="notifications">
@@ -2113,7 +2113,7 @@ async function go(page='home',id=null){
     if(page==='home')await home();
     else if(page==='profile')await profile(target);
     else if(page==='community')await community();
-    else if(page==='chat'){await chats();await window.MWChat?.load?.();}
+    else if(page==='chat'){await chats();await window.MWChat?.load?.();await window.MWV11?.loadPrefs?.();}
     else if(page==='create')create();
     else await home();
   }catch(err){
@@ -3608,6 +3608,7 @@ function chatRows(){
       chatPeer(id,S.chatUsers?.[id],S.chatId===id,S.chatUnread?.has(id)?1:0)
     ).join('');
   window.MWChat?.renderGroups?.();
+  window.MWV11?.decorateInbox?.();
 }
 let chatListRequest=0, chatThreadRequest=0;
 const recentThreads=new Map();
@@ -3703,17 +3704,16 @@ async function conversation(id){
   if(recent?.rows?.length){
     const msgs=$('#msgs');
     if(msgs){
-      msgs.innerHTML=recent.rows.map(m=>
-        chatBubble(m.body,m.sender_id===S.u.id,chatTime(m.created_at),
-          `<button class="linkbtn" data-act="reportMsg" data-id="${e(m.id)}">${ico('flag',12)}</button>`)
-      ).join('');
+      msgs.innerHTML=recent.rows.map(m=>window.MWV11?.bubble?.(m,'dm',recent.rows)||
+        chatBubble(m.body,m.sender_id===S.u.id,chatTime(m.created_at))).join('');
+      window.MWV11?.afterRender?.(recent.rows,'dm');
       msgs.scrollTop=msgs.scrollHeight;
     }
   }
   const uid=S.u.id;
   const [pResult,msgResult]=await Promise.all([
     users([id]),
-    DB.from('messages').select('id,sender_id,recipient_id,body,created_at')
+    DB.from('messages').select('id,sender_id,recipient_id,body,created_at,edited_at,reply_to')
       .or(`and(sender_id.eq.${uid},recipient_id.eq.${id}),and(sender_id.eq.${id},recipient_id.eq.${uid})`)
       .order('created_at',{ascending:false}).limit(55)
   ]);
@@ -3726,14 +3726,15 @@ async function conversation(id){
   recentThreads.set(key,{rows,at:Date.now()});
   const msgs=$('#msgs');
   if(msgs){
-    msgs.innerHTML=rows.map(m=>
-      chatBubble(m.body,m.sender_id===uid,chatTime(m.created_at),
-        `<button class="linkbtn" data-act="reportMsg" data-id="${e(m.id)}">${ico('flag',12)}</button>`)
-    ).join('')||'<p class="muted">Birinchi xabarni yuboring.</p>';
+    msgs.innerHTML=rows.map(m=>window.MWV11?.bubble?.(m,'dm',rows)||
+      chatBubble(m.body,m.sender_id===uid,chatTime(m.created_at))).join('')||'<p class="muted">Birinchi xabarni yuboring.</p>';
+    window.MWV11?.afterRender?.(rows,'dm');
+    window.MWV11?.addThreadSearch?.();
     msgs.scrollTop=msgs.scrollHeight;
   }
   markChatSeen(id);
   chatRows();
+  window.MWV11?.markRead?.('u:'+id).catch(console.warn);
 }
 async function worldConversation(){
   if(!requireUser())return;
@@ -3753,12 +3754,13 @@ async function worldConversation(){
     if(msgs){
       msgs.innerHTML=renderWorldMessages(recent.rows,names);
       msgs.scrollTop=msgs.scrollHeight;
+      window.MWV11?.afterRender?.(recent.rows,'world');
     }
   }
   // Start both requests simultaneously instead of waiting for room settings first.
   const [prefResult,rowsResult]=await Promise.all([
     prefPromise,
-    DB.from('world_chat_messages').select('id,author_id,body,created_at')
+    DB.from('world_chat_messages').select('id,author_id,body,created_at,edited_at,reply_to')
       .order('created_at',{ascending:false}).limit(55)
   ]);
   if(S.page!=='chat'||S.chatId!=='world'||seq!==chatThreadRequest||!$('#conversation'))return;
@@ -3778,8 +3780,11 @@ async function worldConversation(){
   if(msgs){
     msgs.innerHTML=renderWorldMessages(rows,names);
     msgs.scrollTop=msgs.scrollHeight;
+    window.MWV11?.afterRender?.(rows,'world');
+    window.MWV11?.addThreadSearch?.();
   }
   S.worldUnread=0;
+  window.MWV11?.markRead?.('world').catch(console.warn);
   worldUpdate({last_seen_at:new Date().toISOString()}).catch(console.warn);
   chatRows();updateChatBadge();
   // Names can be requested afterwards, without blocking the messages.
@@ -3789,6 +3794,7 @@ async function worldConversation(){
       const existingScroll=$('#msgs').scrollTop;
       $('#msgs').innerHTML=renderWorldMessages(rows,mp);
       $('#msgs').scrollTop=existingScroll;
+      window.MWV11?.afterRender?.(rows,'world');
     }).catch(console.warn);
   }
 }
@@ -3797,9 +3803,7 @@ function renderWorldMessages(rows,names){
     <button class="linkbtn" data-act="user" data-id="${e(m.author_id)}">
       ${avatar(names[m.author_id])} ${label(names[m.author_id])}
     </button>
-    ${chatBubble(m.body,m.author_id===S.u?.id,chatTime(m.created_at),
-      m.author_id!==S.u?.id?`<button class="linkbtn" data-act="reportUser"
-        data-id="${e(m.author_id)}" title="Shikoyat">${ico('flag',12)}</button>`:'')}
+    ${window.MWV11?.bubble?.(m,'world',rows)||chatBubble(m.body,m.author_id===S.u?.id,chatTime(m.created_at))}
   </div>`).join('')||'<p class="muted">Hozircha xabar yo‘q.</p>';
 }
 function chooseChat(){
@@ -4390,6 +4394,7 @@ window.addEventListener('click',async event=>{
     }
     else if(act==='worldLeave'){
       if(!confirm('Umumiy chatdan chiqmoqchimisiz?'))return;
+      if(!confirm('Tasdiqlang: umumiy chat ro‘yxatdan chiqadi, keyin qayta qo‘shilishingiz mumkin.'))return;
       await worldUpdate({joined:false});
       await worldConversation();
     }
@@ -4697,5 +4702,6 @@ if('serviceWorker'in navigator){
 </script>
 <script src="./mw-live-chat.js?v=1"></script>
 <script src="./mw-social.js?v=2"></script>
+<script src="./mw-v11.js?v=1"></script>
 </body>
 </html>
