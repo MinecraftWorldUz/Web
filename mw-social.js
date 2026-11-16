@@ -22,7 +22,7 @@ window.MWSocial=(()=>{
         '</button>').join('')+'</div>':
       '<div class="mw-social-empty"><span class="empty-icon">▧</span>'+
       '<h3>Hozircha postlar yo‘q</h3>'+
-      '<p>Rasm yoki matn bilan ilk postingizni ulashing.</p></div>');
+      (S.u.id===id?'<p>Rasm yoki matn bilan ilk postingizni ulashing.</p>':'<p>Bu profilda hali post yo‘q.</p>')+'</div>');
  }
  function newPost(){
   dialog('Yangi post','<form id="mwSocialPostForm">'+
