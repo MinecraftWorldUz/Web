@@ -154,7 +154,7 @@ window.MWV11=(()=>{
     const m=await fetchMessage(scope,id);if(!m)return;
     V.activeMessage={scope,id};
     const own=isMine(m,scope),emoji=['👍','❤️','😂','🔥','👏','😮','🎉','😢'];
-    dialog(T('newMsg'),'<div class="mw11-menu-text">'+esc(m.body||'')+'</div>'+
+    dialog(S.lang==='ru'?'Действия с сообщением':S.lang==='en'?'Message actions':'Xabar amallari','<div class="mw11-menu-text">'+esc(m.body||'')+'</div>'+
       '<div class="mw11-emoji-row">'+emoji.map(em=>'<button type="button" data-v11="react" data-id="'+esc(id)+'" data-scope="'+scope+'" data-emoji="'+em+'">'+em+'</button>').join('')+'</div>'+
       '<div class="mw11-actions">'+
       '<button data-v11="reply" data-id="'+esc(id)+'" data-scope="'+scope+'">'+ico('chat',18)+' '+T('reply')+'</button>'+
@@ -248,7 +248,7 @@ window.MWV11=(()=>{
   async function forwardTo(dest){
     const ref=V.activeMessage,m=ref?await fetchMessage(ref.scope,ref.id):null;
     if(!m||!m.body)throw Error('Xabar topilmadi');
-    const body='↪ '+m.body;
+    const body='↪ '+m.body.slice(0,1998);
     let r;
     if(dest==='world')r=await DB.from('world_chat_messages').insert({author_id:authUser(),body});
     else if(dest.startsWith('g:'))r=await DB.from('mw_group_messages').insert({group_id:dest.slice(2),sender_id:authUser(),body});
