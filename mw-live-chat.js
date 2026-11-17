@@ -137,9 +137,19 @@ window.MWChat=(()=>{
   if(C.group)group=check(await DB.from('mw_groups').update(values).eq('id',C.group.id).eq('owner_id',S.u.id).select('*').single());
   else group=check(await DB.from('mw_groups').insert({...values,owner_id:S.u.id}).select('*').single());
   let failed=0;
-  for(const recipient_id of C.selected){
-   const result=await DB.from('mw_group_invitations').insert({group_id:group.id,sender_id:S.u.id,recipient_id});
-   if(result.error&&result.error.code!=='23505')failed++;
+  if(C.selected.length){
+   const joined=check(await DB.from('mw_group_members').select('user_id').eq('group_id',group.id));
+   const hasJoined=new Set(joined.map(m=>m.user_id));
+   for(const recipient_id of C.selected){
+    if(hasJoined.has(recipient_id))continue;
+    try{
+     const existing=check(await DB.from('mw_group_invitations').select('id,status')
+       .eq('group_id',group.id).eq('recipient_id',recipient_id).maybeSingle());
+     if(existing?.status==='pending')continue;
+     if(existing)check(await DB.from('mw_group_invitations').delete().eq('id',existing.id));
+     check(await DB.from('mw_group_invitations').insert({group_id:group.id,sender_id:S.u.id,recipient_id}));
+    }catch(err){console.warn('Guruh taklifi:',err);failed++}
+   }
   }
   close();
   S.chatId='g:'+group.id;
@@ -179,13 +189,27 @@ window.MWChat=(()=>{
   const group=check(await DB.from('mw_groups').select('*').eq('id',id).single());
   const members=check(await DB.from('mw_group_members').select('user_id').eq('group_id',id));
   const map=await users(members.map(x=>x.user_id));
-  dialog('Guruh ma’lumotlari','<div class="mw-group-top">'+(group.avatar_url?'<img class="av large" src="'+escape(group.avatar_url)+'" alt="">':icon('users',40))+
-   '<div><h3>'+escape(group.name)+'</h3><p>@'+escape(group.username||'maxfiy')+'</p><p>'+escape(group.bio||'')+'</p></div></div>'+
-   '<h3>A’zolar · '+members.length+'</h3><div class="mw-member-list">'+members.map(m=>'<button class="mw-member-option" data-act="user" data-id="'+escape(m.user_id)+'">'+
-   avatar(map[m.user_id])+'<span>'+label(map[m.user_id])+(m.user_id===group.owner_id?' · Egasi':'')+'</span></button>').join('')+'</div>'+
-   '<div class="buttons">'+(group.owner_id===S.u.id?'<button class="btn" data-mw="edit-group" data-id="'+escape(id)+'">Tahrirlash / a’zo qo‘shish</button>'+
-   '<button class="btn danger" data-mw="delete-group" data-id="'+escape(id)+'">Guruhni o‘chirish</button>':
-   '<button class="btn danger" data-mw="leave-group" data-id="'+escape(id)+'">Guruhdan chiqish</button>')+'</div>');
+  const own=group.owner_id===S.u.id;
+  const membersHtml=members.map(m=>`<div class="mw-member-option mw11-member-manage">
+      <button type="button" class="mw11-member-person" data-act="user" data-id="${escape(m.user_id)}">
+        ${avatar(map[m.user_id])}
+        <span>${label(map[m.user_id])} ${m.user_id===group.owner_id?' · Egasi':''}</span>
+      </button>
+      ${own&&m.user_id!==group.owner_id?`<button type="button" class="mw11-kick" data-mw="kick" data-id="${escape(id)}"
+        data-user="${escape(m.user_id)}" aria-label="A’zoni guruhdan chiqarish" title="Guruhdan chiqarish">${icon('x',18)}</button>`:''}
+    </div>`).join('');
+  dialog('Guruh ma’lumotlari',`
+    <div class="mw-group-top">
+      ${group.avatar_url?'<img class="av large" src="'+escape(group.avatar_url)+'" alt="">':icon('users',40)}
+      <div><h3>${escape(group.name)}</h3><p>@${escape(group.username||'maxfiy')}</p><p>${escape(group.bio||'')}</p></div>
+    </div>
+    <h3>A’zolar · ${members.length}</h3>
+    <div class="mw-member-list">${membersHtml}</div>
+    <div class="buttons">${own?
+      '<button class="btn" data-mw="edit-group" data-id="'+escape(id)+'">Tahrirlash / a’zo qo‘shish</button>'+
+      '<button class="btn danger" data-mw="delete-group" data-id="'+escape(id)+'">Guruhni o‘chirish</button>':
+      '<button class="btn danger" data-mw="leave-group" data-id="'+escape(id)+'">Guruhdan chiqish</button>'}
+    </div>`);
  }
  async function invitations(){
   const invites=check(await DB.from('mw_group_invitations').select('id,group_id,sender_id').eq('recipient_id',S.u.id).eq('status','pending'));
@@ -211,6 +235,17 @@ window.MWChat=(()=>{
    const g=check(await DB.from('mw_groups').select('*').eq('id',id).single());
    if(g.owner_id!==S.u.id)throw Error('Faqat guruh egasi tahrirlay oladi');
    editGroup(g);
+  }
+  else if(command==='kick'){
+   const targetId=button.dataset.user;
+   const g=check(await DB.from('mw_groups').select('owner_id').eq('id',id).single());
+   if(g.owner_id!==S.u.id||targetId===g.owner_id)throw Error('Faqat guruh egasi a’zoni chiqaradi');
+   if(!confirm('Bu a’zoni guruhdan chiqarasizmi?'))return;
+   const removed=check(await DB.from('mw_group_members').delete().eq('group_id',id)
+     .eq('user_id',targetId).select('user_id'));
+   if(!removed.length)throw Error('A’zoni chiqarib bo‘lmadi');
+   toast('A’zo guruhdan chiqarildi');
+   await info(id);
   }
   else if(command==='invites')await invitations();
   else if(command==='answer'){
