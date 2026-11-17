@@ -41,9 +41,10 @@ window.MWChat=(()=>{
   for(const m of recent.data)if(!C.last[m.group_id]){C.last[m.group_id]=new Date(m.created_at).getTime();C.preview[m.group_id]=String(m.body||'').slice(0,65)}
   renderGroups();
   const owned=C.groups.filter(g=>g.owner_id===uid).map(g=>g.id);
-  const pending=owned.length?check(await DB.from('mw_group_join_requests')
-    .select('id',{count:'exact',head:true}).in('group_id',owned).eq('status','pending')):[];
-  const requestCount=Array.isArray(pending)?0:(pending?.count||0);
+  const pending=owned.length?await DB.from('mw_group_join_requests')
+    .select('id',{count:'exact',head:true}).in('group_id',owned).eq('status','pending'):null;
+  if(pending?.error)throw pending.error;
+  const requestCount=pending?.count||0;
   const bar=$('.chat-title');
   if(bar&&!$('#mwInviteButton')){
    bar.insertAdjacentHTML('beforeend','<button class="btn small ghost" id="mwInviteButton" data-mw="invites">Takliflar</button>');
