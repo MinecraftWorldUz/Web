@@ -1,7 +1,7 @@
 /* Minecraft World v1.1 — authenticated messenger UI extensions.
    Message permissions are enforced by Supabase RLS, not by this script. */
 window.MWV11=(()=>{
-  const V={rows:new Map(),prefs:new Map(),reply:null,filter:'all',search:'',activeMessage:null,loadedFor:null,longPressTimer:null,longPressTriggered:false};
+  const V={rows:new Map(),prefs:new Map(),reply:null,filter:'all',search:'',activeMessage:null,loadedFor:null,longPressTimer:null,longPressTriggered:false,mediaCache:new Map(),mediaUser:null};
   const esc=e;
   const messages={
     uz:{all:'Barchasi',unread:'O‘qilmagan',archive:'Arxiv',search:'Chat yoki @username qidirish',reply:'Javob berish',edit:'Tahrirlash',remove:'O‘chirish',copy:'Nusxalash',forward:'Uzatish',reaction:'Reaksiya',save:'Saqlash',pinned:'Mahkamlangan',pin:'Mahkamlash',unpin:'Mahkamlashni olib tashlash',mute:'Ovozsiz',unmute:'Ovozni yoqish',arch:'Arxivlash',unarch:'Arxivdan chiqarish',deleteAsk:'Xabarni o‘chirasizmi?',confirm:'Saqlash',replying:'Javob',searchMsg:'Xabar ichidan qidirish',empty:'Hozircha hech narsa topilmadi',newMsg:'Yangi xabar',noReply:'Xabar',self:'Siz'},
@@ -22,6 +22,7 @@ window.MWV11=(()=>{
     const quote=m.reply_to?'<div class="mw11-quote">'+esc((reply?.body||T('noReply')).slice(0,130))+'</div>':'';
     return '<div class="bubble '+(mine?'mine':'')+' mw11-bubble" tabindex="0" role="button" aria-label="Xabar amallari" data-v11-msg="'+esc(id)+'" data-v11-scope="'+scope+'">'+
       quote+'<div class="bubble-body">'+esc(m.body||'')+'</div>'+
+      (m.attachment_path?'<div class="mw11-attachment" data-mw11-media="'+esc(m.attachment_path)+'"><span>📎 '+esc(m.attachment_name||'Fayl')+'</span></div>':'')+
       '<div class="mw11-footer"><small>'+esc(chatTime(m.created_at))+(m.edited_at?' · ✎':'')+(mine?' ✓':'')+'</small></div>'+
       '<div class="mw11-reaction-list" data-v11-reactions="'+esc(id)+'"></div></div>';
   }
@@ -74,6 +75,7 @@ window.MWV11=(()=>{
     if(!rows?.length)return;
     syncLastDate(rows);
     for(const m of rows)if(m.id)V.rows.set(rxKey(scope,m.id),m);
+    loadMedia(rows).catch(err=>console.warn('Chat media:',err));
     const ids=rows.map(m=>m.id).filter(Boolean);
     if(!ids.length)return;
     DB.from('mw_message_reactions').select('message_id,user_id,emoji').eq('scope',scope).in('message_id',ids).then(({data,error})=>{
@@ -92,6 +94,78 @@ window.MWV11=(()=>{
       }
     }).catch(console.warn);
   }
+
+  const mimeTypes={
+    'image/jpeg':['jpg','image'],'image/png':['png','image'],
+    'image/webp':['webp','image'],'image/gif':['gif','image'],
+    'video/mp4':['mp4','video'],'video/webm':['webm','video'],
+    'application/pdf':['pdf','file'],'text/plain':['txt','file'],
+    'application/zip':['zip','file'],'application/x-zip-compressed':['zip','file']
+  };
+  async function uploadAttachment(form,scope,threadId){
+    const file=form?.querySelector('input[name="attachment"]')?.files?.[0];
+    if(!file)return {};
+    const type=mimeTypes[file.type];
+    if(!type)throw Error('Bu fayl turi qo‘llab-quvvatlanmaydi');
+    if(file.size>10485760)throw Error('Fayl 10 MB dan oshmasin');
+    if(!file.size)throw Error('Bo‘sh faylni yuborib bo‘lmaydi');
+    const uid=authUser(),id=String(threadId||'');
+    if(!uid)throw Error('Akkauntga kiring');
+    const isUUID=/^[0-9a-f-]{36}$/i.test(id);
+    if((scope==='dm'||scope==='group')&&!isUUID)throw Error('Suhbat topilmadi');
+    const folder=scope==='dm'?'dm/'+uid+'/'+id:
+      scope==='group'?'group/'+id+'/'+uid:'world/'+uid;
+    const path=folder+'/'+crypto.randomUUID()+'.'+type[0];
+    const result=await DB.storage.from('mw-chat').upload(path,file,{contentType:file.type,upsert:false});
+    if(result.error)throw result.error;
+    return {attachment_path:path,attachment_name:file.name.slice(0,140)||'Fayl',attachment_type:type[1]};
+  }
+  async function loadMedia(rows){
+    if(!rows?.length||!authUser())return;
+    if(V.mediaUser!==authUser()){V.mediaUser=authUser();V.mediaCache.clear()}
+    const media=rows.filter(m=>m.attachment_path&&m.id);
+    for(const m of media){
+      const target=document.querySelector('.mw11-bubble[data-v11-msg="'+m.id+'"] .mw11-attachment');
+      if(!target||target.dataset.mw11Media!==m.attachment_path)continue;
+      let item=V.mediaCache.get(m.attachment_path),url=item?.until>Date.now()?item.url:null;
+      if(!url){
+        const result=await DB.storage.from('mw-chat').createSignedUrl(m.attachment_path,240);
+        if(result.error){console.warn('Media URL:',result.error.message);target.textContent='Faylni ochib bo‘lmadi';continue}
+        url=result.data?.signedUrl;
+        if(!url)continue;
+        V.mediaCache.set(m.attachment_path,{url,until:Date.now()+210000});
+      }
+      if(!target.isConnected||target.dataset.mw11Media!==m.attachment_path)continue;
+      const name=esc(m.attachment_name||'Fayl');
+      const href=esc(url);
+      if(m.attachment_type==='image'){
+        target.innerHTML='<a href="'+href+'" target="_blank" rel="noopener noreferrer" aria-label="'+name+'">'+
+          '<img class="mw11-image-message" src="'+href+'" alt="'+name+'" loading="lazy"></a>';
+      }else if(m.attachment_type==='video'){
+        target.innerHTML='<video class="mw11-video-message" src="'+href+'" controls playsinline preload="metadata" aria-label="'+name+'"></video>';
+      }else{
+        target.innerHTML='<a class="mw11-file-message" href="'+href+'" target="_blank" rel="noopener noreferrer" download>'+
+          '<span>📄</span><strong>'+name+'</strong><span>↗</span></a>';
+      }
+    }
+  }
+  function clearAttachment(form){
+    const file=form?.querySelector('input[name="attachment"]');
+    if(file)file.value='';
+    attachmentSummary(form);
+  }
+  function attachmentSummary(form){
+    const el=form?.querySelector('input[name="attachment"]');
+    const box=form?.querySelector('.mw11-attachment-preview');
+    if(!box)return;
+    const file=el?.files?.[0];
+    if(!file){box.hidden=true;box.innerHTML='';return}
+    box.hidden=false;
+    const type=mimeTypes[file.type],kind=type?.[1]==='image'?'🖼':type?.[1]==='video'?'🎞':'📎';
+    box.innerHTML='<span>'+kind+' '+esc(file.name.slice(0,80))+' · '+Math.ceil(file.size/1024)+' KB</span>'+
+      '<button type="button" data-v11="clear-media" aria-label="Faylni olib tashlash">×</button>';
+  }
+
   function replyId(scope,thread){
     return V.reply?.scope===scope&&V.reply.thread===thread?V.reply.id:null;
   }
@@ -228,11 +302,17 @@ window.MWV11=(()=>{
   }
   async function deleteMessage(scope,id){
     if(!confirm(T('deleteAsk')))return;
+    const original=await fetchMessage(scope,id);
     const table=scope==='group'?'mw_group_messages':scope==='world'?'world_chat_messages':'messages';
     const col=scope==='world'?'author_id':'sender_id';
     const r=await DB.from(table).delete().eq('id',id).eq(col,authUser()).select('id');
     if(r.error)throw r.error;
     if(!r.data?.length)throw Error('Bu xabarni o‘chirishga ruxsat yo‘q');
+    if(original?.attachment_path){
+      const removed=await DB.storage.from('mw-chat').remove([original.attachment_path]);
+      if(removed.error)console.warn('Media cleanup:',removed.error);
+      V.mediaCache.delete(original.attachment_path);
+    }
     V.rows.delete(rxKey(scope,id));
     close();await refreshThread();
   }
@@ -325,6 +405,10 @@ window.MWV11=(()=>{
     e.preventDefault();e.stopImmediatePropagation();
     const act=a.dataset.v11,scope=a.dataset.scope,id=a.dataset.id;
     const run=async()=>{
+      if(act==='clear-media'){
+        const form=document.querySelector('#conversation .chat-compose');
+        clearAttachment(form);return;
+      }
       if(act==='emoji-open'){
         const picker=document.getElementById('mw11EmojiPanel');
         if(picker)picker.hidden=!picker.hidden;
@@ -408,6 +492,12 @@ window.MWV11=(()=>{
       });
     }
   },true);
+
+  window.addEventListener('change',ev=>{
+    if(!ev.target.matches('#conversation .mw11-attachment-input'))return;
+    attachmentSummary(ev.target.closest('form'));
+  },true);
+
   window.addEventListener('submit',event=>{
     const form=event.target;if(form.id!=='mw11EditMessage')return;
     event.preventDefault();event.stopImmediatePropagation();
@@ -420,6 +510,13 @@ window.MWV11=(()=>{
       bar.insertAdjacentHTML('beforeend','<button type="button" id="mw11SearchToggle" data-v11="search-toggle" aria-label="'+T('searchMsg')+'">'+ico('search',18)+'</button>');
     }
     const form=document.querySelector('#conversation .chat-compose');
+    if(form&&!form.querySelector('.mw11-attachment-input')){
+      form.insertAdjacentHTML('afterbegin',
+        '<label class="mw11-attach-label" title="Rasm, video yoki fayl yuborish" aria-label="Fayl biriktirish">'+
+          ico('paperclip',22)+'<input type="file" class="mw11-attachment-input" name="attachment"'+
+          ' accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,application/pdf,text/plain,application/zip,application/x-zip-compressed">'+
+        '</label><div class="mw11-attachment-preview" hidden></div>');
+    }
     if(form&&!form.querySelector('[data-v11="emoji-open"]')){
       form.insertAdjacentHTML('afterbegin','<button type="button" class="mw11-emoji-trigger" data-v11="emoji-open" aria-label="Emoji">☺</button>');
       form.insertAdjacentHTML('beforebegin','<div class="mw11-emoji-panel" id="mw11EmojiPanel" hidden>'+
@@ -470,5 +567,5 @@ window.MWV11=(()=>{
     return true;
   }
 
-  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate};
+  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate,uploadAttachment,loadMedia,clearAttachment};
 })();

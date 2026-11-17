@@ -1775,6 +1775,124 @@ body:before,.hero:after{display:none!important}
  }
 }
 
+
+/* V1.1 consistent media picker, scoped to forms instead of browser-native buttons */
+.mw-upload-tile.file-picker{
+ display:flex!important;align-items:center;gap:13px;min-height:80px;padding:13px 14px!important;
+ border:1px dashed #b48c54!important;border-radius:16px!important;
+ background:linear-gradient(130deg,#2b3d2d,#4a3726)!important;
+ color:#f8e6c7!important;position:relative;cursor:pointer;transition:background .18s,border-color .18s;
+}
+.mw-upload-tile.file-picker:hover,.mw-upload-tile.file-picker:focus-within{
+ border-color:#edbd6e!important;background:linear-gradient(130deg,#365139,#584129)!important;
+}
+.mw-upload-tile .mw-upload-icon{
+ width:49px;height:49px;display:grid;place-items:center;flex:none;border:1px solid #edbd6e59;
+ border-radius:13px;background:#74543355;color:#efd19b;
+}
+.mw-upload-tile .mw-upload-details{display:grid;gap:5px;min-width:0;flex:1}
+.mw-upload-details strong{font-size:14px;font-weight:700;overflow-wrap:anywhere}
+.mw-upload-details small{font-size:11px;color:#cebea4;overflow-wrap:anywhere}
+.mw-upload-tile .mw-upload-choose{
+ background:#b88947;color:#291b11;font-weight:800;padding:8px 11px;border-radius:10px;
+ font-size:12px;white-space:nowrap;flex:none;
+}
+.mw-upload-tile input[type="file"],.mw-avatar-edit input[type="file"],
+.mw-avatar-button input[type="file"],.mw-social-photo input[type="file"],
+.mw-photo-control input[type="file"],.mw-file-input input[type="file"]{
+ position:absolute!important;opacity:0!important;width:1px!important;height:1px!important;
+ pointer-events:none!important;border:0!important;padding:0!important;left:12px;bottom:12px;
+}
+.mw-upload-tile .mw-upload-preview{
+ width:56px;height:56px;object-fit:cover;border-radius:10px;border:1px solid #edbd6e55;flex:none;
+}
+.mw-upload-tile .mw-upload-preview[hidden]{display:none!important}
+.mw-profile-edit-form .mw-edit-top{align-items:flex-start;gap:17px}
+.mw-profile-edit-form .mw-edit-name{display:grid;gap:6px;flex:1;min-width:0}
+.mw-profile-edit-form .mw-edit-name textarea{min-height:85px;max-height:170px;resize:vertical}
+.mw-profile-edit-form .mw-edit-name label:not(:first-child){margin-top:5px}
+.mw-profile-edit-form .mw-avatar-edit{flex:none;border-radius:50%!important;overflow:visible}
+.mw-profile-edit-form .mw-avatar-edit #avatarPreview{overflow:hidden;border-radius:50%}
+.mw-profile-edit-form .mw-photo-plus{border-radius:50%;bottom:-4px;right:-4px}
+.mw-username-hint.ok{color:#a9e6a7}
+.mw-username-hint.bad{color:#ffb29d}
+.mw-edit-privacy #mwVisibilityStatus{color:#f1c47e}
+.mw-social-photo{border-radius:15px;min-height:125px}
+@media(max-width:390px){
+ .mw-upload-tile .mw-upload-choose{padding:7px;font-size:11px}
+ .mw-profile-edit-form .mw-edit-top{gap:11px}
+ .mw-profile-edit-form .mw-edit-name textarea{min-height:95px}
+}
+
+
+/* Private media messages in V1.1 — same Minecraft World palette as all chats */
+#app.mw11-chat-page .mw11-attachment{margin:8px 0;max-width:100%;font-size:12px}
+#app.mw11-chat-page .mw11-image-message{
+ width:auto;max-width:min(100%,340px);max-height:310px;object-fit:contain;
+ border-radius:12px;display:block;border:1px solid #ffffff22;
+}
+#app.mw11-chat-page .mw11-video-message{
+ display:block;width:min(100%,340px);max-height:300px;border-radius:12px;background:#101d13;
+}
+#app.mw11-chat-page .mw11-file-message{
+ display:flex;align-items:center;gap:9px;color:#f7deac!important;background:#203323a8;
+ padding:12px;max-width:100%;border:1px solid #d3af6c65;border-radius:12px;
+ overflow-wrap:anywhere;text-decoration:none;
+}
+#app.mw11-chat-page .mw11-file-message strong{flex:1;min-width:0;overflow-wrap:anywhere}
+#app.mw11-chat-page .mw11-attach-label{
+ display:grid;place-items:center;width:37px;height:42px;min-width:37px;flex:none;
+ color:#e6bf82;cursor:pointer;position:relative;border-radius:12px;
+}
+#app.mw11-chat-page .mw11-attach-label:hover{background:#ffffff12}
+#app.mw11-chat-page .mw11-attach-label input[type="file"]{
+ position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;
+}
+#app.mw11-chat-page .mw11-attachment-preview{
+ display:flex;flex-basis:100%;align-items:center;justify-content:space-between;gap:10px;
+ background:#314632;border-left:3px solid #e0b56a;border-radius:9px;
+ padding:8px 11px;font-size:12px;color:#f6e8c8;max-width:100%;
+}
+#app.mw11-chat-page .mw11-attachment-preview span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#app.mw11-chat-page .mw11-attachment-preview button{
+ border:0;border-radius:50%;background:#ffffff19;color:#f6e8c8;
+ font-size:20px;width:30px;height:30px;flex:none;
+}
+#app.mw11-chat-page .mw11-attachment-preview[hidden]{display:none!important}
+
+
+/* V1.1 groups discovery, consent prompts and profile availability */
+.mw-public-groups-title{font-size:16px;margin:18px 0 10px;color:#f5dba6}
+.mw-public-group-item{min-height:65px;background:#273b2d!important;border:1px solid #8b795344!important}
+.mw-public-group-avatar{width:43px;height:43px;min-width:43px;object-fit:cover;border-radius:50%;border:1px solid #d1b47755}
+.mw-public-group-item>.svg-icon{width:43px;height:43px;flex:none;min-width:43px;color:#deb972}
+.mw-people-more{margin:10px 0;width:100%;justify-content:center;border-radius:12px!important;padding:12px}
+.mw-request-pending{padding:13px;border:1px solid #b7a06c6a;border-radius:12px;color:#e8d3aa;background:#34422c}
+.mw-invite-card{display:grid;gap:11px;padding:14px;margin:10px 0;background:#2a392b;border:1px solid #a78b587d;border-radius:15px}
+.mw-invite-card p{font-size:13px;color:#d5c2a7;white-space:pre-wrap;margin:0;line-height:1.5}
+.mw-invite-card>small{color:#d3c5ad;font-size:12px}
+.mw-invite-card .buttons{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.mw-invite-card .buttons>.btn{flex:1;justify-content:center;min-height:40px}
+.mw-invite-person{display:flex;align-items:center;gap:11px;min-width:0}
+.mw-invite-person>div{display:grid;gap:5px;min-width:0}
+.mw-invite-person strong{overflow-wrap:anywhere}
+.mw-invite-person small{font-size:12px;color:#d6ba89;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mw-invite-avatar,.mw-invite-person .av{width:50px;height:50px;border-radius:50%;flex:none;object-fit:cover;border:1px solid #b5a77b55}
+.mw-invite-person>.svg-icon{min-width:48px;height:48px;color:#e4be82}
+.mw-avatar-button{display:grid;place-items:center;width:88px;height:88px;min-width:88px;border-radius:50%!important;border:2px solid #b99a6299;cursor:pointer}
+.mw-avatar-button>span{border-radius:50%;background:#efc17c;color:#2f2419;border:2px solid #27372a}
+.mw-avatar-button img{width:84px!important;height:84px!important;object-fit:cover;border-radius:50%!important}
+#mwUsernameState{display:block;min-height:19px;font-size:12px;padding-top:5px}
+#mwUsernameState.ok{color:#b8ec9d}
+#mwUsernameState.bad{color:#ffb2a5}
+@media(max-width:420px){
+ .mw-upload-tile.file-picker{gap:9px;padding:11px!important}
+ .mw-upload-tile .mw-upload-icon{width:41px;height:41px;min-width:41px}
+ .mw-upload-tile .mw-upload-choose{font-size:11px}
+ .mw-invite-card{padding:12px}
+ .mw-public-groups-title{margin-top:14px}
+}
+
 </style>
 </head>
 <body>
@@ -1845,6 +1963,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
 const ICONS={
+'paperclip':'<path d="m20 11.5-7.9 7.9a5 5 0 0 1-7.1-7.1l8.2-8.2a3.3 3.3 0 0 1 4.7 4.7l-8.4 8.4a1.6 1.6 0 0 1-2.3-2.3l7.9-7.9"/>',
+'image':'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m3 16 5-5 4 4 3-3 6 6"/>',
 'more-vertical':'<circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"/>',
 world:'<path d="m12 2 9 5-9 5-9-5 9-5Z M3 7v10l9 5 9-5V7M12 12v10"/><path d="m7 8 5 3 5-3M7 13l5 3 5-3"/>',
 home:'<path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8"/>',
@@ -2391,13 +2511,19 @@ function close(){
   $('#overlay').innerHTML=''
 }
 function filePicker(name,accept,required=false){
-  const text=name==='avatar'?'Avatar rasmini tanlash':
-    name==='image'?'Mod rasmini tanlash':'Mod faylini tanlash';
-  return `<label class="file-picker" for="pick-${name}">
-    ${ico(name==='file'?'package':'upload',22)}
-    <span id="pick-label-${name}">${text}</span>
+  const picture=name==='image',attachment=name==='file';
+  const text=picture?'Mod uchun muqova rasmini tanlash':attachment?'Mod faylini tanlash':'Avatar rasmini tanlash';
+  const detail=picture?'JPEG, PNG, WebP yoki GIF':attachment?'ZIP, JAR, MCPACK va boshqa mos fayllar':'Rasm tanlash';
+  return `<label class="mw-upload-tile file-picker" for="pick-${name}">
+    <span class="mw-upload-icon">${ico(attachment?'package':picture?'image':'user',25)}</span>
+    <span class="mw-upload-details">
+      <strong id="pick-label-${name}">${text}</strong>
+      <small>${detail}</small>
+    </span>
+    <span class="mw-upload-choose">Tanlash</span>
     <input id="pick-${name}" type="file" name="${name}"
-      accept="${e(accept)}" ${required?'required':''}>
+      accept="${e(accept)}" ${required?'required':''} aria-label="${text}">
+    <img class="mw-upload-preview" alt="Tanlangan rasm" hidden>
   </label>`
 }
 function formField(title,name,type='text',val='',req=true){
@@ -3235,13 +3361,10 @@ function editProfile(){
           <label for="mwDisplayName">Ism</label>
           <input class="field" id="mwDisplayName" name="display_name" maxlength="60"
             placeholder="Ismingiz" value="${e(S.me.display_name||'')}">
-          <small class="muted">Avatarni o‘zgartirish uchun + ni bosing</small>
+          <label for="mwEditBio">Bio</label>
+          <textarea class="field" id="mwEditBio" name="bio" rows="3"
+            maxlength="350" placeholder="O‘zingiz haqingizda...">${e(S.me.bio||'')}</textarea>
         </div>
-      </div>
-      <div class="formgroup">
-        <label for="mwEditBio">${t('bio')}</label>
-        <textarea class="field" id="mwEditBio" name="bio" rows="3"
-          maxlength="350" placeholder="O‘zingiz haqingizda...">${e(S.me.bio||'')}</textarea>
       </div>
       <div class="formgroup">
         <label for="mwEditUsername">Username</label>
@@ -3256,12 +3379,12 @@ function editProfile(){
       <fieldset class="mw-edit-privacy">
         <legend>Chat maxfiyligi</legend>
         <label class="mw-switch-row"><span>
-          <strong>Ommaviy akkaunt</strong>
-          <small>Username orqali chat qidiruvida topiladi</small>
+          <strong>Chat turi: <b id="mwVisibilityStatus">Ommaviy</b></strong>
+          <small>Ommaviy bo‘lsa qidiruvda chiqadi, maxfiy bo‘lsa eski suhbatlaringiz saqlanadi</small>
         </span><input type="checkbox" id="mwPublicProfile" checked></label>
         <label class="mw-switch-row"><span>
-          <strong>Guruhga qo‘shishni tasdiqlash</strong>
-          <small>Taklifga rozilik bermaguncha guruhga qo‘shilmaysiz</small>
+          <strong>Guruhga qo‘shishdan oldin so‘rash</strong>
+          <small>Yoqilgan bo‘lsa taklifni qabul qilasiz, o‘chirilsa guruhga avtomatik qo‘shilasiz</small>
         </span><input type="checkbox" id="mwInviteApproval" checked></label>
       </fieldset>
       <button class="btn mw-edit-save" type="submit">${t('save')}</button>
@@ -3278,6 +3401,9 @@ async function saveProfile(f){
     throw Error('Username noto‘g‘ri');
   if(S.me.is_admin&&username!=='admin')
     throw Error('Admin username o‘zgarmaydi');
+  const usernameCheck=await DB.rpc('mw_username_available',{candidate:username,kind:'profile'});
+  check(usernameCheck);
+  if(!usernameCheck.data)throw Error('Username band');
   let avatar_url=S.me.avatar_url;
   let fi=x.get('avatar');
   if(fi?.size){
@@ -4128,7 +4254,7 @@ async function conversation(id){
   const uid=S.u.id;
   const [pResult,msgResult]=await Promise.all([
     users([id]),
-    DB.from('messages').select('id,sender_id,recipient_id,body,created_at,edited_at,reply_to')
+    DB.from('messages').select('id,sender_id,recipient_id,body,created_at,edited_at,reply_to,attachment_path,attachment_name,attachment_type')
       .or(`and(sender_id.eq.${uid},recipient_id.eq.${id}),and(sender_id.eq.${id},recipient_id.eq.${uid})`)
       .order('created_at',{ascending:false}).limit(55)
   ]);
@@ -4178,7 +4304,7 @@ async function worldConversation(){
   // Start both requests simultaneously instead of waiting for room settings first.
   const [prefResult,rowsResult]=await Promise.all([
     prefPromise,
-    DB.from('world_chat_messages').select('id,author_id,body,created_at,edited_at,reply_to')
+    DB.from('world_chat_messages').select('id,author_id,body,created_at,edited_at,reply_to,attachment_path,attachment_name,attachment_type')
       .order('created_at',{ascending:false}).limit(55)
   ]);
   if(S.page!=='chat'||S.chatId!=='world'||seq!==chatThreadRequest||!$('#conversation'))return;
@@ -4256,17 +4382,26 @@ async function findChatUsers(term){
       ${avatar(p)} <span class="peer-text">@${e(p.username)}</span> ${ico('chat',18)}</button>`
   ).join('')||'<p class="muted">Foydalanuvchi topilmadi.</p>';
 }
+async function pendingOwnerJoinCount(uid){
+  const groups=check(await DB.from('mw_groups').select('id').eq('owner_id',uid));
+  if(!groups.length)return 0;
+  const result=await DB.from('mw_group_join_requests').select('id',{count:'exact',head:true})
+    .in('group_id',groups.map(g=>g.id)).eq('status','pending');
+  if(result.error)throw result.error;
+  return result.count||0;
+}
 async function notificationCount(){
   if(!S.u){$('#alertCount').hidden=true;return}
   const uid=S.u.id;
-  const [base,invites]=await Promise.all([
+  const [base,invites,owners]=await Promise.all([
     DB.from('notifications').select('id',{count:'exact',head:true})
       .eq('user_id',uid).eq('is_read',false),
     DB.from('mw_group_invitations').select('id',{count:'exact',head:true})
-      .eq('recipient_id',uid).eq('status','pending')
+      .eq('recipient_id',uid).eq('status','pending'),
+    pendingOwnerJoinCount(uid)
   ]);
   if(S.u?.id!==uid)return;
-  const count=(base.count||0)+(invites.count||0);
+  const count=(base.count||0)+(invites.count||0)+owners;
   $('#alertCount').hidden=!count;
   $('#alertCount').textContent=count>99?'99+':String(count);
 }
@@ -4352,6 +4487,13 @@ function listen(){
       notificationCount().catch(console.warn);
     })
     .on('postgres_changes',{event:'INSERT',schema:'public',
+      table:'mw_group_join_requests'},p=>{
+      notificationCount().catch(console.warn);
+      if(p.new?.requester_id!==S.u?.id&&notificationEnabled())toast('Guruhga qo‘shilish so‘rovi keldi');
+    })
+    .on('postgres_changes',{event:'UPDATE',schema:'public',
+      table:'mw_group_join_requests'},()=>notificationCount().catch(console.warn))
+    .on('postgres_changes',{event:'INSERT',schema:'public',
       table:'messages',filter:`recipient_id=eq.${S.u.id}`},
       p=>{onIncomingDirect(p.new).catch(console.warn)})
     .on('postgres_changes',{event:'INSERT',schema:'public',
@@ -4362,21 +4504,21 @@ function listen(){
 async function notifications(){
   if(!requireUser())return;
   const uid=S.u.id;
-  const [r,invites]=await Promise.all([
+  const [r,invites,owners]=await Promise.all([
     DB.from('notifications').select('*').eq('user_id',uid)
       .order('created_at',{ascending:false}).limit(35),
     DB.from('mw_group_invitations').select('id',{count:'exact',head:true})
-      .eq('recipient_id',uid).eq('status','pending')
+      .eq('recipient_id',uid).eq('status','pending'),
+    pendingOwnerJoinCount(uid)
   ]);
   check(r);if(S.u?.id!==uid)return;
-  const pending=invites.count||0;
+  const pending=(invites.count||0)+owners;
   dialog(t('notifications'),`
-    ${pending?'<button class="btn" data-mw="invites">'+ico('users',17)+' Guruh takliflari ('+pending+')</button>':''}
+    ${pending?'<button class="btn" data-mw="invites">'+ico('users',17)+' Guruh taklif va so‘rovlari ('+pending+')</button>':''}
     ${btn('markRead',t('mark'))}
     <div class="divider"></div>
     ${r.data.map(n=>`
-      <div class="item"
-        style="border-left:3px solid ${n.is_read?'#567':'#ffab60'}">
+      <div class="item" style="border-left:3px solid ${n.is_read?'#567':'#ffab60'}">
         <b>${e(n.title)}</b>
         <p>${e(n.body)}</p>
         <small class="muted">${when(n.created_at)}</small>
@@ -4919,7 +5061,18 @@ window.addEventListener('change',async ev=>{
   if(ev.target.matches('.file-picker input[type="file"], .mw-avatar-edit input[type="file"]')){
     const x=ev.target;
     const label=document.getElementById('pick-label-'+x.name);
-    if(label&&x.files?.[0])label.textContent=x.files[0].name;
+    if(label&&x.files?.[0]){
+      label.textContent=x.files[0].name;
+      const tile=x.closest('.mw-upload-tile');
+      const small=tile?.querySelector('.mw-upload-details small');
+      if(small)small.textContent='Tanlandi · '+Math.max(1,Math.ceil(x.files[0].size/1024))+' KB';
+      const preview=tile?.querySelector('.mw-upload-preview');
+      if(preview&&x.files[0].type.startsWith('image/')){
+        const reader=new FileReader();
+        reader.onload=()=>{if(tile?.isConnected){preview.src=String(reader.result);preview.hidden=false}};
+        reader.readAsDataURL(x.files[0]);
+      }
+    }
     if(x.name==='avatar'&&x.files?.[0]?.type.startsWith('image/')){
       const preview=$('#avatarPreview');
       if(preview){
@@ -4986,12 +5139,14 @@ window.addEventListener('submit',async ev=>{
     else if(f.id==='msgForm'){
       if(!requireUser())return;
       const text=String(new FormData(f).get('body')||'').trim();
-      if(!text)return;
+      const media=await window.MWV11?.uploadAttachment?.(f,'dm',f.dataset.id)||{};
+      if(!text&&!media.attachment_path)return;
+      const body=text||'📎 '+media.attachment_name;
       const result=check(await DB.from('messages').insert({
-        sender_id:S.u.id,recipient_id:f.dataset.id,body:text,
+        sender_id:S.u.id,recipient_id:f.dataset.id,body,...media,
         reply_to:window.MWV11?.replyId?.('dm','u:'+f.dataset.id)||null
-      }).select('id,sender_id,recipient_id,body,created_at,reply_to,edited_at').single());
-      f.reset();
+      }).select('id,sender_id,recipient_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type').single());
+      f.reset();window.MWV11?.clearAttachment?.(f);
       window.MWV11?.clearReply?.();
       const msgs=$('#msgs');
       if(msgs&&S.chatId===f.dataset.id){
@@ -5003,7 +5158,7 @@ window.addEventListener('submit',async ev=>{
         window.MWV11?.afterRender?.([result],'dm');
       }
       S.mwDirectTimes=S.mwDirectTimes||{};S.mwDirectTimes[f.dataset.id]=Date.now();
-      S.mwLastMessage=S.mwLastMessage||{};S.mwLastMessage[f.dataset.id]='Siz: '+text.slice(0,65);
+      S.mwLastMessage=S.mwLastMessage||{};S.mwLastMessage[f.dataset.id]='Siz: '+result.body.slice(0,65);
       markChatSeen(f.dataset.id);
       chatRows();
       if(!S.chatPeers?.includes(f.dataset.id)){
@@ -5016,12 +5171,14 @@ window.addEventListener('submit',async ev=>{
     else if(f.id==='worldMsgForm'){
       if(!requireUser()||S.worldPref?.joined===false)return;
       const text=String(new FormData(f).get('body')||'').trim();
-      if(!text)return;
+      const media=await window.MWV11?.uploadAttachment?.(f,'world','world')||{};
+      if(!text&&!media.attachment_path)return;
+      const body=text||'📎 '+media.attachment_name;
       const result=check(await DB.from('world_chat_messages').insert({
-        author_id:S.u.id,body:text,
+        author_id:S.u.id,body,...media,
         reply_to:window.MWV11?.replyId?.('world','world')||null
-      }).select('id,author_id,body,created_at,reply_to,edited_at').single());
-      f.reset();
+      }).select('id,author_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type').single());
+      f.reset();window.MWV11?.clearAttachment?.(f);
       window.MWV11?.clearReply?.();
       const msgs=$('#msgs');
       if(msgs&&S.chatId==='world'){
@@ -5032,7 +5189,7 @@ window.addEventListener('submit',async ev=>{
         msgs.scrollTop=msgs.scrollHeight;
         window.MWV11?.afterRender?.([result],'world');
       }
-      S.mwWorldTime=Date.now();S.mwWorldPreview='Siz: '+text.slice(0,65);chatRows();
+      S.mwWorldTime=Date.now();S.mwWorldPreview='Siz: '+result.body.slice(0,65);chatRows();
       worldUpdate({last_seen_at:new Date().toISOString()}).catch(console.warn);
     }
     else if(f.id==='badgeForm'){
@@ -5124,7 +5281,7 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js?v=14').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=15').catch(console.warn);
   });
 }
 
@@ -5166,8 +5323,8 @@ if('serviceWorker'in navigator){
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=4"></script>
+<script src="./mw-live-chat.js?v=5"></script>
 <script src="./mw-social.js?v=2"></script>
-<script src="./mw-v11.js?v=4"></script>
+<script src="./mw-v11.js?v=5"></script>
 </body>
 </html>
