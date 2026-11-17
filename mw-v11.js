@@ -34,8 +34,12 @@ window.MWV11=(()=>{
   function dateLabel(input){
     const d=new Date(input);if(Number.isNaN(d.getTime()))return '';
     if(chatDateKey(input)===chatDateKey(new Date()))return S.lang==='ru'?'Сегодня':S.lang==='en'?'Today':'Bugun';
-    const locale=S.lang==='ru'?'ru-RU':S.lang==='en'?'en-US':'uz-UZ';
     const current=new Date();
+    if(S.lang==='uz'){
+      const months=['yanvar','fevral','mart','aprel','may','iyun','iyul','avgust','sentabr','oktabr','noyabr','dekabr'];
+      return d.getDate()+' '+months[d.getMonth()]+(d.getFullYear()!==current.getFullYear()?' '+d.getFullYear():'');
+    }
+    const locale=S.lang==='ru'?'ru-RU':'en-US';
     return d.toLocaleDateString(locale,{day:'numeric',month:'long',year:d.getFullYear()!==current.getFullYear()?'numeric':undefined});
   }
   function dateMarker(input){
