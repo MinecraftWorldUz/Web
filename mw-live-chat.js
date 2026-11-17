@@ -19,6 +19,14 @@ window.MWChat=(()=>{
      renderGroups();
      if(S.page==='chat'&&S.chatId==='g:'+g&&payload.new.sender_id!==uid)openGroup(g).catch(console.warn);
     })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'mw_group_members',filter:`user_id=eq.${uid}`},()=>{
+      if(S.u?.id!==uid)return;
+      load().catch(console.warn);
+    })
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'mw_group_members',filter:`user_id=eq.${uid}`},()=>{
+      if(S.u?.id!==uid)return;
+      load().catch(console.warn);
+    })
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'mw_group_join_requests'},payload=>{
       if(S.u?.id!==uid||!C.groups.some(g=>g.id===payload.new.group_id&&g.owner_id===uid))return;
       if(S.page==='chat')toast('Guruhga qo‘shilish so‘rovi keldi');
