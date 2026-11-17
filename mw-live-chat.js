@@ -169,7 +169,7 @@ window.MWChat=(()=>{
   S.chatId='g:'+id;C.activeId=id;
   const area=$('#conversation');if(!area)return;
   area.innerHTML='<header class="chat-toolbar">'+
-     (g.avatar_url?'<img class="av" src="'+escape(g.avatar_url)+'" alt="">':icon('users',28))+
+     '<span class="mw11-group-header-avatar">'+(g.avatar_url?'<img class="av" src="'+escape(g.avatar_url)+'" alt="">':icon('users',28))+'</span>'+
      '<button class="linkbtn mw11-head-name" data-mw="group-info" data-id="'+escape(id)+'"><strong>'+escape(g.name)+'</strong><small>@'+escape(g.username||'maxfiy')+'</small></button></header>'+
    '<div class="messages" id="msgs"></div><form class="chat-compose" id="mwGroupMessage" data-id="'+escape(id)+'">'+
    '<input class="field" name="body" maxlength="2000" placeholder="Xabar yozing..." required><button class="btn" type="submit">'+icon('send',20)+'</button></form>';
