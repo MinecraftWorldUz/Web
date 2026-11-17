@@ -1,7 +1,7 @@
 /* Minecraft World — authenticated chat groups integration.
    This file is loaded only by production index.html and uses its existing DB, S, $, e, avatar, label, dialog, go helpers. */
 window.MWChat=(()=>{
- const C={groups:[],last:{},preview:{},members:[],selected:[],group:null,activeId:null,queryTimer:null,userId:null,channel:null};
+ const C={groups:[],last:{},preview:{},members:[],selected:[],selectedNames:new Map(),group:null,activeId:null,queryTimer:null,userId:null,channel:null,personQuery:'',memberQuery:'',personOffset:0,memberOffset:0};
  const escape=e,icon=ico;
  async function load(){
   if(!S.u||S.page!=='chat')return;
@@ -71,27 +71,42 @@ window.MWChat=(()=>{
    '<div id="mwPersonResults" class="mw-member-list"></div>');
   searchPeople('');
  }
- async function searchPeople(q,forGroup=false){
+
+ async function searchPeople(q,forGroup=false,append=false){
   if(!S.u)return;
   const term=String(q||'').trim().replace(/^@/,'').replace(/[%*,()]/g,'').slice(0,30);
-  let req=DB.from('profiles').select('id,username,display_name,avatar_url').neq('id',S.u.id).limit(35);
-  if(term)req=req.or('username.ilike.%'+term+'%,display_name.ilike.%'+term+'%');
-  const all=check(await req);
-  const settings=all.length?await DB.from('mw_chat_settings').select('user_id,discoverable').in('user_id',all.map(p=>p.id)):({data:[]});
-  const hidden=new Set((settings.data||[]).filter(p=>p.discoverable===false).map(p=>p.user_id));
-  const filtered=all.filter(p=>!hidden.has(p.id));
   const target=$(forGroup?'#mwMemberResults':'#mwPersonResults');
   if(!target)return;
-  if(forGroup){
-   C.members=filtered;
-   target.innerHTML=filtered.map(memberPreview).join('')||'<p class="muted">Topilmadi</p>';
-  }else{
-   target.innerHTML=filtered.map(p=>'<button class="mw-member-option" data-act="chatStart" data-id="'+escape(p.id)+'">'+avatar(p)+
-    '<span><b>'+escape(p.display_name||p.username)+'</b><small>@'+escape(p.username)+'</small></span></button>').join('')||'<p class="muted">Topilmadi</p>';
+  const key=forGroup?'member':'person';
+  if(!append){
+    C[key+'Query']=term;
+    C[key+'Offset']=0;
   }
+  const offset=C[key+'Offset']||0;
+  let req=DB.from('profiles').select('id,username,display_name,avatar_url')
+     .neq('id',S.u.id).order('username',{ascending:true}).range(offset,offset+49);
+  if(term)req=req.or('username.ilike.%'+term+'%,display_name.ilike.%'+term+'%');
+  const all=check(await req);
+  if(C[key+'Query']!==term||!target.isConnected)return;
+  const settings=all.length?check(await DB.from('mw_chat_settings')
+    .select('user_id,discoverable').in('user_id',all.map(p=>p.id))):[];
+  const hidden=new Set(settings.filter(p=>p.discoverable===false).map(p=>p.user_id));
+  const visible=all.filter(p=>!hidden.has(p.id)||(S.chatPeers||[]).includes(p.id));
+  if(forGroup)C.members=append?[...C.members,...visible]:visible;
+  const cards=forGroup?visible.map(memberPreview).join(''):
+    visible.map(p=>'<button class="mw-member-option" data-act="chatStart" data-id="'+escape(p.id)+'">'+
+    avatar(p)+'<span><b>'+escape(p.display_name||p.username)+'</b><small>@'+escape(p.username)+'</small></span></button>').join('');
+  if(!append)target.innerHTML=cards;
+  else{target.querySelector('.mw-people-more')?.remove();target.insertAdjacentHTML('beforeend',cards)}
+  C[key+'Offset']=offset+all.length;
+  if(all.length===50)target.insertAdjacentHTML('beforeend',
+   '<button type="button" class="btn ghost mw-people-more" data-mw="more-people" data-kind="'+
+      (forGroup?'members':'people')+'">Yana akkauntlarni ko‘rish</button>');
+  if(!target.children.length)target.innerHTML='<p class="muted">Akkaunt topilmadi.</p>';
  }
+
  function editGroup(g=null){
-  C.group=g;C.selected=[];
+  C.group=g;C.selected=[];C.selectedNames=new Map();
   dialog(g?'Guruhni tahrirlash':'Guruh yaratish','<form id="mwGroupForm" data-id="'+escape(g?.id||'')+'">'+
    '<div class="mw-group-top"><label class="mw-avatar-button">'+(g?.avatar_url?'<img src="'+escape(g.avatar_url)+'" alt="">':icon('users',38))+
    '<span>＋</span><input type="file" name="avatar" accept="image/png,image/jpeg,image/webp"></label>'+
@@ -105,27 +120,36 @@ window.MWChat=(()=>{
    '<button class="btn" type="submit">Saqlash</button></form>');
   visibility();
   searchPeople('',true);
+  if(g?.visibility!=='private')usernameStatus().catch(console.warn);
  }
  function visibility(){const w=$('#mwUsernameWrap');if(w)w.hidden=$('#mwGroupForm [name=visibility]:checked')?.value==='private'}
+
  async function usernameStatus(){
   const input=$('#mwGroupUsername'),output=$('#mwUsernameState');
-  if(!input||!output)return;
+  if(!input||!output||input.closest('[hidden]'))return;
   const value=input.value.trim().replace(/^@/,'').toLowerCase();
-  if(!/^[a-z0-9_]{5,25}$/.test(value)){output.textContent='5–25 ta a-z, 0-9, _';output.className='bad';return}
-  const [p,g]=await Promise.all([
-   DB.from('profiles').select('id').eq('username',value).limit(1),
-   DB.from('mw_groups').select('id').eq('username',value).limit(1)
-  ]);
-  if(!output.isConnected||input.value.toLowerCase()!==value)return;
-  const taken=!!p.data?.length||(g.data||[]).some(x=>x.id!==C.group?.id);
-  output.textContent=taken?'Username band':'Username bo‘sh';output.className=taken?'bad':'ok';
+  if(!/^[a-z0-9_]{5,25}$/.test(value)){
+    output.textContent='5–25 belgi: a-z, 0-9 yoki _';output.className='bad';return;
+  }
+  output.textContent='Tekshirilmoqda…';output.className='';
+  const {data,error}=await DB.rpc('mw_username_available',{candidate:value,kind:'group',editing_group:C.group?.id||null});
+  if(!output.isConnected||input.value.trim().replace(/^@/,'').toLowerCase()!==value)return;
+  if(error){console.warn('Username check:',error);output.textContent='Tekshirib bo‘lmadi';output.className='bad';return}
+  output.textContent=data?'Username bo‘sh':'Username band';
+  output.className=data?'ok':'bad';
  }
+
  async function saveGroup(form){
   const d=new FormData(form),name=String(d.get('name')||'').trim(),vis=String(d.get('visibility')||'public');
   let username=vis==='public'?String(d.get('username')||'').trim().replace(/^@/,'').toLowerCase():null;
   if(!name)throw Error('Guruh nomini yozing');
   if(username&&!/^[a-z0-9_]{5,25}$/.test(username))throw Error('Username noto‘g‘ri');
   if(vis==='public'&&!username)throw Error('Username kerak');
+  if(vis==='public'){
+   const r=await DB.rpc('mw_username_available',{candidate:username,kind:'group',editing_group:C.group?.id||null});
+   check(r);
+   if(!r.data)throw Error('Username band');
+  }
   let avatar_url=C.group?.avatar_url||null;
   const file=d.get('avatar');
   if(file?.size){
@@ -136,7 +160,7 @@ window.MWChat=(()=>{
   let group;
   if(C.group)group=check(await DB.from('mw_groups').update(values).eq('id',C.group.id).eq('owner_id',S.u.id).select('*').single());
   else group=check(await DB.from('mw_groups').insert({...values,owner_id:S.u.id}).select('*').single());
-  let failed=0;
+  let failed=0,requested=[],joinedNow=[];
   if(C.selected.length){
    const joined=check(await DB.from('mw_group_members').select('user_id').eq('group_id',group.id));
    const hasJoined=new Set(joined.map(m=>m.user_id));
@@ -145,9 +169,14 @@ window.MWChat=(()=>{
     try{
      const existing=check(await DB.from('mw_group_invitations').select('id,status')
        .eq('group_id',group.id).eq('recipient_id',recipient_id).maybeSingle());
-     if(existing?.status==='pending')continue;
+     if(existing?.status==='pending'){requested.push(C.selectedNames.get(recipient_id)||recipient_id.slice(0,7));continue;}
      if(existing)check(await DB.from('mw_group_invitations').delete().eq('id',existing.id));
-     check(await DB.from('mw_group_invitations').insert({group_id:group.id,sender_id:S.u.id,recipient_id}));
+     const invitation=check(await DB.from('mw_group_invitations')
+       .insert({group_id:group.id,sender_id:S.u.id,recipient_id})
+       .select('status').single());
+     const nick=C.selectedNames.get(recipient_id)||recipient_id.slice(0,7);
+     if(invitation.status==='pending')requested.push(nick);
+     else joinedNow.push(nick);
     }catch(err){console.warn('Guruh taklifi:',err);failed++}
    }
   }
@@ -156,7 +185,9 @@ window.MWChat=(()=>{
   S.mw11MobileOpen=true;
   await load();
   await openGroup(group.id);
-  if(failed)toast('Ba’zi takliflar yuborilmadi');
+  if(requested.length)toast('@'+requested.slice(0,3).join(', @')+' — ruxsat so‘rovi yuborildi');
+  else if(joinedNow.length)toast(joinedNow.length+' a’zo guruhga qo‘shildi');
+  if(failed)toast(failed+' ta taklif yuborilmadi');
  }
  const groupBubble=(m,p,rows)=>'<div class="mw11-group-message">'+
    (m.sender_id!==S.u.id?'<span class="mw11-group-sender">'+escape(p?.display_name||p?.username||'Ishtirokchi')+'</span>':'')+
@@ -213,15 +244,28 @@ window.MWChat=(()=>{
       '<button class="btn danger" data-mw="leave-group" data-id="'+escape(id)+'">Guruhdan chiqish</button>'}
     </div>`);
  }
+
  async function invitations(){
-  const invites=check(await DB.from('mw_group_invitations').select('id,group_id,sender_id').eq('recipient_id',S.u.id).eq('status','pending'));
-  const groupIds=invites.map(i=>i.group_id);
-  const groups=groupIds.length?check(await DB.from('mw_groups').select('id,name').in('id',groupIds)):[];
-  const names=Object.fromEntries(groups.map(g=>[g.id,g.name]));
-  dialog('Guruh takliflari',invites.map(i=>'<div class="item"><b>'+escape(names[i.group_id]||'Guruh')+'</b>'+
-   '<div class="buttons"><button class="btn" data-mw="answer" data-id="'+escape(i.id)+'" data-status="accepted">Qabul qilish</button>'+
-   '<button class="btn ghost" data-mw="answer" data-id="'+escape(i.id)+'" data-status="declined">Rad etish</button></div></div>').join('')||'<p class="muted">Hozircha taklif yo‘q.</p>');
+  const invites=check(await DB.from('mw_group_invitations')
+    .select('id,group_id,sender_id,created_at').eq('recipient_id',S.u.id).eq('status','pending'));
+  const groupIds=[...new Set(invites.map(i=>i.group_id))];
+  const groups=groupIds.length?check(await DB.from('mw_groups')
+    .select('id,name,bio,avatar_url,username').in('id',groupIds)):[];
+  const names=new Map(groups.map(g=>[g.id,g]));
+  const people=invites.length?await users(invites.map(x=>x.sender_id)):{};
+  dialog('Guruh takliflari',invites.map(i=>{
+    const g=names.get(i.group_id),sender=people[i.sender_id];
+    return '<div class="mw-invite-card">'+
+      '<div class="mw-invite-person">'+
+      (g?.avatar_url?'<img class="mw-invite-avatar" src="'+escape(g.avatar_url)+'" alt="">':icon('users',32))+
+      '<div><strong>'+escape(g?.name||'Guruh')+'</strong><small>@'+escape(g?.username||'maxfiy')+'</small></div></div>'+
+      '<p>'+escape(g?.bio||'')+'</p>'+
+      '<small>'+escape(sender?.display_name||sender?.username||'Foydalanuvchi')+' sizni guruhga taklif qildi</small>'+
+      '<div class="buttons"><button class="btn" data-mw="answer" data-id="'+escape(i.id)+'" data-status="accepted">Qabul qilish</button>'+
+      '<button class="btn ghost" data-mw="answer" data-id="'+escape(i.id)+'" data-status="declined">Rad etish</button></div></div>';
+  }).join('')||'<p class="muted">Hozircha taklif yo‘q.</p>');
  }
+
  async function worldInfo(){
   const pref=await worldPref();
   dialog('Umumiy chat','<h3>Umumiy chat</h3><p>Bu suhbatga barcha yangi va eski akkauntlar avtomatik qo‘shiladi.</p>'+
@@ -232,6 +276,7 @@ window.MWChat=(()=>{
   const command=button.dataset.mw,id=button.dataset.id;
   if(command==='new-chat')newChat();
   else if(command==='new-group')editGroup();
+  else if(command==='more-people')await searchPeople(button.dataset.kind==='members'?C.memberQuery:C.personQuery,button.dataset.kind==='members',true);
   else if(command==='open'){S.mw11MobileOpen=true;await openGroup(id);}
   else if(command==='group-info')await info(id);
   else if(command==='edit-group'){
@@ -306,18 +351,20 @@ window.MWChat=(()=>{
    user_id:S.u.id,discoverable:pub.checked,require_group_approval:approval.checked
   }));
  }
+
  async function checkAccountUsername(input){
   if(!S.u||!input)return;
-  const value=input.value.trim().toLowerCase(),id='mwAccountNameCheck';
-  let status=$('#'+id);
-  if(!status){input.insertAdjacentHTML('afterend','<small id="'+id+'"></small>');status=$('#'+id)}
-  if(!/^[a-z0-9_]{3,20}$/.test(value)){status.textContent='Username 3–20 belgi';return}
-  const [p,g]=await Promise.all([
-   DB.from('profiles').select('id').eq('username',value),
-   DB.from('mw_groups').select('id').eq('username',value)
-  ]);
-  if(!status?.isConnected||input.value.trim().toLowerCase()!==value)return;
-  status.textContent=(p.data||[]).some(x=>x.id!==S.u.id)||(g.data||[]).length?'Username band':'Username bo‘sh';
+  const value=input.value.trim().replace(/^@/,'').toLowerCase();
+  const status=$('#mwAccountNameCheck');if(!status)return;
+  if(!/^[a-z0-9_]{3,20}$/.test(value)){
+    status.textContent='3–20 belgi: a-z, 0-9 yoki _';status.className='mw-username-hint bad';return;
+  }
+  status.textContent='Tekshirilmoqda…';status.className='mw-username-hint';
+  const {data,error}=await DB.rpc('mw_username_available',{candidate:value,kind:'profile'});
+  if(!status.isConnected||input.value.trim().replace(/^@/,'').toLowerCase()!==value)return;
+  if(error){console.warn(error);status.textContent='Tekshirib bo‘lmadi';status.className='mw-username-hint bad';return;}
+  status.textContent=data?'Username bo‘sh':'Username band';
+  status.className='mw-username-hint '+(data?'ok':'bad');
  }
 
  // Capture handles group actions before legacy catch-all click handler; no other features change.
@@ -345,6 +392,10 @@ window.MWChat=(()=>{
  window.addEventListener('change',ev=>{
   if(ev.target.matches('.mw-check-member')){
    const id=ev.target.value;
+   if(ev.target.checked){
+     const p=C.members.find(x=>x.id===id);
+     if(p)C.selectedNames.set(id,p.username);
+   }else C.selectedNames.delete(id);
    C.selected=ev.target.checked?[...new Set([...C.selected,id])]:C.selected.filter(x=>x!==id);
    if($('#mwSelectedCount'))$('#mwSelectedCount').textContent=C.selected.length+' kishi tanlandi';
   }
