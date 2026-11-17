@@ -4105,8 +4105,9 @@ async function conversation(id){
   if(recent?.rows?.length){
     const msgs=$('#msgs');
     if(msgs){
-      msgs.innerHTML=recent.rows.map(m=>window.MWV11?.bubble?.(m,'dm',recent.rows)||
-        chatBubble(m.body,m.sender_id===S.u.id,chatTime(m.created_at))).join('');
+      msgs.innerHTML=(window.MWV11?.dated?.(recent.rows,m=>window.MWV11?.bubble?.(m,'dm',recent.rows)||
+        chatBubble(m.body,m.sender_id===S.u.id,chatTime(m.created_at)))||
+        recent.rows.map(m=>chatBubble(m.body,m.sender_id===S.u.id,chatTime(m.created_at))).join(''));
       window.MWV11?.afterRender?.(recent.rows,'dm');
       msgs.scrollTop=msgs.scrollHeight;
     }
@@ -4128,8 +4129,9 @@ async function conversation(id){
   recentThreads.set(key,{rows,at:Date.now()});
   const msgs=$('#msgs');
   if(msgs){
-    msgs.innerHTML=rows.map(m=>window.MWV11?.bubble?.(m,'dm',rows)||
-      chatBubble(m.body,m.sender_id===uid,chatTime(m.created_at))).join('')||'<p class="muted">Birinchi xabarni yuboring.</p>';
+    msgs.innerHTML=(window.MWV11?.dated?.(rows,m=>window.MWV11?.bubble?.(m,'dm',rows)||
+      chatBubble(m.body,m.sender_id===uid,chatTime(m.created_at)))||
+      rows.map(m=>chatBubble(m.body,m.sender_id===uid,chatTime(m.created_at))).join(''))||'<p class="muted">Birinchi xabarni yuboring.</p>';
     window.MWV11?.afterRender?.(rows,'dm');
     window.MWV11?.addThreadSearch?.();
     msgs.scrollTop=msgs.scrollHeight;
@@ -4202,12 +4204,13 @@ async function worldConversation(){
   }
 }
 function renderWorldMessages(rows,names){
-  return rows.map(m=>`<div class="world-message">
+  const render=m=>`<div class="world-message">
     <button class="linkbtn" data-act="user" data-id="${e(m.author_id)}">
       ${avatar(names[m.author_id])} ${label(names[m.author_id])}
     </button>
     ${window.MWV11?.bubble?.(m,'world',rows)||chatBubble(m.body,m.author_id===S.u?.id,chatTime(m.created_at))}
-  </div>`).join('')||'<p class="muted">Hozircha xabar yo‘q.</p>';
+  </div>`;
+  return (window.MWV11?.dated?.(rows,render)||rows.map(render).join(''))||'<p class="muted">Hozircha xabar yo‘q.</p>';
 }
 function chooseChat(){
   if(!requireUser())return;
@@ -4270,8 +4273,9 @@ async function onIncomingDirect(msg){
     }).catch(console.warn);
   }
   if(S.page==='chat'&&S.chatId===sender&&$('#msgs')){
-    $('#msgs').insertAdjacentHTML('beforeend',window.MWV11?.bubble?.(msg,'dm',[msg])||
-      chatBubble(msg.body,false,chatTime(msg.created_at)));
+    const newBubble=window.MWV11?.bubble?.(msg,'dm',[msg])||chatBubble(msg.body,false,chatTime(msg.created_at));
+    if(window.MWV11?.appendDated)window.MWV11.appendDated(msg,newBubble);
+    else $('#msgs').insertAdjacentHTML('beforeend',newBubble);
     window.MWV11?.afterRender?.([msg],'dm');
     const container=$('#msgs');container.scrollTop=container.scrollHeight;
     markChatSeen(sender);
@@ -4293,12 +4297,14 @@ async function onIncomingWorld(msg){
     const mp=await users([msg.author_id]);
     if(S.chatId!=='world'||!$('#msgs'))return;
     const p=mp[msg.author_id];
-    $('#msgs').insertAdjacentHTML('beforeend',`<div class="world-message">
+    const newWorldMessage=`<div class="world-message">
       <button class="linkbtn" data-act="user" data-id="${e(msg.author_id)}">
       ${avatar(p)} ${label(p)}</button>
       ${window.MWV11?.bubble?.(msg,'world',[msg])||
        chatBubble(msg.body,false,chatTime(msg.created_at))}
-    </div>`);
+    </div>`;
+    if(window.MWV11?.appendDated)window.MWV11.appendDated(msg,newWorldMessage);
+    else $('#msgs').insertAdjacentHTML('beforeend',newWorldMessage);
     const container=$('#msgs');container.scrollTop=container.scrollHeight;
     window.MWV11?.afterRender?.([msg],'world');
     S.worldUnread=0;
@@ -4976,8 +4982,10 @@ window.addEventListener('submit',async ev=>{
       window.MWV11?.clearReply?.();
       const msgs=$('#msgs');
       if(msgs&&S.chatId===f.dataset.id){
-        msgs.insertAdjacentHTML('beforeend',window.MWV11?.bubble?.(result,'dm',[result])||
-          chatBubble(result.body,true,chatTime(result.created_at)));
+        const html=window.MWV11?.bubble?.(result,'dm',[result])||
+          chatBubble(result.body,true,chatTime(result.created_at));
+        if(window.MWV11?.appendDated)window.MWV11.appendDated(result,html);
+        else msgs.insertAdjacentHTML('beforeend',html);
         msgs.scrollTop=msgs.scrollHeight;
         window.MWV11?.afterRender?.([result],'dm');
       }
@@ -5004,8 +5012,10 @@ window.addEventListener('submit',async ev=>{
       window.MWV11?.clearReply?.();
       const msgs=$('#msgs');
       if(msgs&&S.chatId==='world'){
-        msgs.insertAdjacentHTML('beforeend',`<div class="world-message">
-          ${window.MWV11?.bubble?.(result,'world',[result])||chatBubble(result.body,true,chatTime(result.created_at))}</div>`);
+        const html=`<div class="world-message">
+          ${window.MWV11?.bubble?.(result,'world',[result])||chatBubble(result.body,true,chatTime(result.created_at))}</div>`;
+        if(window.MWV11?.appendDated)window.MWV11.appendDated(result,html);
+        else msgs.insertAdjacentHTML('beforeend',html);
         msgs.scrollTop=msgs.scrollHeight;
         window.MWV11?.afterRender?.([result],'world');
       }
