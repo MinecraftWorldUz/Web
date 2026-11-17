@@ -4349,17 +4349,26 @@ async function findChatUsers(term){
       ${avatar(p)} <span class="peer-text">@${e(p.username)}</span> ${ico('chat',18)}</button>`
   ).join('')||'<p class="muted">Foydalanuvchi topilmadi.</p>';
 }
+async function pendingOwnerJoinCount(uid){
+  const groups=check(await DB.from('mw_groups').select('id').eq('owner_id',uid));
+  if(!groups.length)return 0;
+  const result=await DB.from('mw_group_join_requests').select('id',{count:'exact',head:true})
+    .in('group_id',groups.map(g=>g.id)).eq('status','pending');
+  if(result.error)throw result.error;
+  return result.count||0;
+}
 async function notificationCount(){
   if(!S.u){$('#alertCount').hidden=true;return}
   const uid=S.u.id;
-  const [base,invites]=await Promise.all([
+  const [base,invites,owners]=await Promise.all([
     DB.from('notifications').select('id',{count:'exact',head:true})
       .eq('user_id',uid).eq('is_read',false),
     DB.from('mw_group_invitations').select('id',{count:'exact',head:true})
-      .eq('recipient_id',uid).eq('status','pending')
+      .eq('recipient_id',uid).eq('status','pending'),
+    pendingOwnerJoinCount(uid)
   ]);
   if(S.u?.id!==uid)return;
-  const count=(base.count||0)+(invites.count||0);
+  const count=(base.count||0)+(invites.count||0)+owners;
   $('#alertCount').hidden=!count;
   $('#alertCount').textContent=count>99?'99+':String(count);
 }
@@ -4445,6 +4454,13 @@ function listen(){
       notificationCount().catch(console.warn);
     })
     .on('postgres_changes',{event:'INSERT',schema:'public',
+      table:'mw_group_join_requests'},p=>{
+      notificationCount().catch(console.warn);
+      if(p.new?.requester_id!==S.u?.id&&notificationEnabled())toast('Guruhga qo‘shilish so‘rovi keldi');
+    })
+    .on('postgres_changes',{event:'UPDATE',schema:'public',
+      table:'mw_group_join_requests'},()=>notificationCount().catch(console.warn))
+    .on('postgres_changes',{event:'INSERT',schema:'public',
       table:'messages',filter:`recipient_id=eq.${S.u.id}`},
       p=>{onIncomingDirect(p.new).catch(console.warn)})
     .on('postgres_changes',{event:'INSERT',schema:'public',
@@ -4455,21 +4471,21 @@ function listen(){
 async function notifications(){
   if(!requireUser())return;
   const uid=S.u.id;
-  const [r,invites]=await Promise.all([
+  const [r,invites,owners]=await Promise.all([
     DB.from('notifications').select('*').eq('user_id',uid)
       .order('created_at',{ascending:false}).limit(35),
     DB.from('mw_group_invitations').select('id',{count:'exact',head:true})
-      .eq('recipient_id',uid).eq('status','pending')
+      .eq('recipient_id',uid).eq('status','pending'),
+    pendingOwnerJoinCount(uid)
   ]);
   check(r);if(S.u?.id!==uid)return;
-  const pending=invites.count||0;
+  const pending=(invites.count||0)+owners;
   dialog(t('notifications'),`
-    ${pending?'<button class="btn" data-mw="invites">'+ico('users',17)+' Guruh takliflari ('+pending+')</button>':''}
+    ${pending?'<button class="btn" data-mw="invites">'+ico('users',17)+' Guruh taklif va so‘rovlari ('+pending+')</button>':''}
     ${btn('markRead',t('mark'))}
     <div class="divider"></div>
     ${r.data.map(n=>`
-      <div class="item"
-        style="border-left:3px solid ${n.is_read?'#567':'#ffab60'}">
+      <div class="item" style="border-left:3px solid ${n.is_read?'#567':'#ffab60'}">
         <b>${e(n.title)}</b>
         <p>${e(n.body)}</p>
         <small class="muted">${when(n.created_at)}</small>
