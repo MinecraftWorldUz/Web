@@ -25,8 +25,54 @@ window.MWV11=(()=>{
       '<div class="mw11-footer"><small>'+esc(chatTime(m.created_at))+(m.edited_at?' · ✎':'')+(mine?' ✓':'')+'</small></div>'+
       '<div class="mw11-reaction-list" data-v11-reactions="'+esc(id)+'"></div></div>';
   }
+
+  // Chronological day labels, preserving the actual message dates.
+  function chatDateKey(input){
+    const d=new Date(input);
+    return Number.isNaN(d.getTime())?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function dateLabel(input){
+    const d=new Date(input);if(Number.isNaN(d.getTime()))return '';
+    if(chatDateKey(input)===chatDateKey(new Date()))return S.lang==='ru'?'Сегодня':S.lang==='en'?'Today':'Bugun';
+    const current=new Date();
+    if(S.lang==='uz'){
+      const months=['yanvar','fevral','mart','aprel','may','iyun','iyul','avgust','sentabr','oktabr','noyabr','dekabr'];
+      return d.getDate()+' '+months[d.getMonth()]+(d.getFullYear()!==current.getFullYear()?' '+d.getFullYear():'');
+    }
+    const locale=S.lang==='ru'?'ru-RU':'en-US';
+    return d.toLocaleDateString(locale,{day:'numeric',month:'long',year:d.getFullYear()!==current.getFullYear()?'numeric':undefined});
+  }
+  function dateMarker(input){
+    const label=dateLabel(input);
+    return label?'<div class="mw11-date-separator" aria-label="Sana">'+esc(label)+'</div>':'';
+  }
+  function dated(rows,render){
+    if(!Array.isArray(rows)||!rows.length)return '';
+    let prev='';
+    return rows.map((m,i)=>{
+      const key=chatDateKey(m.created_at);
+      const divider=key&&key!==prev?dateMarker(m.created_at):'';
+      prev=key;
+      return divider+render(m,i);
+    }).join('');
+  }
+  function appendDated(m,html){
+    const holder=document.getElementById('msgs');
+    if(!holder)return;
+    const key=chatDateKey(m.created_at);
+    const prev=holder.dataset.mw11LastDay||'';
+    holder.insertAdjacentHTML('beforeend',(key&&key!==prev?dateMarker(m.created_at):'')+html);
+    if(key)holder.dataset.mw11LastDay=key;
+    holder.scrollTop=holder.scrollHeight;
+  }
+  function syncLastDate(rows){
+    const holder=document.getElementById('msgs');
+    if(holder&&rows?.length)holder.dataset.mw11LastDay=chatDateKey(rows[rows.length-1].created_at);
+  }
+
   function afterRender(rows,scope){
     if(!rows?.length)return;
+    syncLastDate(rows);
     for(const m of rows)if(m.id)V.rows.set(rxKey(scope,m.id),m);
     const ids=rows.map(m=>m.id).filter(Boolean);
     if(!ids.length)return;
@@ -386,7 +432,7 @@ window.MWV11=(()=>{
   function resetMobileThread(){
     S.mw11MobileOpen=false;
     document.body.classList.remove('mw11-thread-mode');
-    document.querySelector('#app')?.classList.remove('mw11-mobile-thread-open');
+    document.querySelector('#app')?.classList.remove('mw11-mobile-thread-open','mw11-chat-page');
   }
   function prepareChatScreen(){
     document.querySelector('#app')?.classList.add('mw11-chat-page');
@@ -424,5 +470,5 @@ window.MWV11=(()=>{
     return true;
   }
 
-  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress};
+  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate};
 })();

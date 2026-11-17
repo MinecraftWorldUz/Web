@@ -170,7 +170,8 @@ window.MWChat=(()=>{
   const area=$('#conversation');if(!area)return;
   area.innerHTML='<header class="chat-toolbar">'+
      '<span class="mw11-group-header-avatar">'+(g.avatar_url?'<img class="av" src="'+escape(g.avatar_url)+'" alt="">':icon('users',28))+'</span>'+
-     '<button class="linkbtn mw11-head-name" data-mw="group-info" data-id="'+escape(id)+'"><strong>'+escape(g.name)+'</strong><small>@'+escape(g.username||'maxfiy')+'</small></button></header>'+
+     '<button class="linkbtn mw11-head-name" data-mw="group-info" data-id="'+escape(id)+'"><strong>'+escape(g.name)+'</strong><small>@'+escape(g.username||'maxfiy')+'</small></button>'+
+     '<button type="button" class="mw11-chat-options-btn" data-v11="options" data-thread="g:'+escape(id)+'" aria-label="Guruh sozlamalari">'+icon('more-vertical',22)+'</button></header>'+
    '<div class="messages" id="msgs"></div><form class="chat-compose" id="mwGroupMessage" data-id="'+escape(id)+'">'+
    '<input class="field" name="body" maxlength="2000" placeholder="Xabar yozing..." required><button class="btn" type="submit">'+icon('send',20)+'</button></form>';
   if(S.mw11MobileOpen)window.MWV11?.openMobileThread?.();
@@ -179,7 +180,8 @@ window.MWChat=(()=>{
   const people=await users(rows.map(m=>m.sender_id));
   if(S.chatId!=='g:'+id||!$('#msgs'))return;
   const ordered=rows.slice().reverse();
-  $('#msgs').innerHTML=ordered.map(m=>groupBubble(m,people[m.sender_id],ordered)).join('')||'<p class="muted">Birinchi xabarni yuboring</p>';
+  $('#msgs').innerHTML=(window.MWV11?.dated?.(ordered,m=>groupBubble(m,people[m.sender_id],ordered))||
+   ordered.map(m=>groupBubble(m,people[m.sender_id],ordered)).join(''))||'<p class="muted">Birinchi xabarni yuboring</p>';
   $('#msgs').scrollTop=$('#msgs').scrollHeight;
   window.MWV11?.afterRender?.(ordered,'group');
   window.MWV11?.addThreadSearch?.();
@@ -223,7 +225,8 @@ window.MWChat=(()=>{
  async function worldInfo(){
   const pref=await worldPref();
   dialog('Umumiy chat','<h3>Umumiy chat</h3><p>Bu suhbatga barcha yangi va eski akkauntlar avtomatik qo‘shiladi.</p>'+
-   '<button class="btn danger" data-mw="world-leave">'+(pref.joined?'Guruhdan chiqish':'Qayta qo‘shilish')+'</button>');
+   '<div class="mw11-info-actions"><button class="btn ghost" data-mw="world-mute">'+(pref.muted?'Ovozni yoqish':'Ovozsiz qilish')+'</button>'+
+   '<button class="btn danger" data-mw="world-leave">'+(pref.joined?'Guruhdan chiqish':'Qayta qo‘shilish')+'</button></div>');
  }
  async function action(button){
   const command=button.dataset.mw,id=button.dataset.id;
@@ -253,6 +256,11 @@ window.MWChat=(()=>{
    close();await load();
   }
   else if(command==='world-info')await worldInfo();
+  else if(command==='world-mute'){
+   const pref=await worldPref();
+   await worldUpdate({muted:!pref.muted});
+   await worldInfo();
+  }
   else if(command==='world-leave'){
    const pref=await worldPref();
    if(pref.joined){if(!confirm('Umumiy chatdan chiqmoqchimisiz?'))return;
