@@ -279,6 +279,22 @@ window.MWV11=(()=>{
     e.preventDefault();e.stopImmediatePropagation();
     const act=a.dataset.v11,scope=a.dataset.scope,id=a.dataset.id;
     const run=async()=>{
+      if(act==='emoji-open'){
+        const picker=document.getElementById('mw11EmojiPanel');
+        if(picker)picker.hidden=!picker.hidden;
+        return;
+      }
+      if(act==='emoji-insert'){
+        const text=document.querySelector('#conversation .chat-compose input[name="body"]');
+        if(text){
+          const em=a.dataset.emoji||'';
+          const pos=text.selectionStart??text.value.length;
+          text.value=text.value.slice(0,pos)+em+text.value.slice(pos);
+          text.focus();text.setSelectionRange(pos+em.length,pos+em.length);
+        }
+        const picker=document.getElementById('mw11EmojiPanel');if(picker)picker.hidden=true;
+        return;
+      }
       if(act==='back-thread')return backMobileThread();
       if(act==='search-toggle'){
         const header=document.querySelector('#conversation .chat-toolbar');
@@ -354,8 +370,16 @@ window.MWV11=(()=>{
   },true);
   function addThreadSearch(){
     const bar=document.querySelector('#conversation .chat-toolbar');
-    if(!bar||document.getElementById('mw11SearchToggle'))return;
-    bar.insertAdjacentHTML('beforeend','<button type="button" id="mw11SearchToggle" data-v11="search-toggle" aria-label="'+T('searchMsg')+'">'+ico('search',18)+'</button>');
+    if(bar&&!document.getElementById('mw11SearchToggle')){
+      bar.insertAdjacentHTML('beforeend','<button type="button" id="mw11SearchToggle" data-v11="search-toggle" aria-label="'+T('searchMsg')+'">'+ico('search',18)+'</button>');
+    }
+    const form=document.querySelector('#conversation .chat-compose');
+    if(form&&!form.querySelector('[data-v11="emoji-open"]')){
+      form.insertAdjacentHTML('afterbegin','<button type="button" class="mw11-emoji-trigger" data-v11="emoji-open" aria-label="Emoji">☺</button>');
+      form.insertAdjacentHTML('beforebegin','<div class="mw11-emoji-panel" id="mw11EmojiPanel" hidden>'+
+       ['😀','😁','😂','🥰','😍','😎','🤔','😭','😮','👍','❤️','🔥','🎉','👏','🙏','💚','👋','✨','💯','🙌'].map(em=>
+        '<button type="button" data-v11="emoji-insert" data-emoji="'+em+'">'+em+'</button>').join('')+'</div>');
+    }
   }
 
   // Mobile split-view navigation follows the original V1.1 test design.
