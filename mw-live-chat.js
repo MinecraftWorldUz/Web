@@ -39,7 +39,7 @@ window.MWChat=(()=>{
   if(bar&&!$('#mwInviteButton')){
    bar.insertAdjacentHTML('beforeend','<button class="btn small ghost" id="mwInviteButton" data-mw="invites">Takliflar</button>');
   }
-  const badge=$('#mwInviteButton');if(badge)badge.textContent='Takliflar'+(invites.count?' ('+invites.count+')':'');
+  const badge=$('#mwInviteButton');if(badge){badge.hidden=!invites.count;badge.textContent='Takliflar'+(invites.count?' ('+invites.count+')':'');}
   if(S.chatId?.startsWith('g:'))await openGroup(S.chatId.slice(2));
  }
  function renderGroups(){
@@ -66,8 +66,8 @@ window.MWChat=(()=>{
   '<input type="checkbox" class="mw-check-member" value="'+escape(p.id)+'" '+(C.selected.includes(p.id)?'checked':'')+'></label>';
  function newChat(){
   if(!S.u)return;
-  dialog('Yangi xabar','<button class="btn" data-mw="new-group">'+icon('users',19)+' Guruh yaratish</button>'+
-   '<div class="formgroup"><input class="field" id="mwPersonSearch" placeholder="Barcha ommaviy akkauntlardan qidirish"></div>'+
+  dialog(S.lang==='ru'?'Новое сообщение':S.lang==='en'?'New message':'Yangi xabar','<button class="btn" data-mw="new-group">'+icon('users',19)+' '+(S.lang==='ru'?'Создать группу':S.lang==='en'?'Create group':'Guruh yaratish')+'</button>'+
+   '<div class="formgroup"><input class="field" id="mwPersonSearch" placeholder="'+(S.lang==='ru'?'Поиск всех публичных пользователей':S.lang==='en'?'Search public accounts':'Barcha ommaviy akkauntlarni qidirish')+'"></div>'+
    '<div id="mwPersonResults" class="mw-member-list"></div>');
   searchPeople('');
  }
@@ -158,7 +158,9 @@ window.MWChat=(()=>{
   if(!member)throw Error('Bu guruhga a’zo emassiz');
   S.chatId='g:'+id;C.activeId=id;
   const area=$('#conversation');if(!area)return;
-  area.innerHTML='<header class="chat-toolbar"><button class="linkbtn" data-mw="group-info" data-id="'+escape(id)+'">'+icon('users',24)+' '+escape(g.name)+'</button></header>'+
+  area.innerHTML='<header class="chat-toolbar">'+
+     (g.avatar_url?'<img class="av" src="'+escape(g.avatar_url)+'" alt="">':icon('users',28))+
+     '<button class="linkbtn mw11-head-name" data-mw="group-info" data-id="'+escape(id)+'"><strong>'+escape(g.name)+'</strong><small>@'+escape(g.username||'maxfiy')+'</small></button></header>'+
    '<div class="messages" id="msgs"></div><form class="chat-compose" id="mwGroupMessage" data-id="'+escape(id)+'">'+
    '<input class="field" name="body" maxlength="2000" placeholder="Xabar yozing..." required><button class="btn" type="submit">'+icon('send',20)+'</button></form>';
   if(S.mw11MobileOpen)window.MWV11?.openMobileThread?.();
@@ -279,6 +281,7 @@ window.MWChat=(()=>{
  window.addEventListener('click',ev=>{
   let button=ev.target.closest('[data-mw]');
   if(!button)return;
+  if(window.MWV11?.consumeLongPress?.()){ev.preventDefault();ev.stopImmediatePropagation();return;}
   ev.preventDefault();ev.stopImmediatePropagation();
   action(button).catch(err=>{console.error(err);toast(err.code==='23505'?'Username band':err.message)});
  },true);
