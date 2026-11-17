@@ -149,6 +149,11 @@ window.MWV11=(()=>{
       }
     }
   }
+  function clearAttachment(form){
+    const file=form?.querySelector('input[name="attachment"]');
+    if(file)file.value='';
+    attachmentSummary(form);
+  }
   function attachmentSummary(form){
     const el=form?.querySelector('input[name="attachment"]');
     const box=form?.querySelector('.mw11-attachment-preview');
@@ -396,8 +401,7 @@ window.MWV11=(()=>{
     const run=async()=>{
       if(act==='clear-media'){
         const form=document.querySelector('#conversation .chat-compose');
-        const input=form?.querySelector('input[name="attachment"]');if(input)input.value='';
-        attachmentSummary(form);return;
+        clearAttachment(form);return;
       }
       if(act==='emoji-open'){
         const picker=document.getElementById('mw11EmojiPanel');
@@ -557,5 +561,5 @@ window.MWV11=(()=>{
     return true;
   }
 
-  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate,uploadAttachment,loadMedia};
+  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate,uploadAttachment,loadMedia,clearAttachment};
 })();
