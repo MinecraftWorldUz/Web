@@ -4019,7 +4019,7 @@ function chatWindowShell(id){
       `<button class="linkbtn mw11-head-name" data-act="user" data-id="${e(id)}">
         <strong>${p?e(p.display_name||p.username):'Suhbat'}</strong><small>${p?'@'+e(p.username):'Yuklanmoqda...'}</small>
       </button>`}
-    <button type="button" class="mw11-chat-options-btn" ${isWorld?'data-mw="world-info"':`data-act="user" data-id="${e(id)}"`} aria-label="Suhbat ma’lumotlari" title="Suhbat ma’lumotlari">
+    <button type="button" class="mw11-chat-options-btn" ${isWorld?'data-mw="world-info"':`data-v11="options" data-thread="u:${e(id)}"`} aria-label="Chat sozlamalari" title="Chat sozlamalari">
       ${ico('more-vertical',22)}
     </button>
   </header>
