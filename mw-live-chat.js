@@ -207,7 +207,7 @@ window.MWChat=(()=>{
    '<input class="field" name="body" maxlength="2000" placeholder="Xabar yozing..." required><button class="btn" type="submit">'+icon('send',20)+'</button></form>';
   if(S.mw11MobileOpen)window.MWV11?.openMobileThread?.();
   renderGroups();
-  const rows=check(await DB.from('mw_group_messages').select('id,sender_id,body,created_at,reply_to,edited_at').eq('group_id',id).order('created_at',{ascending:false}).limit(65));
+  const rows=check(await DB.from('mw_group_messages').select('id,sender_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type').eq('group_id',id).order('created_at',{ascending:false}).limit(65));
   const people=await users(rows.map(m=>m.sender_id));
   if(S.chatId!=='g:'+id||!$('#msgs'))return;
   const ordered=rows.slice().reverse();
@@ -423,9 +423,14 @@ window.MWChat=(()=>{
   try{
    if(f.id==='mwGroupForm')await saveGroup(f);
    else{
-    const body=String(new FormData(f).get('body')||'').trim();if(!body)return;
-    check(await DB.from('mw_group_messages').insert({group_id:f.dataset.id,sender_id:S.u.id,body,reply_to:window.MWV11?.replyId?.('group','g:'+f.dataset.id)||null}));
-    f.reset();window.MWV11?.clearReply?.();C.last[f.dataset.id]=Date.now();C.preview[f.dataset.id]='Siz: '+body.slice(0,65);await openGroup(f.dataset.id);
+    const text=String(new FormData(f).get('body')||'').trim();
+    const media=await window.MWV11?.uploadAttachment?.(f,'group',f.dataset.id)||{};
+    if(!text&&!media.attachment_path)return;
+    const body=text||'📎 '+media.attachment_name;
+    check(await DB.from('mw_group_messages').insert({group_id:f.dataset.id,sender_id:S.u.id,body,...media,
+      reply_to:window.MWV11?.replyId?.('group','g:'+f.dataset.id)||null}));
+    f.reset();window.MWV11?.clearAttachment?.(f);window.MWV11?.clearReply?.();
+    C.last[f.dataset.id]=Date.now();C.preview[f.dataset.id]='Siz: '+body.slice(0,65);await openGroup(f.dataset.id);
    }
   }catch(err){console.error(err);toast(err.code==='23505'?'Username band':err.message)}
   finally{if(btn)btn.disabled=false}
