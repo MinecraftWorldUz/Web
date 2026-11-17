@@ -1,7 +1,7 @@
 /* Minecraft World v1.1 — authenticated messenger UI extensions.
    Message permissions are enforced by Supabase RLS, not by this script. */
 window.MWV11=(()=>{
-  const V={rows:new Map(),prefs:new Map(),reply:null,filter:'all',search:'',activeMessage:null,loadedFor:null};
+  const V={rows:new Map(),prefs:new Map(),reply:null,filter:'all',search:'',activeMessage:null,loadedFor:null,longPressTimer:null,longPressTriggered:false};
   const esc=e;
   const messages={
     uz:{all:'Barchasi',unread:'O‘qilmagan',archive:'Arxiv',search:'Chat yoki @username qidirish',reply:'Javob berish',edit:'Tahrirlash',remove:'O‘chirish',copy:'Nusxalash',forward:'Uzatish',reaction:'Reaksiya',save:'Saqlash',pinned:'Mahkamlangan',pin:'Mahkamlash',unpin:'Mahkamlashni olib tashlash',mute:'Ovozsiz',unmute:'Ovozni yoqish',arch:'Arxivlash',unarch:'Arxivdan chiqarish',deleteAsk:'Xabarni o‘chirasizmi?',confirm:'Saqlash',replying:'Javob',searchMsg:'Xabar ichidan qidirish',empty:'Hozircha hech narsa topilmadi',newMsg:'Yangi xabar',noReply:'Xabar',self:'Siz'},
@@ -20,10 +20,9 @@ window.MWV11=(()=>{
     V.rows.set(rxKey(scope,id),m);
     const reply=rows.find(row=>row.id===m.reply_to);
     const quote=m.reply_to?'<div class="mw11-quote">'+esc((reply?.body||T('noReply')).slice(0,130))+'</div>':'';
-    return '<div class="bubble '+(mine?'mine':'')+' mw11-bubble" data-v11-msg="'+esc(id)+'" data-v11-scope="'+scope+'">'+
+    return '<div class="bubble '+(mine?'mine':'')+' mw11-bubble" tabindex="0" role="button" aria-label="Xabar amallari" data-v11-msg="'+esc(id)+'" data-v11-scope="'+scope+'">'+
       quote+'<div class="bubble-body">'+esc(m.body||'')+'</div>'+
-      '<div class="mw11-footer"><small>'+esc(chatTime(m.created_at))+(m.edited_at?' · ✎':'')+(mine?' ✓':'')+'</small>'+
-      '<span class="mw11-message-tools"><button type="button" data-v11="menu" data-id="'+esc(id)+'" data-scope="'+scope+'" aria-label="Xabar amallari">⋯</button></span></div>'+
+      '<div class="mw11-footer"><small>'+esc(chatTime(m.created_at))+(m.edited_at?' · ✎':'')+(mine?' ✓':'')+'</small></div>'+
       '<div class="mw11-reaction-list" data-v11-reactions="'+esc(id)+'"></div></div>';
   }
   function afterRender(rows,scope){
@@ -131,7 +130,8 @@ window.MWV11=(()=>{
         (V.filter==='unread'&&!unread)||
         (V.search&&!label.includes(V.search.toLowerCase()));
       const old=p.querySelector('.mw11-chat-options');if(old)old.remove();
-      p.insertAdjacentHTML('beforeend','<span class="mw11-chat-options" role="button" tabindex="0" data-v11="options" data-thread="'+esc(thread)+'" aria-label="Chat sozlamalari">⋯</span>');
+      p.dataset.mw11Thread=thread;
+      p.title='Chatni ochish · Sozlamalar uchun bosib turing';
       let flag=p.querySelector('.mw11-chat-flag');if(flag)flag.remove();
       if(pref.pinned||pref.muted){
         p.insertAdjacentHTML('beforeend','<span class="mw11-chat-flag">'+(pref.pinned?'📌':'')+(pref.muted?'🔕':'')+'</span>');
@@ -266,10 +266,20 @@ window.MWV11=(()=>{
       '<button data-v11="pref" data-thread="'+esc(thread)+'" data-field="archived">'+ico('folder',18)+' '+T(pref.archived?'unarch':'arch')+'</button></div>');
   }
   function handle(e){
-    const a=e.target.closest('[data-v11]');if(!a)return;
+    if(V.longPressTriggered){V.longPressTriggered=false;e.preventDefault();e.stopImmediatePropagation();return}
+    const a=e.target.closest('[data-v11]');
+    if(!a){
+      const bubble=e.target.closest('.mw11-bubble[data-v11-msg]');
+      if(bubble&&!e.target.closest('.mw11-react-chip')){
+        e.preventDefault();e.stopImmediatePropagation();
+        menu(bubble.dataset.v11Scope,bubble.dataset.v11Msg).catch(err=>toast(err.message));
+      }
+      return;
+    }
     e.preventDefault();e.stopImmediatePropagation();
     const act=a.dataset.v11,scope=a.dataset.scope,id=a.dataset.id;
     const run=async()=>{
+      if(act==='back-thread')return backMobileThread();
       if(act==='search-toggle'){
         const header=document.querySelector('#conversation .chat-toolbar');
         if(!header)return;
@@ -298,6 +308,31 @@ window.MWV11=(()=>{
     };
     run().catch(err=>{console.error('MWV11:',err);toast(err.message||'Xatolik')});
   }
+  // Telegram-like press-and-hold: per-chat settings without intrusive dots.
+  let pressX=0,pressY=0;
+  window.addEventListener('pointerdown',ev=>{
+    const node=ev.target.closest('#chatRows .chat-peer[data-mw11-thread]');
+    if(!node||ev.pointerType==='mouse')return;
+    pressX=ev.clientX;pressY=ev.clientY;
+    clearTimeout(V.longPressTimer);
+    V.longPressTimer=setTimeout(()=>{
+      V.longPressTriggered=true;
+      chatOptions(node.dataset.mw11Thread);
+    },540);
+  },true);
+  window.addEventListener('pointermove',ev=>{
+    if(Math.abs(ev.clientX-pressX)>12||Math.abs(ev.clientY-pressY)>12)clearTimeout(V.longPressTimer);
+  },true);
+  for(const name of ['pointerup','pointercancel','scroll'])
+    window.addEventListener(name,()=>clearTimeout(V.longPressTimer),true);
+  window.addEventListener('contextmenu',ev=>{
+    const bubble=ev.target.closest('.mw11-bubble[data-v11-msg]');
+    const chat=ev.target.closest('#chatRows .chat-peer[data-mw11-thread]');
+    if(!bubble&&!chat)return;
+    ev.preventDefault();ev.stopImmediatePropagation();
+    if(bubble)menu(bubble.dataset.v11Scope,bubble.dataset.v11Msg).catch(err=>toast(err.message));
+    else chatOptions(chat.dataset.mw11Thread);
+  },true);
   window.addEventListener('click',handle,true);
   window.addEventListener('keydown',event=>{
     if((event.key==='Enter'||event.key===' ')&&event.target.matches('[data-v11="options"]'))handle(event);
@@ -322,5 +357,46 @@ window.MWV11=(()=>{
     if(!bar||document.getElementById('mw11SearchToggle'))return;
     bar.insertAdjacentHTML('beforeend','<button type="button" id="mw11SearchToggle" data-v11="search-toggle" aria-label="'+T('searchMsg')+'">'+ico('search',18)+'</button>');
   }
-  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch};
+
+  // Mobile split-view navigation follows the original V1.1 test design.
+  function resetMobileThread(){
+    S.mw11MobileOpen=false;
+    document.body.classList.remove('mw11-thread-mode');
+    document.querySelector('#app')?.classList.remove('mw11-mobile-thread-open');
+  }
+  function prepareChatScreen(){
+    document.querySelector('#app')?.classList.add('mw11-chat-page');
+    const mobile=window.matchMedia('(max-width:760px)').matches;
+    if(!mobile){document.body.classList.remove('mw11-thread-mode');return}
+    document.body.classList.toggle('mw11-thread-mode',!!S.mw11MobileOpen);
+    document.querySelector('#app')?.classList.toggle('mw11-mobile-thread-open',!!S.mw11MobileOpen);
+    if(!S.mw11MobileOpen){
+      const container=document.querySelector('#app');
+      if(container)container.scrollIntoView({block:'start'});
+    }
+  }
+  function openMobileThread(){
+    S.mw11MobileOpen=true;
+    if(!window.matchMedia('(max-width:760px)').matches)return;
+    document.querySelector('#app')?.classList.add('mw11-chat-page','mw11-mobile-thread-open');
+    document.body.classList.add('mw11-thread-mode');
+    const toolbar=document.querySelector('#conversation .chat-toolbar');
+    if(toolbar&&!toolbar.querySelector('[data-v11="back-thread"]')){
+      toolbar.insertAdjacentHTML('afterbegin','<button type="button" class="mw11-back-thread" data-v11="back-thread" aria-label="Orqaga">'+
+        ico('back',24)+'</button>');
+    }
+    document.querySelector('#conversation .messages')?.scrollTo?.({top:100000,behavior:'instant'});
+  }
+  function backMobileThread(){
+    S.mw11MobileOpen=false;
+    document.body.classList.remove('mw11-thread-mode');
+    document.querySelector('#app')?.classList.remove('mw11-mobile-thread-open');
+    clearReply();
+    if(S.page==='chat'){
+      document.querySelector('#mw11InboxSearch')?.focus?.({preventScroll:true});
+      document.activeElement?.blur?.();
+    }
+  }
+
+  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread};
 })();
