@@ -68,6 +68,7 @@ window.MWV11=(()=>{
 
   function afterRender(rows,scope){
     if(!rows?.length)return;
+    syncLastDate(rows);
     for(const m of rows)if(m.id)V.rows.set(rxKey(scope,m.id),m);
     const ids=rows.map(m=>m.id).filter(Boolean);
     if(!ids.length)return;
