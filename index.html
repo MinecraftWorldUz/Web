@@ -1528,6 +1528,11 @@ body:before,.hero:after{display:none!important}
   #app.mw11-chat-page .chat-title h2{margin:0}
 }
 
+
+.mw11-head-name{display:grid!important;gap:3px;min-width:0;flex:1;text-align:left!important;align-content:center;line-height:1.15}
+.mw11-head-name strong{display:block;min-width:0;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;font-size:16px}
+.mw11-head-name small{font-size:11px;color:#c6af91;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;display:block;font-weight:400}
+
 </style>
 </head>
 <body>
@@ -2251,6 +2256,7 @@ async function go(page='home',id=null){
   const nav=++navigationSeq;
   S.page=page;
   S.profileId=target;
+  if(page==='chat')window.scrollTo(0,0);
   if(page!=='chat')window.MWV11?.resetMobileThread?.();
   document.querySelectorAll('[data-go]').forEach(x=>
     x.classList.toggle('on',x.dataset.go===page));
@@ -3779,9 +3785,9 @@ function chatWindowShell(id){
   const p=!isWorld?(S.chatUsers?.[id]||knownProfiles.get(id)?.p):null;
   return `<header class="chat-toolbar">
     ${isWorld?ico('globe',24):avatar(p)}
-    ${isWorld?'<button class="linkbtn" data-mw="world-info" style="flex:1;text-align:left">Umumiy chat</button>':
-      `<button class="linkbtn" data-act="user" data-id="${e(id)}">
-        ${p?label(p):'@...'}
+    ${isWorld?'<button class="linkbtn mw11-head-name" data-mw="world-info" style="flex:1;text-align:left"><strong>Umumiy chat</strong><small>Minecraft World</small></button>':
+      `<button class="linkbtn mw11-head-name" data-act="user" data-id="${e(id)}">
+        <strong>${p?e(p.display_name||p.username):'Suhbat'}</strong><small>${p?'@'+e(p.username):'Yuklanmoqda...'}</small>
       </button>`}
     ${isWorld?`<button data-act="worldMute" title="Ovozsiz qilish">
         ${ico('bell',19)} ${S.worldPref?.muted?'Yoqish':'Mute'}</button>
@@ -3806,14 +3812,14 @@ async function chats(){
   // Paint the inbox and active thread without waiting for the database.
   $('#app').innerHTML=`
     <div class="bar chat-title">
-      <h2>${ico('chat',24)} Chatlar</h2>
-      <button class="btn small mw11-top-new" data-act="chooseChat">${ico('plus',20)} Yangi chat</button>
+      <h2>${ico('chat',24)} ${S.lang==='ru'?'Чаты':S.lang==='en'?'Chats':'Chatlar'}</h2>
+      <button class="btn small mw11-top-new" data-act="chooseChat">${ico('plus',20)} ${S.lang==='ru'?'Новое сообщение':S.lang==='en'?'New message':'Yangi xabar'}</button>
     </div>
     <section class="chatlayout">
       <aside class="chatlist" id="chatRows"></aside>
       <div class="chat-window" id="conversation"></div>
     </section>
-    <button type="button" class="mw11-new-chat-fab" id="mw11ChatFab" data-act="chooseChat" aria-label="Yangi xabar" title="Yangi xabar">${ico('plus',32)}</button>`;
+    <button type="button" class="mw11-new-chat-fab" id="mw11ChatFab" data-act="chooseChat" aria-label="${S.lang==='ru'?'Новое сообщение':S.lang==='en'?'New message':'Yangi xabar'}" title="Yangi xabar">${ico('plus',32)}</button>`;
   chatRows();
   updateChatBadge();
   window.MWV11?.prepareChatScreen?.();
@@ -3886,7 +3892,8 @@ async function conversation(id){
   if(S.page!=='chat'||S.chatId!==id||seq!==chatThreadRequest||!$('#conversation'))return;
   const p=pResult[id]||S.chatUsers?.[id];
   const title=$('#conversation .chat-toolbar .linkbtn');
-  if(title)title.innerHTML=label(p);
+  if(title)title.innerHTML='<strong>'+e(p?.display_name||p?.username||'Suhbat')+tick(p)+'</strong>'+
+    '<small>@'+e(p?.username||'...')+'</small>';
   const rows=msgResult.data.slice().reverse();
   recentThreads.set(key,{rows,at:Date.now()});
   const msgs=$('#msgs');
