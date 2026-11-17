@@ -302,11 +302,17 @@ window.MWV11=(()=>{
   }
   async function deleteMessage(scope,id){
     if(!confirm(T('deleteAsk')))return;
+    const original=await fetchMessage(scope,id);
     const table=scope==='group'?'mw_group_messages':scope==='world'?'world_chat_messages':'messages';
     const col=scope==='world'?'author_id':'sender_id';
     const r=await DB.from(table).delete().eq('id',id).eq(col,authUser()).select('id');
     if(r.error)throw r.error;
     if(!r.data?.length)throw Error('Bu xabarni o‘chirishga ruxsat yo‘q');
+    if(original?.attachment_path){
+      const removed=await DB.storage.from('mw-chat').remove([original.attachment_path]);
+      if(removed.error)console.warn('Media cleanup:',removed.error);
+      V.mediaCache.delete(original.attachment_path);
+    }
     V.rows.delete(rxKey(scope,id));
     close();await refreshThread();
   }
