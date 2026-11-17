@@ -1545,6 +1545,21 @@ body:before,.hero:after{display:none!important}
   #app.mw11-chat-page .mw11-no-results[hidden]{display:none!important}
 }
 
+
+/* Group member controls, same visual system as the original test */
+.mw11-member-manage{display:flex!important;align-items:center;gap:7px;padding:6px 8px!important;border-radius:12px!important;min-height:62px}
+.mw11-member-person{flex:1;min-width:0;display:flex;align-items:center;gap:11px;text-align:left;color:var(--text);background:transparent!important;border:0!important;cursor:pointer;padding:5px!important}
+.mw11-member-person .av{width:40px;height:40px;flex:none;object-fit:cover;border-radius:50%}
+.mw11-member-person span{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mw11-kick{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:11px;border:1px solid #c6786440;background:#9a4b2d28;color:#ffb4a2;cursor:pointer}
+.mw11-kick:hover{background:#9a4b2d55}
+.mw11-group-header-avatar,.mw11-thread-avatar{width:43px;height:43px;flex:none;border-radius:50%;display:grid;place-items:center;background:#745433;color:#e6c282;overflow:hidden}
+.mw11-group-header-avatar img{width:43px;height:43px;object-fit:cover;border-radius:50%}
+@media(max-width:760px){
+  #app.mw11-chat-page.mw11-mobile-thread-open .chat-toolbar>.mw11-thread-avatar,
+  #app.mw11-chat-page.mw11-mobile-thread-open .chat-toolbar>.mw11-group-header-avatar{width:42px;height:42px;flex:none;border-radius:50%}
+}
+
 </style>
 </head>
 <body>
@@ -3772,7 +3787,7 @@ function chatPeer(id,p,active=false,unread=0){
   const isWorld=id==='world';
   return `<button type="button" class="chat-peer ${active?'active':''}"
     data-act="${isWorld?'worldOpen':'chatSelect'}" data-id="${e(id)}">
-      <span class="account-avatar">${isWorld?ico('globe',24):avatar(p)}</span>
+      <span class="account-avatar">${isWorld?'<span class="mw11-thread-avatar">'+ico('globe',24)+'</span>':avatar(p)}</span>
       <span class="peer-text"><b>${isWorld?'Umumiy chat':p?(e(p.display_name||p.username)+tick(p)):'Chat'}</b>
         <small>${isWorld?(S.mwWorldPreview||'Minecraft World jamoasi'):(S.mwLastMessage?.[id]||('@'+(p?.username||'foydalanuvchi')))}</small></span>
       ${unread?`<span class="chat-unread">${Math.min(99,unread)}</span>`:''}
