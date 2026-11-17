@@ -1762,6 +1762,19 @@ body:before,.hero:after{display:none!important}
  #app.mw11-chat-page .chat-window .messages *{animation:none!important;transition:none!important}
 }
 
+
+/* Accessible shared chat info actions */
+#app.mw11-chat-page .mw11-info-actions,.mw11-info-actions{
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0 3px;
+}
+.mw11-info-actions .btn{min-height:43px;flex:1;white-space:normal}
+#app.mw11-chat-page .chat-toolbar .mw11-chat-options-btn .svg-icon{width:21px;height:21px}
+@media(max-width:760px){
+ #app.mw11-chat-page.mw11-mobile-thread-open .chat-toolbar .mw11-chat-options-btn{
+   height:43px;width:43px;min-width:43px;display:grid;place-items:center;
+ }
+}
+
 </style>
 </head>
 <body>
@@ -5111,7 +5124,7 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js?v=13').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=14').catch(console.warn);
   });
 }
 
@@ -5153,8 +5166,8 @@ if('serviceWorker'in navigator){
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=3"></script>
+<script src="./mw-live-chat.js?v=4"></script>
 <script src="./mw-social.js?v=2"></script>
-<script src="./mw-v11.js?v=3"></script>
+<script src="./mw-v11.js?v=4"></script>
 </body>
 </html>
