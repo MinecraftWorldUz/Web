@@ -1572,6 +1572,196 @@ body:before,.hero:after{display:none!important}
  #app.mw11-chat-page.mw11-mobile-thread-open .mw11-emoji-trigger{height:40px;width:36px}
 }
 
+
+/* V1.1 Messenger visual refinement
+   Telegram-like composition, strictly Minecraft World green + wood + gold palette.
+   Only affects active chat windows: all other pages keep their existing theme. */
+#app.mw11-chat-page {
+  --mw11-wall:#1c2920;
+  --mw11-wall-dark:#18241d;
+  --mw11-wood:#2b3529;
+  --mw11-head:#27372a;
+  --mw11-head-edge:#806840;
+  --mw11-sent:#856b3e;
+  --mw11-received:#354739;
+  --mw11-text:#f9f0db;
+  --mw11-soft:#d8c8a9;
+  --mw11-gold:#e9b96c;
+}
+#app.mw11-chat-page .mw11-chat-avatar{
+  width:45px;height:45px;min-width:45px;display:grid;place-items:center;
+  border-radius:50%;background:#53663f;color:#f5d38d;
+  border:1px solid #a891583d;overflow:hidden;flex:none;
+}
+#app.mw11-chat-page .mw11-chat-avatar .av,
+#app.mw11-chat-page .mw11-chat-avatar .av img{
+  width:100%!important;height:100%!important;border:0!important;
+  border-radius:50%!important;object-fit:cover!important;display:grid;place-items:center;
+}
+#app.mw11-chat-page .mw11-chat-options-btn{
+  width:43px;height:43px;min-width:43px;display:grid;place-items:center;
+  border:1px solid #ffffff16;background:#364935!important;border-radius:50%;
+  padding:0;color:var(--mw11-gold);flex:none;cursor:pointer;
+}
+#app.mw11-chat-page .mw11-chat-options-btn:active{background:#4a603d!important}
+#app.mw11-chat-page .chat-toolbar{min-width:0}
+#app.mw11-chat-page .mw11-head-name{color:var(--mw11-text);min-width:0}
+#app.mw11-chat-page .mw11-head-name strong{font-size:16px;letter-spacing:.1px}
+#app.mw11-chat-page .mw11-head-name small{color:#c7caaa}
+#app.mw11-chat-page .chat-window .messages{
+  background-color:var(--mw11-wall);
+  background-image:
+    radial-gradient(circle at 8% 18%,#e3bf7630 0 2px,transparent 2.5px),
+    radial-gradient(circle at 90% 75%,#a0b27528 0 2px,transparent 2.5px),
+    linear-gradient(45deg,transparent 47.5%,#f1d9a408 48.5%,#f1d9a408 50%,transparent 51%),
+    linear-gradient(135deg,transparent 47.5%,#9bc18d09 48.5%,#9bc18d09 50%,transparent 51%),
+    linear-gradient(160deg,#1b2a21,#283628 55%,#1b2c23);
+  background-size:160px 160px,183px 183px,118px 118px,118px 118px,cover;
+  background-position:0 0,40px 30px,16px 2px,16px 2px,center;
+}
+#app.mw11-chat-page .chat-window .messages .bubble{
+  background:var(--mw11-received);
+  color:var(--mw11-text);border:1px solid #aec89819;
+  box-shadow:0 3px 12px #07180e32;
+  border-radius:19px 19px 19px 6px;
+  line-height:1.47;padding:10px 13px;
+  width:max-content;max-width:min(82%,520px);
+  min-width:80px;margin:0;word-break:break-word;align-self:flex-start;
+}
+#app.mw11-chat-page .chat-window .messages .bubble.mine{
+  background:var(--mw11-sent);
+  color:#fff9eb;border-color:#eac18a40;
+  border-radius:19px 19px 6px 19px;
+  align-self:flex-end;margin-left:auto;
+}
+#app.mw11-chat-page .chat-window .messages .bubble .bubble-body{
+  white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px;line-height:1.45;
+}
+#app.mw11-chat-page .chat-window .messages .bubble small,
+#app.mw11-chat-page .chat-window .messages .mw11-bubble .mw11-footer small{
+  color:#f4e8ce;font-size:10px;line-height:1.1;opacity:.78;
+}
+#app.mw11-chat-page .chat-window .messages .world-message{
+  width:100%;max-width:100%;display:flex;flex-direction:column;
+  align-items:flex-start;gap:4px;margin:2px 0 7px;
+}
+#app.mw11-chat-page .chat-window .messages .world-message:has(.bubble.mine){align-items:flex-end}
+#app.mw11-chat-page .chat-window .messages .world-message .bubble{
+  margin-left:0!important;
+}
+#app.mw11-chat-page .chat-window .messages .world-message>.linkbtn{
+  display:flex;align-items:center;gap:8px;
+  padding:0 5px!important;margin:0 0 1px!important;
+  font-size:12px;font-weight:700;color:var(--mw11-gold);max-width:85%;
+}
+#app.mw11-chat-page .chat-window .messages .world-message>.linkbtn .av{width:25px;height:25px}
+#app.mw11-chat-page .chat-window .messages .world-message:has(.bubble.mine)>.linkbtn{display:none}
+#app.mw11-chat-page .chat-window .messages .mw11-bubble{cursor:pointer}
+#app.mw11-chat-page .chat-window .messages .mw11-bubble:focus-visible{
+  outline:2px solid var(--mw11-gold);outline-offset:2px;
+}
+#app.mw11-chat-page .chat-window .messages .mw11-quote{
+  border-left:3px solid var(--mw11-gold);background:#15271b54;
+  color:#f7ebd6;padding:7px 10px;
+}
+#app.mw11-chat-page .chat-window .messages .mw11-reaction-list{margin-top:5px}
+#app.mw11-chat-page .chat-window .messages .mw11-react-chip{
+  background:#223726af;color:#f8e9cf;border:1px solid #e9b96c66;border-radius:20px;
+}
+#app.mw11-chat-page .chat-window .messages .mw11-date-separator{
+  position:relative;align-self:center;display:flex;justify-content:center;
+  color:#f7e9cb;font-size:12px;line-height:1.2;margin:13px auto;
+  background:#364637d9;border:1px solid #c9ad7650;
+  border-radius:18px;padding:6px 13px;max-width:80%;
+  box-shadow:0 2px 8px #0c170c23;z-index:1;white-space:nowrap;
+}
+#app.mw11-chat-page .chat-window .messages .mw11-group-sender{
+  color:var(--mw11-gold);padding-left:5px;margin:1px 0 0;font-size:12px;
+}
+#app.mw11-chat-page .chat-window .chat-compose{
+  background:var(--mw11-head);border-top:1px solid #866a3e7e;
+  display:flex;align-items:center;gap:9px;
+}
+#app.mw11-chat-page .chat-window .chat-compose>.field{
+  background:#1b2a21!important;border:1px solid #869b6e5b!important;
+  border-radius:26px!important;color:#f8ecd7!important;
+  min-height:49px;padding:12px 15px;font-size:15px;
+}
+#app.mw11-chat-page .chat-window .chat-compose>.field::placeholder{color:#aeb8a0;opacity:1}
+#app.mw11-chat-page .chat-window .chat-compose>button[type="submit"]{
+  background:var(--mw11-gold)!important;color:#233321!important;
+  border-radius:50%!important;box-shadow:0 3px 9px #0b180c50;
+  width:49px;height:49px;min-width:49px;display:grid;place-items:center;padding:0!important;
+  border:1px solid #fae7b899;
+}
+#app.mw11-chat-page .mw11-emoji-trigger{color:var(--mw11-gold)!important}
+#app.mw11-chat-page .mw11-emoji-panel{
+  background:#2d3c2c;border-top:1px solid #97764b70;
+}
+#app.mw11-chat-page .mw11-reply-bar{background:#394632;border-left-color:var(--mw11-gold)}
+#app.mw11-chat-page .mw11-reply-bar strong{color:var(--mw11-gold)}
+@media(max-width:760px){
+ #app.mw11-chat-page.mw11-mobile-thread-open .chat-window{
+   background:var(--mw11-wall-dark)!important;
+ }
+ #app.mw11-chat-page.mw11-mobile-thread-open .chat-window .chat-toolbar{
+   background:var(--mw11-head)!important;
+   min-height:72px;max-height:78px;padding:10px 12px!important;
+   border-bottom:1px solid #ae915457;
+   gap:9px;
+ }
+ #app.mw11-chat-page.mw11-mobile-thread-open .chat-toolbar .mw11-back-thread{
+   color:var(--mw11-gold)!important;border-radius:50%!important;
+   background:#354835!important;border:1px solid #d2b47729!important;
+   width:43px;min-width:43px;height:43px;min-height:43px;padding:7px!important;
+ }
+ #app.mw11-chat-page.mw11-mobile-thread-open .chat-toolbar .mw11-chat-avatar{
+   width:43px;height:43px;min-width:43px;
+ }
+ #app.mw11-chat-page.mw11-mobile-thread-open .chat-toolbar .mw11-chat-options-btn{
+   background:#354835!important;
+ }
+ #app.mw11-chat-page.mw11-mobile-thread-open .chat-window .messages{
+   display:flex;flex-direction:column;min-height:0;max-height:none;
+   flex:1 1 auto;gap:7px;padding:17px 14px 24px!important;
+   background-color:var(--mw11-wall)!important;
+   background-image:
+    radial-gradient(circle at 8% 18%,#e3bf7630 0 2px,transparent 2.5px),
+    radial-gradient(circle at 90% 75%,#a0b27528 0 2px,transparent 2.5px),
+    linear-gradient(45deg,transparent 47.5%,#f1d9a408 48.5%,#f1d9a408 50%,transparent 51%),
+    linear-gradient(135deg,transparent 47.5%,#9bc18d09 48.5%,#9bc18d09 50%,transparent 51%),
+    linear-gradient(160deg,#1b2a21,#283628 55%,#1b2c23)!important;
+   background-size:160px 160px,183px 183px,118px 118px,118px 118px,cover!important;
+   background-position:0 0,40px 30px,16px 2px,16px 2px,center!important;
+ }
+ #app.mw11-chat-page.mw11-mobile-thread-open .chat-window .messages .bubble{
+   max-width:86%!important;border-radius:19px 19px 19px 6px!important;
+   padding:10px 13px!important;min-width:74px!important;
+   background:var(--mw11-received)!important;
+ }
+ #app.mw11-chat-page.mw11-mobile-thread-open .chat-window .messages .bubble.mine{
+   border-radius:19px 19px 6px 19px!important;
+   background:var(--mw11-sent)!important;
+ }
+ #app.mw11-chat-page.mw11-mobile-thread-open .chat-window .chat-compose{
+   padding:9px 12px max(11px,env(safe-area-inset-bottom))!important;
+   background:var(--mw11-head)!important;border-top-color:#ae915457!important;
+ }
+ #app.mw11-chat-page.mw11-mobile-thread-open .chat-window .chat-compose>.field{
+   border-radius:26px!important;background:#1b2a21!important;
+ }
+ #app.mw11-chat-page.mw11-mobile-thread-open .chat-window .chat-compose>button[type="submit"]{
+   border-radius:50%!important;background:var(--mw11-gold)!important;
+   color:#233321!important;
+ }
+ #app.mw11-chat-page.mw11-mobile-thread-open .chat-window .mw11-emoji-panel{
+   background:#2b3c2e!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #app.mw11-chat-page .chat-window .messages *{animation:none!important;transition:none!important}
+}
+
 </style>
 </head>
 <body>
@@ -1642,6 +1832,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
 const ICONS={
+'more-vertical':'<circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"/>',
 world:'<path d="m12 2 9 5-9 5-9-5 9-5Z M3 7v10l9 5 9-5V7M12 12v10"/><path d="m7 8 5 3 5-3M7 13l5 3 5-3"/>',
 home:'<path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8"/>',
 users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.1a4 4 0 0 1 0 7.8"/>',
@@ -3823,14 +4014,14 @@ function chatWindowShell(id){
   const isWorld=id==='world';
   const p=!isWorld?(S.chatUsers?.[id]||knownProfiles.get(id)?.p):null;
   return `<header class="chat-toolbar">
-    ${isWorld?ico('globe',24):avatar(p)}
+    ${isWorld?'<span class="mw11-chat-avatar">'+ico('globe',25)+'</span>':'<span class="mw11-chat-avatar">'+avatar(p)+'</span>'}
     ${isWorld?'<button class="linkbtn mw11-head-name" data-mw="world-info" style="flex:1;text-align:left"><strong>Umumiy chat</strong><small>Minecraft World</small></button>':
       `<button class="linkbtn mw11-head-name" data-act="user" data-id="${e(id)}">
         <strong>${p?e(p.display_name||p.username):'Suhbat'}</strong><small>${p?'@'+e(p.username):'Yuklanmoqda...'}</small>
       </button>`}
-    ${isWorld?`<button data-act="worldMute" title="Ovozsiz qilish">
-        ${ico('bell',19)} ${S.worldPref?.muted?'Yoqish':'Mute'}</button>
-      <button data-mw="world-info" title="Chat ma’lumotlari">${ico('users',19)}</button>`:''}
+    <button type="button" class="mw11-chat-options-btn" ${isWorld?'data-mw="world-info"':`data-act="user" data-id="${e(id)}"`} aria-label="Suhbat ma’lumotlari" title="Suhbat ma’lumotlari">
+      ${ico('more-vertical',22)}
+    </button>
   </header>
   <div class="messages" id="msgs">
     <p class="muted">Xabarlar yuklanmoqda...</p>
