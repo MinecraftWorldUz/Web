@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+<defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#142b20"/><stop offset=".55" stop-color="#2f4830"/><stop offset="1" stop-color="#614627"/></linearGradient>
+<linearGradient id="gold" x1="0" x2="1"><stop stop-color="#f7d88a"/><stop offset="1" stop-color="#b97936"/></linearGradient>
+<pattern id="grid" width="54" height="54" patternUnits="userSpaceOnUse"><rect width="54" height="54" fill="none" stroke="#bdc682" stroke-opacity=".08" stroke-width="2"/></pattern></defs>
+<rect width="1200" height="675" fill="url(#bg)"/><rect width="1200" height="675" fill="url(#grid)"/>
+<rect x="30" y="30" width="1140" height="615" rx="35" fill="none" stroke="#dbaa58" stroke-width="7" stroke-opacity=".65"/>
+<g transform="translate(75 90)"><rect width="445" height="470" rx="32" fill="#10271d" stroke="#8e9d54" stroke-width="4"/>
+<rect x="56" y="56" width="330" height="330" rx="22" fill="#32472f"/>
+<g fill="#edc15d" stroke="#794e23" stroke-width="9">
+<path d="M128 250V178a93 93 0 0 1 186 0v72l27 30H101z"/>
+<path d="M175 307h91v16c0 47-91 47-91 0z"/></g>
+<rect x="202" y="74" width="44" height="40" rx="15" fill="#ffe4a0"/>
+<path d="M118 252h225" stroke="#f8dea1" stroke-width="16"/>
+<text x="223" y="438" fill="#f3dfae" font-family="sans-serif" font-weight="900" font-size="35" text-anchor="middle">4 CRAFTS</text>
+</g>
+<text x="590" y="165" fill="#e2cd9e" font-family="sans-serif" font-size="34" font-weight="700" letter-spacing="3">MINECRAFT WORLD</text>
+<text x="583" y="260" fill="#fff6d7" font-family="sans-serif" font-size="72" font-weight="900">SAYOHATCHI</text>
+<text x="583" y="344" fill="#f0c779" font-family="sans-serif" font-size="69" font-weight="900">RETSEPTLARI</text>
+<rect x="585" y="387" width="475" height="63" rx="14" fill="#d8aa55"/>
+<text x="823" y="429" fill="#22341d" font-family="sans-serif" font-size="30" text-anchor="middle" font-weight="800">BEDROCK ADD-ON</text>
+<text x="588" y="505" fill="#e6dac0" font-family="sans-serif" font-size="28">Egar  |  Nom yorlig‘i  |  Qo‘ng‘iroq</text>
+<text x="588" y="553" fill="#b8c7aa" font-family="sans-serif" font-size="26">Ot zirhi  •  1.21+  •  V1.0</text>
+</svg>
