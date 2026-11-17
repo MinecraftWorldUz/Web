@@ -68,7 +68,9 @@ window.MWChat=(()=>{
   if(!S.u)return;
   dialog(S.lang==='ru'?'Новое сообщение':S.lang==='en'?'New message':'Yangi xabar','<button class="btn" data-mw="new-group">'+icon('users',19)+' '+(S.lang==='ru'?'Создать группу':S.lang==='en'?'Create group':'Guruh yaratish')+'</button>'+
    '<div class="formgroup"><input class="field" id="mwPersonSearch" placeholder="'+(S.lang==='ru'?'Поиск всех публичных пользователей':S.lang==='en'?'Search public accounts':'Barcha ommaviy akkauntlarni qidirish')+'"></div>'+
-   '<div id="mwPersonResults" class="mw-member-list"></div>');
+   '<div id="mwPersonResults" class="mw-member-list"></div>'+
+   '<h3 class="mw-public-groups-title">Ommaviy guruhlar</h3>'+
+   '<div id="mwPublicGroups" class="mw-member-list"></div>');
   searchPeople('');
  }
 
@@ -103,6 +105,49 @@ window.MWChat=(()=>{
    '<button type="button" class="btn ghost mw-people-more" data-mw="more-people" data-kind="'+
       (forGroup?'members':'people')+'">Yana akkauntlarni ko‘rish</button>');
   if(!target.children.length)target.innerHTML='<p class="muted">Akkaunt topilmadi.</p>';
+  if(!forGroup&&!append)await searchPublicGroups(term);
+ }
+
+
+ async function searchPublicGroups(q){
+  const target=$('#mwPublicGroups');if(!target||!S.u)return;
+  const term=String(q||'').trim().replace(/^@/,'').replace(/[%*,()]/g,'').slice(0,30);
+  let req=DB.from('mw_groups').select('id,name,username,bio,avatar_url')
+    .eq('visibility','public').order('created_at',{ascending:false}).limit(30);
+  if(term)req=req.or('username.ilike.%'+term+'%,name.ilike.%'+term+'%');
+  const groups=check(await req);
+  if(!target.isConnected||String($('#mwPersonSearch')?.value||'').trim().replace(/^@/,'')!==term)return;
+  target.innerHTML=groups.map(g=>'<button type="button" class="mw-member-option mw-public-group-item" data-mw="discover-group" data-id="'+escape(g.id)+'">'+
+    (g.avatar_url?'<img class="mw-public-group-avatar" src="'+escape(g.avatar_url)+'" alt="">':icon('users',32))+
+    '<span><b>'+escape(g.name)+'</b><small>@'+escape(g.username||'')+
+    (g.bio?' · '+escape(g.bio.slice(0,55)):'')+'</small></span></button>').join('')||
+   '<p class="muted">Ommaviy guruh topilmadi.</p>';
+ }
+ async function discoverGroup(id){
+  if(!S.u)return;
+  const group=check(await DB.from('mw_groups').select('id,name,username,bio,avatar_url,visibility')
+    .eq('id',id).eq('visibility','public').single());
+  const joined=check(await DB.from('mw_group_members').select('user_id').eq('group_id',id).eq('user_id',S.u.id).maybeSingle());
+  const old=check(await DB.from('mw_group_join_requests').select('id,status')
+    .eq('group_id',id).eq('requester_id',S.u.id).maybeSingle());
+  dialog('Ommaviy guruh',
+   '<div class="mw-group-top">'+
+   (group.avatar_url?'<img class="av large" src="'+escape(group.avatar_url)+'" alt="">':icon('users',40))+
+   '<div><h3>'+escape(group.name)+'</h3><p>@'+escape(group.username||'')+'</p></div></div>'+
+   '<p>'+escape(group.bio||'')+'</p>'+
+   (joined?'<button class="btn" data-mw="open" data-id="'+escape(id)+'">Guruhni ochish</button>':
+    old?.status==='pending'?'<p class="mw-request-pending">Qo‘shilish so‘rovi yuborilgan, egasining javobi kutilmoqda</p>':
+    '<button class="btn" data-mw="request-join" data-id="'+escape(id)+'">Qo‘shilish uchun so‘rov yuborish</button>'));
+ }
+ async function requestJoin(id){
+  if(!S.u)return;
+  const old=check(await DB.from('mw_group_join_requests').select('id,status')
+    .eq('group_id',id).eq('requester_id',S.u.id).maybeSingle());
+  if(old?.status==='pending'){toast('So‘rovingiz hali ko‘rib chiqilmoqda');return}
+  if(old)check(await DB.from('mw_group_join_requests').delete().eq('id',old.id).eq('requester_id',S.u.id));
+  check(await DB.from('mw_group_join_requests').insert({group_id:id,requester_id:S.u.id}));
+  toast('Guruh egasiga qo‘shilish so‘rovi yuborildi');
+  await discoverGroup(id);
  }
 
  function editGroup(g=null){
@@ -277,6 +322,14 @@ window.MWChat=(()=>{
   if(command==='new-chat')newChat();
   else if(command==='new-group')editGroup();
   else if(command==='more-people')await searchPeople(button.dataset.kind==='members'?C.memberQuery:C.personQuery,button.dataset.kind==='members',true);
+  else if(command==='discover-group')await discoverGroup(id);
+  else if(command==='request-join')await requestJoin(id);
+  else if(command==='review-join'){
+   const row=check(await DB.from('mw_group_join_requests').update({status:button.dataset.status,decided_at:new Date().toISOString()})
+     .eq('id',id).eq('status','pending').select('group_id').single());
+   toast(button.dataset.status==='accepted'?'A’zo guruhga qo‘shildi':'So‘rov rad etildi');
+   await info(row.group_id);
+  }
   else if(command==='open'){S.mw11MobileOpen=true;await openGroup(id);}
   else if(command==='group-info')await info(id);
   else if(command==='edit-group'){
