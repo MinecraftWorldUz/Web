@@ -1560,6 +1560,18 @@ body:before,.hero:after{display:none!important}
   #app.mw11-chat-page.mw11-mobile-thread-open .chat-toolbar>.mw11-group-header-avatar{width:42px;height:42px;flex:none;border-radius:50%}
 }
 
+
+/* Emoji composer shared by all chat types */
+.mw11-emoji-trigger{display:grid;place-items:center;flex:none;width:40px;height:40px;line-height:1;font-size:28px;border:0!important;border-radius:50%!important;background:transparent!important;color:#edc985!important;cursor:pointer;padding:2px!important}
+.mw11-emoji-panel{display:flex;flex-wrap:wrap;gap:5px;padding:9px 12px;background:#35291f;border-top:1px solid #86623b;justify-content:center;max-height:180px;overflow:auto}
+.mw11-emoji-panel[hidden]{display:none!important}
+.mw11-emoji-panel button{font-size:24px;line-height:1;background:transparent;border:0;border-radius:8px;padding:7px;cursor:pointer}
+.mw11-emoji-panel button:active{background:#ffffff20}
+@media(max-width:760px){
+ #app.mw11-chat-page.mw11-mobile-thread-open .mw11-emoji-panel{flex:none}
+ #app.mw11-chat-page.mw11-mobile-thread-open .mw11-emoji-trigger{height:40px;width:36px}
+}
+
 </style>
 </head>
 <body>
