@@ -342,6 +342,8 @@ window.MWChat=(()=>{
   const row=check(await DB.from('mw_chat_settings').select('discoverable,require_group_approval').eq('user_id',S.u.id).maybeSingle());
   if($('#mwPublicProfile'))$('#mwPublicProfile').checked=row?.discoverable!==false;
   if($('#mwInviteApproval'))$('#mwInviteApproval').checked=row?.require_group_approval!==false;
+  const visibility=$('#mwVisibilityStatus');
+  if(visibility)visibility.textContent=row?.discoverable===false?'Maxfiy':'Ommaviy';
  }
  async function saveProfileSettings(){
   if(!S.u)return;
@@ -399,7 +401,13 @@ window.MWChat=(()=>{
    C.selected=ev.target.checked?[...new Set([...C.selected,id])]:C.selected.filter(x=>x!==id);
    if($('#mwSelectedCount'))$('#mwSelectedCount').textContent=C.selected.length+' kishi tanlandi';
   }
-  if(ev.target.closest('#mwGroupForm')&&ev.target.name==='visibility')visibility();
+  if(ev.target.closest('#mwGroupForm')&&ev.target.name==='visibility'){
+    visibility();if(ev.target.value==='public')usernameStatus().catch(console.warn);
+  }
+  if(ev.target.id==='mwPublicProfile'){
+    const label=$('#mwVisibilityStatus');
+    if(label)label.textContent=ev.target.checked?'Ommaviy':'Maxfiy';
+  }
   if(ev.target.closest('.mw-avatar-button')&&ev.target.files?.[0]){
    const reader=new FileReader();reader.onload=()=>{
     const l=ev.target.closest('.mw-avatar-button');
