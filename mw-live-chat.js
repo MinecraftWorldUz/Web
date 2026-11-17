@@ -1,20 +1,21 @@
 /* Minecraft World — authenticated chat groups integration.
    This file is loaded only by production index.html and uses its existing DB, S, $, e, avatar, label, dialog, go helpers. */
 window.MWChat=(()=>{
- const C={groups:[],last:{},members:[],selected:[],group:null,activeId:null,queryTimer:null,userId:null,channel:null};
+ const C={groups:[],last:{},preview:{},members:[],selected:[],group:null,activeId:null,queryTimer:null,userId:null,channel:null};
  const escape=e,icon=ico;
  async function load(){
   if(!S.u||S.page!=='chat')return;
   const uid=S.u.id;
   if(C.userId!==uid){
    if(C.channel)DB.removeChannel(C.channel);
-   C.userId=uid;C.groups=[];C.last={};
+   C.userId=uid;C.groups=[];C.last={};C.preview={};
    C.channel=DB.channel('mw-groups-'+uid)
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'mw_group_messages'},payload=>{
      if(S.u?.id!==uid)return;
      const g=payload.new.group_id;
      if(!C.groups.some(x=>x.id===g))return;
      C.last[g]=new Date(payload.new.created_at).getTime();
+     C.preview[g]=String(payload.new.body||'').slice(0,65);
      renderGroups();
      if(S.page==='chat'&&S.chatId==='g:'+g&&payload.new.sender_id!==uid)openGroup(g).catch(console.warn);
     }).subscribe();
@@ -23,7 +24,7 @@ window.MWChat=(()=>{
   const ids=member.map(m=>m.group_id);
   const [groups,recent,invites,worldRecent]=await Promise.all([
    ids.length?DB.from('mw_groups').select('*').in('id',ids):Promise.resolve({data:[],error:null}),
-   ids.length?DB.from('mw_group_messages').select('group_id,created_at').in('group_id',ids).order('created_at',{ascending:false}).limit(150):Promise.resolve({data:[],error:null}),
+   ids.length?DB.from('mw_group_messages').select('group_id,body,created_at').in('group_id',ids).order('created_at',{ascending:false}).limit(150):Promise.resolve({data:[],error:null}),
    DB.from('mw_group_invitations').select('id',{count:'exact',head:true}).eq('recipient_id',uid).eq('status','pending'),
    DB.from('world_chat_messages').select('created_at').order('created_at',{ascending:false}).limit(1)
   ]);
@@ -31,14 +32,14 @@ window.MWChat=(()=>{
   if(S.u?.id!==uid||S.page!=='chat')return;
   C.groups=groups.data;
   S.mwWorldTime=worldRecent.data?.[0]?new Date(worldRecent.data[0].created_at).getTime():0;
-  C.last={};
-  for(const m of recent.data)if(!C.last[m.group_id])C.last[m.group_id]=new Date(m.created_at).getTime();
+  C.last={};C.preview={};
+  for(const m of recent.data)if(!C.last[m.group_id]){C.last[m.group_id]=new Date(m.created_at).getTime();C.preview[m.group_id]=String(m.body||'').slice(0,65)}
   renderGroups();
   const bar=$('.chat-title');
   if(bar&&!$('#mwInviteButton')){
    bar.insertAdjacentHTML('beforeend','<button class="btn small ghost" id="mwInviteButton" data-mw="invites">Takliflar</button>');
   }
-  const badge=$('#mwInviteButton');if(badge)badge.textContent='Takliflar'+(invites.count?' ('+invites.count+')':'');
+  const badge=$('#mwInviteButton');if(badge){badge.hidden=!invites.count;badge.textContent='Takliflar'+(invites.count?' ('+invites.count+')':'');}
   if(S.chatId?.startsWith('g:'))await openGroup(S.chatId.slice(2));
  }
  function renderGroups(){
@@ -48,7 +49,7 @@ window.MWChat=(()=>{
   for(const g of C.groups){
    const html='<button type="button" class="chat-peer mw-group-item '+(S.chatId==='g:'+g.id?'active':'')+'" data-mw="open" data-id="'+escape(g.id)+'">'+
     '<span class="account-avatar">'+(g.avatar_url?'<img class="av" src="'+escape(g.avatar_url)+'" alt="">':icon('users',25))+'</span>'+
-    '<span class="peer-text"><b>'+escape(g.name)+'</b><small>@'+escape(g.username||'maxfiy')+'</small></span></button>';
+    '<span class="peer-text"><b>'+escape(g.name)+'</b><small>'+escape(C.preview[g.id]||('@'+(g.username||'maxfiy')))+'</small></span></button>';
    rows.insertAdjacentHTML('beforeend',html);
   }
   // Keep world, direct and group threads together; newest activity first.
@@ -65,8 +66,8 @@ window.MWChat=(()=>{
   '<input type="checkbox" class="mw-check-member" value="'+escape(p.id)+'" '+(C.selected.includes(p.id)?'checked':'')+'></label>';
  function newChat(){
   if(!S.u)return;
-  dialog('Yangi xabar','<button class="btn" data-mw="new-group">'+icon('users',19)+' Guruh yaratish</button>'+
-   '<div class="formgroup"><input class="field" id="mwPersonSearch" placeholder="Barcha ommaviy akkauntlardan qidirish"></div>'+
+  dialog(S.lang==='ru'?'Новое сообщение':S.lang==='en'?'New message':'Yangi xabar','<button class="btn" data-mw="new-group">'+icon('users',19)+' '+(S.lang==='ru'?'Создать группу':S.lang==='en'?'Create group':'Guruh yaratish')+'</button>'+
+   '<div class="formgroup"><input class="field" id="mwPersonSearch" placeholder="'+(S.lang==='ru'?'Поиск всех публичных пользователей':S.lang==='en'?'Search public accounts':'Barcha ommaviy akkauntlarni qidirish')+'"></div>'+
    '<div id="mwPersonResults" class="mw-member-list"></div>');
   searchPeople('');
  }
@@ -136,12 +137,23 @@ window.MWChat=(()=>{
   if(C.group)group=check(await DB.from('mw_groups').update(values).eq('id',C.group.id).eq('owner_id',S.u.id).select('*').single());
   else group=check(await DB.from('mw_groups').insert({...values,owner_id:S.u.id}).select('*').single());
   let failed=0;
-  for(const recipient_id of C.selected){
-   const result=await DB.from('mw_group_invitations').insert({group_id:group.id,sender_id:S.u.id,recipient_id});
-   if(result.error&&result.error.code!=='23505')failed++;
+  if(C.selected.length){
+   const joined=check(await DB.from('mw_group_members').select('user_id').eq('group_id',group.id));
+   const hasJoined=new Set(joined.map(m=>m.user_id));
+   for(const recipient_id of C.selected){
+    if(hasJoined.has(recipient_id))continue;
+    try{
+     const existing=check(await DB.from('mw_group_invitations').select('id,status')
+       .eq('group_id',group.id).eq('recipient_id',recipient_id).maybeSingle());
+     if(existing?.status==='pending')continue;
+     if(existing)check(await DB.from('mw_group_invitations').delete().eq('id',existing.id));
+     check(await DB.from('mw_group_invitations').insert({group_id:group.id,sender_id:S.u.id,recipient_id}));
+    }catch(err){console.warn('Guruh taklifi:',err);failed++}
+   }
   }
   close();
   S.chatId='g:'+group.id;
+  S.mw11MobileOpen=true;
   await load();
   await openGroup(group.id);
   if(failed)toast('Ba’zi takliflar yuborilmadi');
@@ -156,9 +168,12 @@ window.MWChat=(()=>{
   if(!member)throw Error('Bu guruhga a’zo emassiz');
   S.chatId='g:'+id;C.activeId=id;
   const area=$('#conversation');if(!area)return;
-  area.innerHTML='<header class="chat-toolbar"><button class="linkbtn" data-mw="group-info" data-id="'+escape(id)+'">'+icon('users',24)+' '+escape(g.name)+'</button></header>'+
+  area.innerHTML='<header class="chat-toolbar">'+
+     '<span class="mw11-group-header-avatar">'+(g.avatar_url?'<img class="av" src="'+escape(g.avatar_url)+'" alt="">':icon('users',28))+'</span>'+
+     '<button class="linkbtn mw11-head-name" data-mw="group-info" data-id="'+escape(id)+'"><strong>'+escape(g.name)+'</strong><small>@'+escape(g.username||'maxfiy')+'</small></button></header>'+
    '<div class="messages" id="msgs"></div><form class="chat-compose" id="mwGroupMessage" data-id="'+escape(id)+'">'+
    '<input class="field" name="body" maxlength="2000" placeholder="Xabar yozing..." required><button class="btn" type="submit">'+icon('send',20)+'</button></form>';
+  if(S.mw11MobileOpen)window.MWV11?.openMobileThread?.();
   renderGroups();
   const rows=check(await DB.from('mw_group_messages').select('id,sender_id,body,created_at,reply_to,edited_at').eq('group_id',id).order('created_at',{ascending:false}).limit(65));
   const people=await users(rows.map(m=>m.sender_id));
@@ -174,13 +189,27 @@ window.MWChat=(()=>{
   const group=check(await DB.from('mw_groups').select('*').eq('id',id).single());
   const members=check(await DB.from('mw_group_members').select('user_id').eq('group_id',id));
   const map=await users(members.map(x=>x.user_id));
-  dialog('Guruh ma’lumotlari','<div class="mw-group-top">'+(group.avatar_url?'<img class="av large" src="'+escape(group.avatar_url)+'" alt="">':icon('users',40))+
-   '<div><h3>'+escape(group.name)+'</h3><p>@'+escape(group.username||'maxfiy')+'</p><p>'+escape(group.bio||'')+'</p></div></div>'+
-   '<h3>A’zolar · '+members.length+'</h3><div class="mw-member-list">'+members.map(m=>'<button class="mw-member-option" data-act="user" data-id="'+escape(m.user_id)+'">'+
-   avatar(map[m.user_id])+'<span>'+label(map[m.user_id])+(m.user_id===group.owner_id?' · Egasi':'')+'</span></button>').join('')+'</div>'+
-   '<div class="buttons">'+(group.owner_id===S.u.id?'<button class="btn" data-mw="edit-group" data-id="'+escape(id)+'">Tahrirlash / a’zo qo‘shish</button>'+
-   '<button class="btn danger" data-mw="delete-group" data-id="'+escape(id)+'">Guruhni o‘chirish</button>':
-   '<button class="btn danger" data-mw="leave-group" data-id="'+escape(id)+'">Guruhdan chiqish</button>')+'</div>');
+  const own=group.owner_id===S.u.id;
+  const membersHtml=members.map(m=>`<div class="mw-member-option mw11-member-manage">
+      <button type="button" class="mw11-member-person" data-act="user" data-id="${escape(m.user_id)}">
+        ${avatar(map[m.user_id])}
+        <span>${label(map[m.user_id])} ${m.user_id===group.owner_id?' · Egasi':''}</span>
+      </button>
+      ${own&&m.user_id!==group.owner_id?`<button type="button" class="mw11-kick" data-mw="kick" data-id="${escape(id)}"
+        data-user="${escape(m.user_id)}" aria-label="A’zoni guruhdan chiqarish" title="Guruhdan chiqarish">${icon('x',18)}</button>`:''}
+    </div>`).join('');
+  dialog('Guruh ma’lumotlari',`
+    <div class="mw-group-top">
+      ${group.avatar_url?'<img class="av large" src="'+escape(group.avatar_url)+'" alt="">':icon('users',40)}
+      <div><h3>${escape(group.name)}</h3><p>@${escape(group.username||'maxfiy')}</p><p>${escape(group.bio||'')}</p></div>
+    </div>
+    <h3>A’zolar · ${members.length}</h3>
+    <div class="mw-member-list">${membersHtml}</div>
+    <div class="buttons">${own?
+      '<button class="btn" data-mw="edit-group" data-id="'+escape(id)+'">Tahrirlash / a’zo qo‘shish</button>'+
+      '<button class="btn danger" data-mw="delete-group" data-id="'+escape(id)+'">Guruhni o‘chirish</button>':
+      '<button class="btn danger" data-mw="leave-group" data-id="'+escape(id)+'">Guruhdan chiqish</button>'}
+    </div>`);
  }
  async function invitations(){
   const invites=check(await DB.from('mw_group_invitations').select('id,group_id,sender_id').eq('recipient_id',S.u.id).eq('status','pending'));
@@ -200,12 +229,23 @@ window.MWChat=(()=>{
   const command=button.dataset.mw,id=button.dataset.id;
   if(command==='new-chat')newChat();
   else if(command==='new-group')editGroup();
-  else if(command==='open')await openGroup(id);
+  else if(command==='open'){S.mw11MobileOpen=true;await openGroup(id);}
   else if(command==='group-info')await info(id);
   else if(command==='edit-group'){
    const g=check(await DB.from('mw_groups').select('*').eq('id',id).single());
    if(g.owner_id!==S.u.id)throw Error('Faqat guruh egasi tahrirlay oladi');
    editGroup(g);
+  }
+  else if(command==='kick'){
+   const targetId=button.dataset.user;
+   const g=check(await DB.from('mw_groups').select('owner_id').eq('id',id).single());
+   if(g.owner_id!==S.u.id||targetId===g.owner_id)throw Error('Faqat guruh egasi a’zoni chiqaradi');
+   if(!confirm('Bu a’zoni guruhdan chiqarasizmi?'))return;
+   const removed=check(await DB.from('mw_group_members').delete().eq('group_id',id)
+     .eq('user_id',targetId).select('user_id'));
+   if(!removed.length)throw Error('A’zoni chiqarib bo‘lmadi');
+   toast('A’zo guruhdan chiqarildi');
+   await info(id);
   }
   else if(command==='invites')await invitations();
   else if(command==='answer'){
@@ -276,6 +316,7 @@ window.MWChat=(()=>{
  window.addEventListener('click',ev=>{
   let button=ev.target.closest('[data-mw]');
   if(!button)return;
+  if(window.MWV11?.consumeLongPress?.()){ev.preventDefault();ev.stopImmediatePropagation();return;}
   ev.preventDefault();ev.stopImmediatePropagation();
   action(button).catch(err=>{console.error(err);toast(err.code==='23505'?'Username band':err.message)});
  },true);
@@ -317,7 +358,7 @@ window.MWChat=(()=>{
    else{
     const body=String(new FormData(f).get('body')||'').trim();if(!body)return;
     check(await DB.from('mw_group_messages').insert({group_id:f.dataset.id,sender_id:S.u.id,body,reply_to:window.MWV11?.replyId?.('group','g:'+f.dataset.id)||null}));
-    f.reset();window.MWV11?.clearReply?.();await openGroup(f.dataset.id);
+    f.reset();window.MWV11?.clearReply?.();C.last[f.dataset.id]=Date.now();C.preview[f.dataset.id]='Siz: '+body.slice(0,65);await openGroup(f.dataset.id);
    }
   }catch(err){console.error(err);toast(err.code==='23505'?'Username band':err.message)}
   finally{if(btn)btn.disabled=false}
