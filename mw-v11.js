@@ -428,7 +428,7 @@ window.MWV11=(()=>{
   function resetMobileThread(){
     S.mw11MobileOpen=false;
     document.body.classList.remove('mw11-thread-mode');
-    document.querySelector('#app')?.classList.remove('mw11-mobile-thread-open');
+    document.querySelector('#app')?.classList.remove('mw11-mobile-thread-open','mw11-chat-page');
   }
   function prepareChatScreen(){
     document.querySelector('#app')?.classList.add('mw11-chat-page');
