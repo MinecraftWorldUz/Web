@@ -1824,6 +1824,42 @@ body:before,.hero:after{display:none!important}
  .mw-profile-edit-form .mw-edit-name textarea{min-height:95px}
 }
 
+
+/* Private media messages in V1.1 — same Minecraft World palette as all chats */
+#app.mw11-chat-page .mw11-attachment{margin:8px 0;max-width:100%;font-size:12px}
+#app.mw11-chat-page .mw11-image-message{
+ width:auto;max-width:min(100%,340px);max-height:310px;object-fit:contain;
+ border-radius:12px;display:block;border:1px solid #ffffff22;
+}
+#app.mw11-chat-page .mw11-video-message{
+ display:block;width:min(100%,340px);max-height:300px;border-radius:12px;background:#101d13;
+}
+#app.mw11-chat-page .mw11-file-message{
+ display:flex;align-items:center;gap:9px;color:#f7deac!important;background:#203323a8;
+ padding:12px;max-width:100%;border:1px solid #d3af6c65;border-radius:12px;
+ overflow-wrap:anywhere;text-decoration:none;
+}
+#app.mw11-chat-page .mw11-file-message strong{flex:1;min-width:0;overflow-wrap:anywhere}
+#app.mw11-chat-page .mw11-attach-label{
+ display:grid;place-items:center;width:37px;height:42px;min-width:37px;flex:none;
+ color:#e6bf82;cursor:pointer;position:relative;border-radius:12px;
+}
+#app.mw11-chat-page .mw11-attach-label:hover{background:#ffffff12}
+#app.mw11-chat-page .mw11-attach-label input[type="file"]{
+ position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;
+}
+#app.mw11-chat-page .mw11-attachment-preview{
+ display:flex;flex-basis:100%;align-items:center;justify-content:space-between;gap:10px;
+ background:#314632;border-left:3px solid #e0b56a;border-radius:9px;
+ padding:8px 11px;font-size:12px;color:#f6e8c8;max-width:100%;
+}
+#app.mw11-chat-page .mw11-attachment-preview span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#app.mw11-chat-page .mw11-attachment-preview button{
+ border:0;border-radius:50%;background:#ffffff19;color:#f6e8c8;
+ font-size:20px;width:30px;height:30px;flex:none;
+}
+#app.mw11-chat-page .mw11-attachment-preview[hidden]{display:none!important}
+
 </style>
 </head>
 <body>
@@ -1894,6 +1930,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
 const ICONS={
+'paperclip':'<path d="m20 11.5-7.9 7.9a5 5 0 0 1-7.1-7.1l8.2-8.2a3.3 3.3 0 0 1 4.7 4.7l-8.4 8.4a1.6 1.6 0 0 1-2.3-2.3l7.9-7.9"/>',
+'image':'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m3 16 5-5 4 4 3-3 6 6"/>',
 'more-vertical':'<circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"/>',
 world:'<path d="m12 2 9 5-9 5-9-5 9-5Z M3 7v10l9 5 9-5V7M12 12v10"/><path d="m7 8 5 3 5-3M7 13l5 3 5-3"/>',
 home:'<path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8"/>',
@@ -4183,7 +4221,7 @@ async function conversation(id){
   const uid=S.u.id;
   const [pResult,msgResult]=await Promise.all([
     users([id]),
-    DB.from('messages').select('id,sender_id,recipient_id,body,created_at,edited_at,reply_to')
+    DB.from('messages').select('id,sender_id,recipient_id,body,created_at,edited_at,reply_to,attachment_path,attachment_name,attachment_type')
       .or(`and(sender_id.eq.${uid},recipient_id.eq.${id}),and(sender_id.eq.${id},recipient_id.eq.${uid})`)
       .order('created_at',{ascending:false}).limit(55)
   ]);
@@ -4233,7 +4271,7 @@ async function worldConversation(){
   // Start both requests simultaneously instead of waiting for room settings first.
   const [prefResult,rowsResult]=await Promise.all([
     prefPromise,
-    DB.from('world_chat_messages').select('id,author_id,body,created_at,edited_at,reply_to')
+    DB.from('world_chat_messages').select('id,author_id,body,created_at,edited_at,reply_to,attachment_path,attachment_name,attachment_type')
       .order('created_at',{ascending:false}).limit(55)
   ]);
   if(S.page!=='chat'||S.chatId!=='world'||seq!==chatThreadRequest||!$('#conversation'))return;
@@ -5052,12 +5090,14 @@ window.addEventListener('submit',async ev=>{
     else if(f.id==='msgForm'){
       if(!requireUser())return;
       const text=String(new FormData(f).get('body')||'').trim();
-      if(!text)return;
+      const media=await window.MWV11?.uploadAttachment?.(f,'dm',f.dataset.id)||{};
+      if(!text&&!media.attachment_path)return;
+      const body=text||'📎 '+media.attachment_name;
       const result=check(await DB.from('messages').insert({
-        sender_id:S.u.id,recipient_id:f.dataset.id,body:text,
+        sender_id:S.u.id,recipient_id:f.dataset.id,body,...media,
         reply_to:window.MWV11?.replyId?.('dm','u:'+f.dataset.id)||null
-      }).select('id,sender_id,recipient_id,body,created_at,reply_to,edited_at').single());
-      f.reset();
+      }).select('id,sender_id,recipient_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type').single());
+      f.reset();window.MWV11?.clearAttachment?.(f);
       window.MWV11?.clearReply?.();
       const msgs=$('#msgs');
       if(msgs&&S.chatId===f.dataset.id){
@@ -5069,7 +5109,7 @@ window.addEventListener('submit',async ev=>{
         window.MWV11?.afterRender?.([result],'dm');
       }
       S.mwDirectTimes=S.mwDirectTimes||{};S.mwDirectTimes[f.dataset.id]=Date.now();
-      S.mwLastMessage=S.mwLastMessage||{};S.mwLastMessage[f.dataset.id]='Siz: '+text.slice(0,65);
+      S.mwLastMessage=S.mwLastMessage||{};S.mwLastMessage[f.dataset.id]='Siz: '+result.body.slice(0,65);
       markChatSeen(f.dataset.id);
       chatRows();
       if(!S.chatPeers?.includes(f.dataset.id)){
@@ -5082,12 +5122,14 @@ window.addEventListener('submit',async ev=>{
     else if(f.id==='worldMsgForm'){
       if(!requireUser()||S.worldPref?.joined===false)return;
       const text=String(new FormData(f).get('body')||'').trim();
-      if(!text)return;
+      const media=await window.MWV11?.uploadAttachment?.(f,'world','world')||{};
+      if(!text&&!media.attachment_path)return;
+      const body=text||'📎 '+media.attachment_name;
       const result=check(await DB.from('world_chat_messages').insert({
-        author_id:S.u.id,body:text,
+        author_id:S.u.id,body,...media,
         reply_to:window.MWV11?.replyId?.('world','world')||null
-      }).select('id,author_id,body,created_at,reply_to,edited_at').single());
-      f.reset();
+      }).select('id,author_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type').single());
+      f.reset();window.MWV11?.clearAttachment?.(f);
       window.MWV11?.clearReply?.();
       const msgs=$('#msgs');
       if(msgs&&S.chatId==='world'){
@@ -5098,7 +5140,7 @@ window.addEventListener('submit',async ev=>{
         msgs.scrollTop=msgs.scrollHeight;
         window.MWV11?.afterRender?.([result],'world');
       }
-      S.mwWorldTime=Date.now();S.mwWorldPreview='Siz: '+text.slice(0,65);chatRows();
+      S.mwWorldTime=Date.now();S.mwWorldPreview='Siz: '+result.body.slice(0,65);chatRows();
       worldUpdate({last_seen_at:new Date().toISOString()}).catch(console.warn);
     }
     else if(f.id==='badgeForm'){
