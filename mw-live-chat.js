@@ -179,7 +179,8 @@ window.MWChat=(()=>{
   const people=await users(rows.map(m=>m.sender_id));
   if(S.chatId!=='g:'+id||!$('#msgs'))return;
   const ordered=rows.slice().reverse();
-  $('#msgs').innerHTML=ordered.map(m=>groupBubble(m,people[m.sender_id],ordered)).join('')||'<p class="muted">Birinchi xabarni yuboring</p>';
+  $('#msgs').innerHTML=(window.MWV11?.dated?.(ordered,m=>groupBubble(m,people[m.sender_id],ordered))||
+   ordered.map(m=>groupBubble(m,people[m.sender_id],ordered)).join(''))||'<p class="muted">Birinchi xabarni yuboring</p>';
   $('#msgs').scrollTop=$('#msgs').scrollHeight;
   window.MWV11?.afterRender?.(ordered,'group');
   window.MWV11?.addThreadSearch?.();
