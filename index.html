@@ -1775,6 +1775,55 @@ body:before,.hero:after{display:none!important}
  }
 }
 
+
+/* V1.1 consistent media picker, scoped to forms instead of browser-native buttons */
+.mw-upload-tile.file-picker{
+ display:flex!important;align-items:center;gap:13px;min-height:80px;padding:13px 14px!important;
+ border:1px dashed #b48c54!important;border-radius:16px!important;
+ background:linear-gradient(130deg,#2b3d2d,#4a3726)!important;
+ color:#f8e6c7!important;position:relative;cursor:pointer;transition:background .18s,border-color .18s;
+}
+.mw-upload-tile.file-picker:hover,.mw-upload-tile.file-picker:focus-within{
+ border-color:#edbd6e!important;background:linear-gradient(130deg,#365139,#584129)!important;
+}
+.mw-upload-tile .mw-upload-icon{
+ width:49px;height:49px;display:grid;place-items:center;flex:none;border:1px solid #edbd6e59;
+ border-radius:13px;background:#74543355;color:#efd19b;
+}
+.mw-upload-tile .mw-upload-details{display:grid;gap:5px;min-width:0;flex:1}
+.mw-upload-details strong{font-size:14px;font-weight:700;overflow-wrap:anywhere}
+.mw-upload-details small{font-size:11px;color:#cebea4;overflow-wrap:anywhere}
+.mw-upload-tile .mw-upload-choose{
+ background:#b88947;color:#291b11;font-weight:800;padding:8px 11px;border-radius:10px;
+ font-size:12px;white-space:nowrap;flex:none;
+}
+.mw-upload-tile input[type="file"],.mw-avatar-edit input[type="file"],
+.mw-avatar-button input[type="file"],.mw-social-photo input[type="file"],
+.mw-photo-control input[type="file"],.mw-file-input input[type="file"]{
+ position:absolute!important;opacity:0!important;width:1px!important;height:1px!important;
+ pointer-events:none!important;border:0!important;padding:0!important;left:12px;bottom:12px;
+}
+.mw-upload-tile .mw-upload-preview{
+ width:56px;height:56px;object-fit:cover;border-radius:10px;border:1px solid #edbd6e55;flex:none;
+}
+.mw-upload-tile .mw-upload-preview[hidden]{display:none!important}
+.mw-profile-edit-form .mw-edit-top{align-items:flex-start;gap:17px}
+.mw-profile-edit-form .mw-edit-name{display:grid;gap:6px;flex:1;min-width:0}
+.mw-profile-edit-form .mw-edit-name textarea{min-height:85px;max-height:170px;resize:vertical}
+.mw-profile-edit-form .mw-edit-name label:not(:first-child){margin-top:5px}
+.mw-profile-edit-form .mw-avatar-edit{flex:none;border-radius:50%!important;overflow:visible}
+.mw-profile-edit-form .mw-avatar-edit #avatarPreview{overflow:hidden;border-radius:50%}
+.mw-profile-edit-form .mw-photo-plus{border-radius:50%;bottom:-4px;right:-4px}
+.mw-username-hint.ok{color:#a9e6a7}
+.mw-username-hint.bad{color:#ffb29d}
+.mw-edit-privacy #mwVisibilityStatus{color:#f1c47e}
+.mw-social-photo{border-radius:15px;min-height:125px}
+@media(max-width:390px){
+ .mw-upload-tile .mw-upload-choose{padding:7px;font-size:11px}
+ .mw-profile-edit-form .mw-edit-top{gap:11px}
+ .mw-profile-edit-form .mw-edit-name textarea{min-height:95px}
+}
+
 </style>
 </head>
 <body>
@@ -2391,13 +2440,19 @@ function close(){
   $('#overlay').innerHTML=''
 }
 function filePicker(name,accept,required=false){
-  const text=name==='avatar'?'Avatar rasmini tanlash':
-    name==='image'?'Mod rasmini tanlash':'Mod faylini tanlash';
-  return `<label class="file-picker" for="pick-${name}">
-    ${ico(name==='file'?'package':'upload',22)}
-    <span id="pick-label-${name}">${text}</span>
+  const picture=name==='image',attachment=name==='file';
+  const text=picture?'Mod uchun muqova rasmini tanlash':attachment?'Mod faylini tanlash':'Avatar rasmini tanlash';
+  const detail=picture?'JPEG, PNG, WebP yoki GIF':attachment?'ZIP, JAR, MCPACK va boshqa mos fayllar':'Rasm tanlash';
+  return `<label class="mw-upload-tile file-picker" for="pick-${name}">
+    <span class="mw-upload-icon">${ico(attachment?'package':picture?'image':'user',25)}</span>
+    <span class="mw-upload-details">
+      <strong id="pick-label-${name}">${text}</strong>
+      <small>${detail}</small>
+    </span>
+    <span class="mw-upload-choose">Tanlash</span>
     <input id="pick-${name}" type="file" name="${name}"
-      accept="${e(accept)}" ${required?'required':''}>
+      accept="${e(accept)}" ${required?'required':''} aria-label="${text}">
+    <img class="mw-upload-preview" alt="Tanlangan rasm" hidden>
   </label>`
 }
 function formField(title,name,type='text',val='',req=true){
@@ -3235,13 +3290,10 @@ function editProfile(){
           <label for="mwDisplayName">Ism</label>
           <input class="field" id="mwDisplayName" name="display_name" maxlength="60"
             placeholder="Ismingiz" value="${e(S.me.display_name||'')}">
-          <small class="muted">Avatarni o‘zgartirish uchun + ni bosing</small>
+          <label for="mwEditBio">Bio</label>
+          <textarea class="field" id="mwEditBio" name="bio" rows="3"
+            maxlength="350" placeholder="O‘zingiz haqingizda...">${e(S.me.bio||'')}</textarea>
         </div>
-      </div>
-      <div class="formgroup">
-        <label for="mwEditBio">${t('bio')}</label>
-        <textarea class="field" id="mwEditBio" name="bio" rows="3"
-          maxlength="350" placeholder="O‘zingiz haqingizda...">${e(S.me.bio||'')}</textarea>
       </div>
       <div class="formgroup">
         <label for="mwEditUsername">Username</label>
@@ -3256,12 +3308,12 @@ function editProfile(){
       <fieldset class="mw-edit-privacy">
         <legend>Chat maxfiyligi</legend>
         <label class="mw-switch-row"><span>
-          <strong>Ommaviy akkaunt</strong>
-          <small>Username orqali chat qidiruvida topiladi</small>
+          <strong>Chat turi: <b id="mwVisibilityStatus">Ommaviy</b></strong>
+          <small>Ommaviy bo‘lsa qidiruvda chiqadi, maxfiy bo‘lsa eski suhbatlaringiz saqlanadi</small>
         </span><input type="checkbox" id="mwPublicProfile" checked></label>
         <label class="mw-switch-row"><span>
-          <strong>Guruhga qo‘shishni tasdiqlash</strong>
-          <small>Taklifga rozilik bermaguncha guruhga qo‘shilmaysiz</small>
+          <strong>Guruhga qo‘shishdan oldin so‘rash</strong>
+          <small>Yoqilgan bo‘lsa taklifni qabul qilasiz, o‘chirilsa guruhga avtomatik qo‘shilasiz</small>
         </span><input type="checkbox" id="mwInviteApproval" checked></label>
       </fieldset>
       <button class="btn mw-edit-save" type="submit">${t('save')}</button>
@@ -3278,6 +3330,9 @@ async function saveProfile(f){
     throw Error('Username noto‘g‘ri');
   if(S.me.is_admin&&username!=='admin')
     throw Error('Admin username o‘zgarmaydi');
+  const usernameCheck=await DB.rpc('mw_username_available',{candidate:username,kind:'profile'});
+  check(usernameCheck);
+  if(!usernameCheck.data)throw Error('Username band');
   let avatar_url=S.me.avatar_url;
   let fi=x.get('avatar');
   if(fi?.size){
@@ -4919,7 +4974,18 @@ window.addEventListener('change',async ev=>{
   if(ev.target.matches('.file-picker input[type="file"], .mw-avatar-edit input[type="file"]')){
     const x=ev.target;
     const label=document.getElementById('pick-label-'+x.name);
-    if(label&&x.files?.[0])label.textContent=x.files[0].name;
+    if(label&&x.files?.[0]){
+      label.textContent=x.files[0].name;
+      const tile=x.closest('.mw-upload-tile');
+      const small=tile?.querySelector('.mw-upload-details small');
+      if(small)small.textContent='Tanlandi · '+Math.max(1,Math.ceil(x.files[0].size/1024))+' KB';
+      const preview=tile?.querySelector('.mw-upload-preview');
+      if(preview&&x.files[0].type.startsWith('image/')){
+        const reader=new FileReader();
+        reader.onload=()=>{if(tile?.isConnected){preview.src=String(reader.result);preview.hidden=false}};
+        reader.readAsDataURL(x.files[0]);
+      }
+    }
     if(x.name==='avatar'&&x.files?.[0]?.type.startsWith('image/')){
       const preview=$('#avatarPreview');
       if(preview){
