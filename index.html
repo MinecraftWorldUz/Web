@@ -2474,6 +2474,8 @@ function avatar(p,large=false){
   }</span>`
 }
 function cover(path){
+  if(path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/site-mods/mw-explorer-recipes-cover.svg')
+    return new URL('./site-mods/mw-explorer-recipes-cover.svg',window.location.href).href;
   return path?DB.storage.from('covers').getPublicUrl(path).data.publicUrl:''
 }
 function btn(a,text,id='',extra=''){
@@ -3603,7 +3605,8 @@ async function getMod(id){
 function renderMod(m){
   const isApproved=m.status==='approved';
   const actions=isApproved?`
-    ${btn('download',(telegramApp()?'Telegramga yuborish':t('downloads'))+' · '+count(m.downloads_count),m.id)}
+    ${btn('download',(m.file_path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/site-mods/mw-explorer-recipes.mcaddon'?
+      'Yuklab olish':telegramApp()?'Telegramga yuborish':t('downloads'))+' · '+count(m.downloads_count),m.id)}
     <button class="btn small ghost mod-toggle" data-act="like" data-id="${e(m.id)}"
       data-mod-toggle="like" aria-pressed="false">
       ${ico('heart',18)} <span>Like · ${count(m.likes_count)}</span></button>
@@ -3696,7 +3699,7 @@ async function openMod(id){
     return;
   }
   if(generation!==modalGeneration||activeModId!==id||!$('#overlay').classList.contains('open'))return;
-  if(!cached||!cached.description)renderMod(m);
+  if(!cached||!cached.description||m.file_path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/site-mods/mw-explorer-recipes.mcaddon')renderMod(m);
   const author=$('#modAuthor');
   if(author&&!author.hasChildNodes()){
     users([m.author_id]).then(mp=>{
@@ -3871,15 +3874,39 @@ async function sendModToTelegram(id,tg){
   }
 }
 async function download(id){
-  const tg=telegramApp();
-  if(tg){
-    await sendModToTelegram(id,tg);
-    return;
-  }
-  const mod=check(await DB.from('mods').select('status')
+  const mod=check(await DB.from('mods').select('status,file_path')
     .eq('id',id).single());
   if(mod.status!=='approved'){
     toast('Mod tekshiruvda. Tasdiqlangach yuklab olish mumkin.');
+    return;
+  }
+  if(mod.file_path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/site-mods/mw-explorer-recipes.mcaddon'){
+    // The first original, site-owned add-on is hosted as a genuine binary
+    // on the same-origin GitHub Pages site. All other mods use Supabase.
+    const registered=check(await DB.rpc('register_download',{p_mod:id}));
+    if(registered!==mod.file_path)throw Error('Mod yuklash manzili o‘zgargan');
+    const url=new URL('./site-mods/mw-explorer-recipes.mcaddon',window.location.href).href;
+    const tg=telegramApp();
+    if(tg?.openLink){
+      tg.openLink(url);
+    }else{
+      const link=document.createElement('a');
+      link.href=url;
+      link.download='MW_Explorer_Recipes.mcaddon';
+      link.target='_blank';
+      link.rel='noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+    const cached=getCachedMod(id);
+    if(cached)cached.downloads_count=(cached.downloads_count||0)+1;
+    toast('Addon yuklab olinmoqda');
+    return;
+  }
+  const tg=telegramApp();
+  if(tg){
+    await sendModToTelegram(id,tg);
     return;
   }
   const path=check(await DB.rpc('register_download',{p_mod:id}));
