@@ -18,6 +18,11 @@ window.MWChat=(()=>{
      C.preview[g]=String(payload.new.body||'').slice(0,65);
      renderGroups();
      if(S.page==='chat'&&S.chatId==='g:'+g&&payload.new.sender_id!==uid)openGroup(g).catch(console.warn);
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'mw_group_join_requests'},payload=>{
+      if(S.u?.id!==uid||!C.groups.some(g=>g.id===payload.new.group_id&&g.owner_id===uid))return;
+      if(S.page==='chat')toast('Guruhga qo‘shilish so‘rovi keldi');
+      load().catch(console.warn);
     }).subscribe();
   }
   const member=check(await DB.from('mw_group_members').select('group_id').eq('user_id',uid));
@@ -35,11 +40,16 @@ window.MWChat=(()=>{
   C.last={};C.preview={};
   for(const m of recent.data)if(!C.last[m.group_id]){C.last[m.group_id]=new Date(m.created_at).getTime();C.preview[m.group_id]=String(m.body||'').slice(0,65)}
   renderGroups();
+  const owned=C.groups.filter(g=>g.owner_id===uid).map(g=>g.id);
+  const pending=owned.length?check(await DB.from('mw_group_join_requests')
+    .select('id',{count:'exact',head:true}).in('group_id',owned).eq('status','pending')):[];
+  const requestCount=Array.isArray(pending)?0:(pending?.count||0);
   const bar=$('.chat-title');
   if(bar&&!$('#mwInviteButton')){
    bar.insertAdjacentHTML('beforeend','<button class="btn small ghost" id="mwInviteButton" data-mw="invites">Takliflar</button>');
   }
-  const badge=$('#mwInviteButton');if(badge){badge.hidden=!invites.count;badge.textContent='Takliflar'+(invites.count?' ('+invites.count+')':'');}
+  const total=(invites.count||0)+requestCount;
+  const badge=$('#mwInviteButton');if(badge){badge.hidden=!total;badge.textContent='Taklif va so‘rovlar'+(total?' ('+total+')':'');}
   if(S.chatId?.startsWith('g:'))await openGroup(S.chatId.slice(2));
  }
  function renderGroups(){
@@ -266,8 +276,10 @@ window.MWChat=(()=>{
  async function info(id){
   const group=check(await DB.from('mw_groups').select('*').eq('id',id).single());
   const members=check(await DB.from('mw_group_members').select('user_id').eq('group_id',id));
-  const map=await users(members.map(x=>x.user_id));
   const own=group.owner_id===S.u.id;
+  const pending=own?check(await DB.from('mw_group_join_requests')
+    .select('id,requester_id').eq('group_id',id).eq('status','pending')):[];
+  const map=await users([...members.map(x=>x.user_id),...pending.map(x=>x.requester_id)]);
   const membersHtml=members.map(m=>`<div class="mw-member-option mw11-member-manage">
       <button type="button" class="mw11-member-person" data-act="user" data-id="${escape(m.user_id)}">
         ${avatar(map[m.user_id])}
@@ -283,6 +295,12 @@ window.MWChat=(()=>{
     </div>
     <h3>A’zolar · ${members.length}</h3>
     <div class="mw-member-list">${membersHtml}</div>
+    ${own&&pending.length?'<h3>Qo‘shilish so‘rovlari ('+pending.length+')</h3>'+
+      '<div class="mw-member-list">'+pending.map(req=>'<div class="mw-invite-card">'+
+      '<div class="mw-invite-person">'+avatar(map[req.requester_id])+
+      '<strong>'+escape(map[req.requester_id]?.display_name||map[req.requester_id]?.username||'Foydalanuvchi')+'</strong></div>'+
+      '<div class="buttons"><button class="btn" data-mw="review-join" data-id="'+escape(req.id)+'" data-status="accepted">Qabul qilish</button>'+
+      '<button class="btn ghost" data-mw="review-join" data-id="'+escape(req.id)+'" data-status="declined">Rad etish</button></div></div>').join('')+'</div>':''}
     <div class="buttons">${own?
       '<button class="btn" data-mw="edit-group" data-id="'+escape(id)+'">Tahrirlash / a’zo qo‘shish</button>'+
       '<button class="btn danger" data-mw="delete-group" data-id="'+escape(id)+'">Guruhni o‘chirish</button>':
@@ -290,25 +308,33 @@ window.MWChat=(()=>{
     </div>`);
  }
 
+
  async function invitations(){
-  const invites=check(await DB.from('mw_group_invitations')
-    .select('id,group_id,sender_id,created_at').eq('recipient_id',S.u.id).eq('status','pending'));
-  const groupIds=[...new Set(invites.map(i=>i.group_id))];
-  const groups=groupIds.length?check(await DB.from('mw_groups')
-    .select('id,name,bio,avatar_url,username').in('id',groupIds)):[];
-  const names=new Map(groups.map(g=>[g.id,g]));
-  const people=invites.length?await users(invites.map(x=>x.sender_id)):{};
-  dialog('Guruh takliflari',invites.map(i=>{
-    const g=names.get(i.group_id),sender=people[i.sender_id];
-    return '<div class="mw-invite-card">'+
-      '<div class="mw-invite-person">'+
-      (g?.avatar_url?'<img class="mw-invite-avatar" src="'+escape(g.avatar_url)+'" alt="">':icon('users',32))+
-      '<div><strong>'+escape(g?.name||'Guruh')+'</strong><small>@'+escape(g?.username||'maxfiy')+'</small></div></div>'+
-      '<p>'+escape(g?.bio||'')+'</p>'+
-      '<small>'+escape(sender?.display_name||sender?.username||'Foydalanuvchi')+' sizni guruhga taklif qildi</small>'+
+  const uid=S.u.id;
+  const [invites,owned]=await Promise.all([
+    DB.from('mw_group_invitations').select('id,group_id,sender_id')
+       .eq('recipient_id',uid).eq('status','pending'),
+    DB.from('mw_groups').select('id,name').eq('owner_id',uid)
+  ]);
+  check(invites);check(owned);
+  const ids=owned.data.map(g=>g.id);
+  const requests=ids.length?check(await DB.from('mw_group_join_requests')
+     .select('id,group_id,requester_id').in('group_id',ids).eq('status','pending')):[];
+  const groupsToLookup=[...new Set(invites.data.map(i=>i.group_id))];
+  const invitedGroups=groupsToLookup.length?check(await DB.from('mw_groups')
+    .select('id,name').in('id',groupsToLookup)):[];
+  const names=new Map([...owned.data,...invitedGroups].map(g=>[g.id,g.name]));
+  const people=await users([...invites.data.map(i=>i.sender_id),...requests.map(r=>r.requester_id)]);
+  dialog('Taklif va so‘rovlar',
+    invites.data.map(i=>'<div class="mw-invite-card"><strong>'+escape(names.get(i.group_id)||'Guruh')+'</strong>'+
+      '<p>'+escape(people[i.sender_id]?.display_name||people[i.sender_id]?.username||'Foydalanuvchi')+' sizni taklif qildi</p>'+
       '<div class="buttons"><button class="btn" data-mw="answer" data-id="'+escape(i.id)+'" data-status="accepted">Qabul qilish</button>'+
-      '<button class="btn ghost" data-mw="answer" data-id="'+escape(i.id)+'" data-status="declined">Rad etish</button></div></div>';
-  }).join('')||'<p class="muted">Hozircha taklif yo‘q.</p>');
+      '<button class="btn ghost" data-mw="answer" data-id="'+escape(i.id)+'" data-status="declined">Rad etish</button></div></div>').join('')+
+    requests.map(r=>'<div class="mw-invite-card"><strong>'+escape(names.get(r.group_id)||'Guruh')+'</strong>'+
+      '<p>'+escape(people[r.requester_id]?.display_name||people[r.requester_id]?.username||'Foydalanuvchi')+' guruhga qo‘shilmoqchi</p>'+
+      '<div class="buttons"><button class="btn" data-mw="review-join" data-id="'+escape(r.id)+'" data-status="accepted">Qabul qilish</button>'+
+      '<button class="btn ghost" data-mw="review-join" data-id="'+escape(r.id)+'" data-status="declined">Rad etish</button></div></div>').join('')+
+    (!invites.data.length&&!requests.length?'<p class="muted">Hozircha taklif yoki so‘rov yo‘q.</p>':''));
  }
 
  async function worldInfo(){
