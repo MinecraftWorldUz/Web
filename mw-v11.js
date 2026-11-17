@@ -392,11 +392,13 @@ window.MWV11=(()=>{
     document.body.classList.remove('mw11-thread-mode');
     document.querySelector('#app')?.classList.remove('mw11-mobile-thread-open');
     clearReply();
-    if(S.page==='chat'){
-      document.querySelector('#mw11InboxSearch')?.focus?.({preventScroll:true});
-      document.activeElement?.blur?.();
-    }
+    if(S.page==='chat')window.scrollTo(0,0);
+  }
+  function consumeLongPress(){
+    if(!V.longPressTriggered)return false;
+    V.longPressTriggered=false;
+    return true;
   }
 
-  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread};
+  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress};
 })();
