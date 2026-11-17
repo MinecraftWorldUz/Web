@@ -4910,7 +4910,7 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js?v=11').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=13').catch(console.warn);
   });
 }
 
@@ -4952,8 +4952,8 @@ if('serviceWorker'in navigator){
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=2"></script>
+<script src="./mw-live-chat.js?v=3"></script>
 <script src="./mw-social.js?v=2"></script>
-<script src="./mw-v11.js?v=1"></script>
+<script src="./mw-v11.js?v=3"></script>
 </body>
 </html>
