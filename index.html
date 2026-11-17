@@ -1533,6 +1533,18 @@ body:before,.hero:after{display:none!important}
 .mw11-head-name strong{display:block;min-width:0;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;font-size:16px}
 .mw11-head-name small{font-size:11px;color:#c6af91;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;display:block;font-weight:400}
 
+
+/* Final mobile layout guards and clean headers */
+@media(max-width:760px){
+  #app.mw11-chat-page .chat-peer[hidden],#app.mw11-chat-page #mw11NoResults[hidden]{display:none!important}
+  #app.mw11-chat-page.mw11-mobile-thread-open .chat-toolbar>button[data-act="worldMute"],
+  #app.mw11-chat-page.mw11-mobile-thread-open .chat-toolbar>button[data-mw="world-info"]:not(.mw11-head-name){display:none!important}
+  #app.mw11-chat-page.mw11-mobile-thread-open .chat-toolbar .mw11-head-name{flex:1 1 auto;min-width:0;max-width:100%;overflow:hidden}
+  #app.mw11-chat-page.mw11-mobile-thread-open .chat-toolbar .mw11-head-name strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #app.mw11-chat-page .chat-peer .verified-mark{vertical-align:middle}
+  #app.mw11-chat-page .mw11-no-results[hidden]{display:none!important}
+}
+
 </style>
 </head>
 <body>
