@@ -2017,6 +2017,9 @@ body:before,.hero:after{display:none!important}
 #conversation .mw11-preview-item img{width:96px;height:86px;object-fit:cover;border-radius:9px;border:1px solid #be995f70}
 #conversation .mw11-preview-item small{font-size:10px;line-height:1.25}
 #conversation .mw11-attachment-preview>button{background:#503527;color:#f8deb6;border:1px solid #a67c48;border-radius:8px;min-width:32px;height:32px;display:grid;place-items:center}
+.mw-verified-chat{display:inline-grid;place-items:center;vertical-align:middle;margin-left:5px;
+ background:#1a9bff;color:white;font-size:11px;font-weight:900;border-radius:50%;
+ width:17px;height:17px;line-height:1;box-shadow:0 0 0 2px #8ed3ff35}
 </style>
 </head>
 <body>
@@ -4959,6 +4962,10 @@ async function admin(){
         <summary>${ico('badge',20)} Ko‘k belgi so‘rovlari ${ico('arrow',17)}</summary>
         <div class="admin-lazy">Ochilganda yuklanadi.</div>
       </details>
+      <details class="admin-section" data-admin-section="groupbadges">
+        <summary>${ico('badge',20)} Guruh va chat ko‘k belgi arizalari ${ico('arrow',17)}</summary>
+        <div class="admin-lazy">Ochilganda yuklanadi.</div>
+      </details>
       <details class="admin-section" data-admin-section="reports">
         <summary>${ico('flag',20)} Shikoyatlar ${ico('arrow',17)}</summary>
         <div class="admin-lazy">Ochilganda yuklanadi.</div>
@@ -5014,6 +5021,20 @@ async function loadAdminSection(section,target){
       <div class="buttons">${adminBtn('approve_verification',t('approve'),v.id)}
        ${adminBtn('reject_verification',t('reject'),v.id,'danger')}</div>
     </div>`).join('')||blank();
+  }else if(section==='groupbadges'){
+    const r=await DB.from('mw_group_badge_requests').select('id,group_id,requester_id,reason')
+      .eq('status','pending').order('created_at',{ascending:true}).limit(60);
+    check(r);
+    const owners=await users(r.data.map(req=>req.requester_id));
+    const groups=r.data.length?check(await DB.from('mw_groups').select('id,name,username')
+      .in('id',r.data.map(req=>req.group_id))):[];
+    const gm=new Map(groups.map(g=>[g.id,g]));
+    html=r.data.map(req=>`<div class="item">
+      <strong>${e(gm.get(req.group_id)?.name||'Guruh')}</strong>
+      <small class="muted">@${e(gm.get(req.group_id)?.username||'maxfiy')} · Egasi: @${e(owners[req.requester_id]?.username||'...')}</small>
+      <p class="wrap">${e(req.reason)}</p>
+      <div class="buttons">${adminBtn('approve_group_badge','Tasdiqlash',req.id)}
+      ${adminBtn('reject_group_badge','Rad etish',req.id,'danger')}</div></div>`).join('')||blank();
   }else if(section==='reports'){
     const r=await DB.from('reports')
       .select('id,target_kind,target_id,reason,status').eq('status','pending').limit(40);
@@ -5112,6 +5133,19 @@ function adminBtn(action,text,id,extra=''){
 }
 async function adminAction(cmd,id){
   if(!S.me?.is_admin||S.me.username!=='admin')return;
+  if(cmd==='approve_group_badge'||cmd==='reject_group_badge'){
+    const row=check(await DB.from('mw_group_badge_requests').select('id,group_id,status')
+      .eq('id',id).eq('status','pending').single());
+    if(cmd==='approve_group_badge'){
+      check(await DB.from('mw_group_badges').upsert({group_id:row.group_id},{onConflict:'group_id'}));
+    }
+    check(await DB.from('mw_group_badge_requests').update({
+      status:cmd==='approve_group_badge'?'approved':'rejected',
+      reviewed_at:new Date().toISOString()
+    }).eq('id',id).eq('status','pending'));
+    toast(cmd==='approve_group_badge'?'Guruh tasdiqlandi':'Ariza rad etildi');
+    await admin();return;
+  }
   let days=null,note=null;
   if(cmd==='ban'||cmd==='approve_verification'){
     let raw=prompt(
