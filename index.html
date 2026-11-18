@@ -2078,6 +2078,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 const ICONS={
 'paperclip':'<path d="m20 11.5-7.9 7.9a5 5 0 0 1-7.1-7.1l8.2-8.2a3.3 3.3 0 0 1 4.7 4.7l-8.4 8.4a1.6 1.6 0 0 1-2.3-2.3l7.9-7.9"/>',
 'image':'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m3 16 5-5 4 4 3-3 6 6"/>',
+'back':'<path d="M15 18 9 12l6-6"/>',
 'more-vertical':'<circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"/>',
 world:'<path d="m12 2 9 5-9 5-9-5 9-5Z M3 7v10l9 5 9-5V7M12 12v10"/><path d="m7 8 5 3 5-3M7 13l5 3 5-3"/>',
 home:'<path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8"/>',
@@ -4442,7 +4443,7 @@ function chatWindowShell(id){
   const p=!isWorld?(S.chatUsers?.[id]||knownProfiles.get(id)?.p):null;
   return `<header class="chat-toolbar">
     ${isWorld?'<span class="mw11-chat-avatar">'+ico('globe',25)+'</span>':'<span class="mw11-chat-avatar">'+avatar(p)+'</span>'}
-    ${isWorld?'<button class="linkbtn mw11-head-name" data-mw="world-info" style="flex:1;text-align:left"><strong>Umumiy chat</strong><small>Minecraft World</small></button>':
+    ${isWorld?'<button class="linkbtn mw11-head-name" data-mw="world-info" style="flex:1;text-align:left"><strong>Umumiy chat</strong><small>@umumiychat</small></button>':
       `<button class="linkbtn mw11-head-name" data-act="user" data-id="${e(id)}">
         <strong>${p?e(p.display_name||p.username):'Suhbat'}</strong><small>${p?'@'+e(p.username):'Yuklanmoqda...'}</small>
       </button>`}
