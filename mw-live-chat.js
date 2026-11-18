@@ -547,6 +547,7 @@ window.MWChat=(()=>{
     }
     f.reset();window.MWV11?.clearAttachment?.(f);window.MWV11?.clearReply?.();
     C.last[f.dataset.id]=Date.now();C.preview[f.dataset.id]='Siz: '+lastBody.slice(0,65);await openGroup(f.dataset.id);
+    window.mwMaybeExpireImages?.().catch(console.warn);
    }
   }catch(err){console.error(err);toast(err.code==='23505'?'Username band':err.message)}
   finally{if(btn)btn.disabled=false}
