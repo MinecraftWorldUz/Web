@@ -5536,6 +5536,7 @@ window.addEventListener('submit',async ev=>{
       S.mwDirectTimes=S.mwDirectTimes||{};S.mwDirectTimes[f.dataset.id]=Date.now();
       S.mwLastMessage=S.mwLastMessage||{};S.mwLastMessage[f.dataset.id]='Siz: '+sent[sent.length-1].body.slice(0,65);
       markChatSeen(f.dataset.id);chatRows();
+      mwMaybeExpireImages().catch(console.warn);
       if(!S.chatPeers?.includes(f.dataset.id)){
         S.chatPeers=[f.dataset.id,...(S.chatPeers||[])];
         const mp=await users([f.dataset.id]);
@@ -5570,6 +5571,7 @@ window.addEventListener('submit',async ev=>{
       }
       S.mwWorldTime=Date.now();S.mwWorldPreview='Siz: '+sent[sent.length-1].body.slice(0,65);chatRows();
       worldUpdate({last_seen_at:new Date().toISOString()}).catch(console.warn);
+      mwMaybeExpireImages().catch(console.warn);
     }
     else if(f.id==='badgeForm'){
       if(!requireUser())return;
@@ -5664,6 +5666,17 @@ if('serviceWorker'in navigator){
   });
 }
 
+// Cleanup runs on Supabase after fresh chat activity. Browser never deletes storage objects.
+async function mwMaybeExpireImages(){
+  if(!S.u)return;
+  const key='mw_last_media_cleanup';
+  let last=0;
+  try{last=Number(localStorage.getItem(key)||0)}catch{}
+  if(Date.now()-last<45000)return;
+  try{localStorage.setItem(key,String(Date.now()))}catch{}
+  const {error}=await DB.functions.invoke('mw-expire-chat-images',{method:'POST',body:{}});
+  if(error)console.warn('Expired chat images:',error.message);
+}
 // Presence: only mutually following accounts can read each other's last seen time (RLS).
 async function mwPingPresence(){
   if(!S.u||document.visibilityState!=='visible')return;
