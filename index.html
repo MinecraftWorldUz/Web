@@ -1987,6 +1987,20 @@ body:before,.hero:after{display:none!important}
  .mw-mod-lang-pill{flex:1;min-width:0}
 }
 
+/* Stable account button layout across login and logged-in states. */
+.top .head-actions{display:flex;align-items:center;gap:8px;flex:none;min-width:0}
+.top .head-actions>.iconbtn{display:inline-flex;align-items:center;justify-content:center;width:43px;height:43px;min-width:43px;padding:0;flex:none}
+.top #accountTop{display:inline-flex;align-items:center;justify-content:center;gap:7px;
+ width:auto;min-width:96px;max-width:200px;padding:0 13px;font-size:14px;
+ font-weight:750;line-height:1.2;white-space:nowrap;overflow:hidden;
+ border:1px solid #c9a46980;border-radius:12px;
+ background:linear-gradient(150deg,#64482c,#473322);color:#fff0cf}
+.top #accountTop>span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top #accountTop>.svg-icon{flex:none}
+@media(max-width:650px){
+ .top #accountTop{width:43px;min-width:43px;max-width:43px;padding:0;gap:0;font-size:0!important}
+ .top #accountTop>span,.top #accountTop>.svg-icon:last-child{display:none!important}
+}
 </style>
 </head>
 <body>
@@ -3623,7 +3637,7 @@ function mwOpenModPicker(kind){
   modal.className='mw-mod-picker-overlay';
   modal.innerHTML='<div class="mw-mod-picker-dialog" role="dialog" aria-modal="true" aria-label="'+e(title)+'">'+
     '<div class="mw-mod-picker-header"><strong>'+e(title)+'</strong>'+
-    '<button type="button" class="mw-mod-picker-x" data-mod-close aria-label="Yopish">${ico('x',20)}</button></div>'+
+    '<button type="button" class="mw-mod-picker-x" data-mod-close aria-label="Yopish">'+ico('x',20)+'</button></div>'+
     '<div class="mw-mod-picker-search-wrap"><input class="field mw-mod-picker-search" type="search" placeholder="Qidirish..." aria-label="Qidirish" autocomplete="off"></div>'+
     '<div class="mw-mod-picker-options" role="listbox">'+
     options.map(x=>'<button type="button" class="mw-mod-picker-option'+
