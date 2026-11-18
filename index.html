@@ -4575,6 +4575,7 @@ async function conversation(id){
   }
   markChatSeen(id);
   chatRows();
+  mwFriendPresence(id,id).catch(console.warn);
   window.MWV11?.markRead?.('u:'+id).catch(console.warn);
 }
 async function worldConversation(){
@@ -5590,6 +5591,28 @@ if('serviceWorker'in navigator){
   });
 }
 
+// Presence: only mutually following accounts can read each other's last seen time (RLS).
+async function mwPingPresence(){
+  if(!S.u||document.visibilityState!=='visible')return;
+  const {error}=await DB.from('mw_presence').upsert({user_id:S.u.id,last_seen_at:new Date().toISOString()});
+  if(error)console.warn('Presence:',error.message);
+}
+async function mwFriendPresence(peer,thread){
+  if(!S.u||!peer||peer===S.u.id)return;
+  const {data,error}=await DB.from('mw_presence').select('last_seen_at').eq('user_id',peer).maybeSingle();
+  if(error){console.warn('Presence fetch:',error.message);return}
+  const title=document.querySelector('#conversation .mw11-head-name');
+  if(!title||S.chatId!==thread)return;
+  const small=title.querySelector('small');
+  if(!small||!data?.last_seen_at)return;
+  const at=new Date(data.last_seen_at),minutes=Math.floor((Date.now()-at.getTime())/60000);
+  if(minutes<0||!Number.isFinite(minutes))return;
+  const formatted=at.toLocaleString('uz-UZ',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  small.textContent=minutes<2?'🟢 Onlayn':'Oxirgi marta: '+formatted;
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')mwPingPresence().catch(console.warn)});
+setInterval(()=>{mwPingPresence().catch(console.warn);if(S.page==='chat'&&S.chatId&&S.chatId!=='world'&&!S.chatId.startsWith('g:'))mwFriendPresence(S.chatId,S.chatId).catch(console.warn)},60000);
+
 // SAYTNI ISHGA TUSHIRISH
 (async()=>{
   hydrateIcons();
@@ -5601,6 +5624,7 @@ if('serviceWorker'in navigator){
   uiObserver.observe($('#app'),{childList:true,subtree:true});
   uiObserver.observe($('#overlay'),{childList:true,subtree:true});
   await Promise.allSettled([go('home'),refreshUser()]);
+  mwPingPresence().catch(console.warn);
   scheduleFastPrefetch();
   const deepId=new URLSearchParams(location.search).get('mod');
   if(deepId&&/^[0-9a-f-]{36}$/i.test(deepId)){
