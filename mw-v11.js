@@ -1,7 +1,7 @@
 /* Minecraft World v1.1 — authenticated messenger UI extensions.
    Message permissions are enforced by Supabase RLS, not by this script. */
 window.MWV11=(()=>{
-  const V={rows:new Map(),prefs:new Map(),reply:null,filter:'all',search:'',activeMessage:null,loadedFor:null,longPressTimer:null,longPressTriggered:false,mediaCache:new Map(),mediaUser:null};
+  const V={rows:new Map(),prefs:new Map(),reply:null,filter:'all',search:'',activeMessage:null,loadedFor:null,longPressTimer:null,longPressTriggered:false,mediaCache:new Map(),mediaUser:null,readTimes:new Map()};
   const esc=e;
   const messages={
     uz:{all:'Barchasi',unread:'O‘qilmagan',archive:'Arxiv',search:'Chat yoki @username qidirish',reply:'Javob berish',edit:'Tahrirlash',remove:'O‘chirish',copy:'Nusxalash',forward:'Uzatish',reaction:'Reaksiya',save:'Saqlash',pinned:'Mahkamlangan',pin:'Mahkamlash',unpin:'Mahkamlashni olib tashlash',mute:'Ovozsiz',unmute:'Ovozni yoqish',arch:'Arxivlash',unarch:'Arxivdan chiqarish',deleteAsk:'Xabarni o‘chirasizmi?',confirm:'Saqlash',replying:'Javob',searchMsg:'Xabar ichidan qidirish',empty:'Hozircha hech narsa topilmadi',newMsg:'Yangi xabar',noReply:'Xabar',self:'Siz'},
@@ -23,7 +23,7 @@ window.MWV11=(()=>{
     return '<div class="bubble '+(mine?'mine':'')+' mw11-bubble" tabindex="0" role="button" aria-label="Xabar amallari" data-v11-msg="'+esc(id)+'" data-v11-scope="'+scope+'">'+
       quote+'<div class="bubble-body">'+esc(m.body||'')+'</div>'+
       (m.attachment_path?'<div class="mw11-attachment" data-mw11-media="'+esc(m.attachment_path)+'"><span>📎 '+esc(m.attachment_name||'Fayl')+'</span></div>':'')+
-      '<div class="mw11-footer"><small>'+esc(chatTime(m.created_at))+(m.edited_at?' · ✎':'')+(mine?' ✓':'')+'</small></div>'+
+      '<div class="mw11-footer"><small>'+esc(chatTime(m.created_at))+(m.edited_at?' · ✎':'')+(mine?'<span class="mw11-delivery" data-created="'+esc(m.created_at)+'">'+(scope==='dm'&&V.readTimes.get(S.chatId)>=new Date(m.created_at).getTime()?' ✓✓':' ✓')+'</span>':'')+'</small></div>'+
       '<div class="mw11-reaction-list" data-v11-reactions="'+esc(id)+'"></div></div>';
   }
 
@@ -71,11 +71,27 @@ window.MWV11=(()=>{
     if(holder&&rows?.length)holder.dataset.mw11LastDay=chatDateKey(rows[rows.length-1].created_at);
   }
 
+  async function refreshDmReceipts(){
+    const peer=S.chatId;
+    if(!peer||peer==='world'||peer.startsWith('g:')||!authUser())return;
+    const {data,error}=await DB.from('mw_dm_reads').select('last_read_at')
+      .eq('reader_id',peer).eq('other_user_id',authUser()).maybeSingle();
+    if(error){console.warn('Read receipt:',error.message);return}
+    if(S.chatId!==peer)return;
+    const readAt=data?new Date(data.last_read_at).getTime():0;
+    V.readTimes.set(peer,readAt);
+    document.querySelectorAll('#msgs .bubble.mine .mw11-delivery').forEach(mark=>{
+      const sent=new Date(mark.dataset.created).getTime();
+      mark.textContent=readAt>=sent?' ✓✓':' ✓';
+      mark.title=readAt>=sent?'O‘qildi':'Yuborildi';
+    });
+  }
   function afterRender(rows,scope){
     if(!rows?.length)return;
     syncLastDate(rows);
     for(const m of rows)if(m.id)V.rows.set(rxKey(scope,m.id),m);
     loadMedia(rows).catch(err=>console.warn('Chat media:',err));
+    if(scope==='dm')refreshDmReceipts().catch(console.warn);
     const ids=rows.map(m=>m.id).filter(Boolean);
     if(!ids.length)return;
     DB.from('mw_message_reactions').select('message_id,user_id,emoji').eq('scope',scope).in('message_id',ids).then(({data,error})=>{
@@ -261,6 +277,11 @@ window.MWV11=(()=>{
     V.prefs.set(thread,value);
     const r=await DB.from('mw_chat_preferences').upsert(value,{onConflict:'user_id,thread_key'});
     if(r.error)console.warn('Mark read:',r.error.message);
+    if(thread.startsWith('u:')){
+      const other_user_id=thread.slice(2);
+      DB.from('mw_dm_reads').upsert({reader_id:authUser(),other_user_id,last_read_at:new Date().toISOString()},
+        {onConflict:'reader_id,other_user_id'}).then(({error})=>{if(error)console.warn('DM read:',error.message)});
+    }
     decorateInbox();
   }
   function decorateInbox(){
@@ -614,5 +635,5 @@ window.MWV11=(()=>{
     return true;
   }
 
-  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate,uploadAttachment,selectedAttachments,loadMedia,clearAttachment};
+  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate,uploadAttachment,selectedAttachments,loadMedia,clearAttachment,refreshDmReceipts};
 })();
