@@ -2474,7 +2474,7 @@ function avatar(p,large=false){
   }</span>`
 }
 function cover(path){
-  if(path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/site-mods/mw-explorer-recipes-cover.svg')
+  if(path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/mw-explorer-recipes-cover.svg')
     return new URL('./site-mods/mw-explorer-recipes-cover.svg',window.location.href).href;
   return path?DB.storage.from('covers').getPublicUrl(path).data.publicUrl:''
 }
@@ -3605,7 +3605,7 @@ async function getMod(id){
 function renderMod(m){
   const isApproved=m.status==='approved';
   const actions=isApproved?`
-    ${btn('download',(m.file_path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/site-mods/mw-explorer-recipes.mcaddon'?
+    ${btn('download',(m.file_path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/mw-explorer-recipes.mcaddon'?
       'Yuklab olish':telegramApp()?'Telegramga yuborish':t('downloads'))+' · '+count(m.downloads_count),m.id)}
     <button class="btn small ghost mod-toggle" data-act="like" data-id="${e(m.id)}"
       data-mod-toggle="like" aria-pressed="false">
@@ -3699,7 +3699,7 @@ async function openMod(id){
     return;
   }
   if(generation!==modalGeneration||activeModId!==id||!$('#overlay').classList.contains('open'))return;
-  if(!cached||!cached.description||m.file_path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/site-mods/mw-explorer-recipes.mcaddon')renderMod(m);
+  if(!cached||!cached.description||m.file_path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/mw-explorer-recipes.mcaddon')renderMod(m);
   const author=$('#modAuthor');
   if(author&&!author.hasChildNodes()){
     users([m.author_id]).then(mp=>{
@@ -3880,7 +3880,7 @@ async function download(id){
     toast('Mod tekshiruvda. Tasdiqlangach yuklab olish mumkin.');
     return;
   }
-  if(mod.file_path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/site-mods/mw-explorer-recipes.mcaddon'){
+  if(mod.file_path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/mw-explorer-recipes.mcaddon'){
     // The first original, site-owned add-on is hosted as a genuine binary
     // on the same-origin GitHub Pages site. All other mods use Supabase.
     const registered=check(await DB.rpc('register_download',{p_mod:id}));
@@ -5308,7 +5308,7 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js?v=15').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=16').catch(console.warn);
   });
 }
 
