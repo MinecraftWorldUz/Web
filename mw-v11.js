@@ -138,7 +138,7 @@ window.MWV11=(()=>{
   };
   async function compressChatImage(file){
     if(file.size<=512000)return file;
-    if(!confirm('Rasm 500 KB dan katta. Sifatini biroz pasaytirib 500 KB gacha kichraytirishga rozimisiz?'))throw Error('Rasm yuborish bekor qilindi');
+    if(!confirm(file.type==='image/gif'?'GIF 500 KB dan katta. Kichraytirishda animatsiya saqlanmaydi. Davom etishga rozimisiz?':'Rasm 500 KB dan katta. Sifatini biroz pasaytirib 500 KB gacha kichraytirishga rozimisiz?'))throw Error('Rasm yuborish bekor qilindi');
     const bmp=await createImageBitmap(file);
     try{
       let scale=Math.min(1,1600/Math.max(bmp.width,bmp.height));
@@ -164,7 +164,7 @@ window.MWV11=(()=>{
     const type=mimeTypes[file.type];
     if(!type)throw Error('Bu fayl turi qo‘llab-quvvatlanmaydi');
     if(type[1]==='image'){
-      if(file.type==='image/gif'&&file.size>512000)throw Error('500 KB dan katta GIF avtomatik kichraytirilmaydi. Boshqa format tanlang.');
+
       file=await compressChatImage(file);
       if(file.size>512000)throw Error('Rasm 500 KB dan oshmasin');
     }else if(file.size>10485760)throw Error('Fayl 10 MB dan oshmasin');
