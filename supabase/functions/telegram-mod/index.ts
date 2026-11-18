@@ -6,6 +6,9 @@ import { createClient } from "npm:@supabase/supabase-js@2.81.0";
 // NEVER put Telegram token or Supabase secret/service keys in GitHub Pages.
 const ORIGIN="https://minecraftworlduz.github.io";
 const MAX_FILE_BYTES=49*1024*1024;
+const SITE_OWNER="2ea37f4b-aa38-4328-a07f-ea1b31879996";
+const SITE_MOD_RE=/^site-mods\/(?:mw-explorer-recipes\.mcaddon|mixed-v1\/[a-z0-9-]+\.(?:mcaddon|mcpack|zip))$/;
+const RAW_REPO="https://raw.githubusercontent.com/MinecraftWorldUz/Web/main/";
 const MAX_INIT_AGE_SECONDS=12*60*60;
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -99,7 +102,7 @@ Deno.serve(async req=>{
     const tgUserId=await validatedTelegramUser(initData,botToken);
     if(!tgUserId)return json({ok:false,error:"Telegram sessiyasi eskirgan. Botdan saytni qayta oching."},401);
     const {data:mod,error:modErr}=await db.from("mods")
-      .select("id,title,file_path,status").eq("id",modId).eq("status","approved").single();
+      .select("id,title,author_id,file_path,status").eq("id",modId).eq("status","approved").single();
     if(modErr||!mod?.file_path)return json({ok:false,error:"Mod topilmadi yoki hali tasdiqlanmagan."},404);
     const {data:canSend,error:quotaErr}=await db.rpc("claim_telegram_send",{p_telegram_user_id:tgUserId});
     if(quotaErr){
@@ -107,8 +110,28 @@ Deno.serve(async req=>{
       return json({ok:false,error:"Serverda vaqtinchalik xatolik."},503);
     }
     if(!canSend)return json({ok:false,error:"Bir daqiqada 3 tagacha fayl yuborish mumkin."},429);
-    const {data:blob,error:fileErr}=await db.storage.from("mod-files").download(mod.file_path);
-    if(fileErr||!blob)return json({ok:false,error:"Mod faylini o‘qib bo‘lmadi."},404);
+    let blob:Blob|null=null;
+    const path=String(mod.file_path);
+    if(mod.author_id===SITE_OWNER && path.startsWith(SITE_OWNER+"/") &&
+       SITE_MOD_RE.test(path.slice(SITE_OWNER.length+1))){
+      const rel=path.slice(SITE_OWNER.length+1);
+      const github=await fetch(RAW_REPO+rel,{method:"GET",
+        headers:{"Accept":"application/octet-stream"},signal:AbortSignal.timeout(26000)});
+      if(!github.ok)return json({ok:false,error:"Mod fayli GitHub’da topilmadi."},404);
+      if(Number(github.headers.get("content-length")||"0")>MAX_FILE_BYTES)
+        return json({ok:false,error:"Mod Telegram cheklovidan katta."},413);
+      if((github.headers.get("content-type")||"").includes("text/html"))
+        return json({ok:false,error:"Mod arxivi topilmadi."},404);
+      blob=await github.blob();
+      const magic=new Uint8Array(await blob.slice(0,4).arrayBuffer());
+      if(magic[0]!==80||magic[1]!==75||magic[2]!==3||magic[3]!==4)
+        return json({ok:false,error:"Mod arxivi noto‘g‘ri."},422);
+    }else{
+      const res=await db.storage.from("mod-files").download(path);
+      if(res.error||!res.data)
+        return json({ok:false,error:"Mod faylini o‘qib bo‘lmadi."},404);
+      blob=res.data;
+    }
     if(blob.size>MAX_FILE_BYTES)return json({ok:false,error:"Fayl Telegram Bot API uchun juda katta (50 MB dan ortiq). Oddiy brauzerdan yuklab oling."},413);
     if(blob.size===0)return json({ok:false,error:"Mod fayli bo‘sh."},422);
     const form=new FormData();
