@@ -2057,6 +2057,17 @@ body:before,.hero:after{display:none!important}
 #app.mw11-chat-page #msgs[data-mw-theme="fireflies"]{background-size:260px 340px,290px 320px,auto!important;animation:mwThemeFloat 24s ease-in-out infinite alternate}
 @media(prefers-reduced-motion:reduce){#app.mw11-chat-page #msgs[data-mw-theme]{animation:none!important}}
 @media(max-width:480px){.mw-theme-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Decorative particles are non-interactive and never cover messages. */
+#app.mw11-chat-page #msgs .mw-theme-particles{position:sticky;top:0;height:0;width:100%;z-index:0;pointer-events:none;overflow:visible}
+#app.mw11-chat-page #msgs .mw-theme-particle{position:absolute;top:-45px;font-size:19px;opacity:0;
+ filter:drop-shadow(0 0 5px #f0c47d60);animation:mwSeasonalFall 18s linear infinite;will-change:transform,opacity}
+#app.mw11-chat-page #msgs[data-mw-theme="portal"] .mw-theme-particle{color:#dcabff;font-size:26px}
+#app.mw11-chat-page #msgs[data-mw-theme="snow"] .mw-theme-particle{color:#fff8e7}
+#app.mw11-chat-page #msgs[data-mw-theme="fireflies"] .mw-theme-particle{color:#d2ff83;text-shadow:0 0 12px #b1ff67}
+@keyframes mwSeasonalFall{0%{opacity:0;transform:translate3d(-15px,-20px,0) rotate(0deg)}
+ 10%{opacity:.75}80%{opacity:.8}100%{opacity:0;transform:translate3d(60px,600px,0) rotate(280deg)}}
+@media(prefers-reduced-motion:reduce){#app.mw11-chat-page #msgs .mw-theme-particle{animation:none!important;display:none}}
 </style>
 </head>
 <body>
@@ -5735,6 +5746,6 @@ setInterval(()=>{mwPingPresence().catch(console.warn);if(S.page==='chat'&&S.chat
 </script>
 <script src="./mw-live-chat.js?v=8"></script>
 <script src="./mw-social.js?v=2"></script>
-<script src="./mw-v11.js?v=8"></script>
+<script src="./mw-v11.js?v=9"></script>
 </body>
 </html>
