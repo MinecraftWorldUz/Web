@@ -106,6 +106,7 @@ window.MWV11=(()=>{
   function afterRender(rows,scope){
     if(!rows?.length)return;
     syncLastDate(rows);
+    applyTheme(scope==='world'?'world':scope==='group'?S.chatId:'u:'+S.chatId).catch(console.warn);
     for(const m of rows)if(m.id)V.rows.set(rxKey(scope,m.id),m);
     loadMedia(rows).catch(err=>console.warn('Chat media:',err));
     if(scope==='dm')refreshDmReceipts().catch(console.warn);
@@ -508,8 +509,31 @@ window.MWV11=(()=>{
       try{id=localStorage.getItem(themeStorage(thread))||id}catch{}
     }
     if(S.chatId!==thread&&!(S.chatId===thread.slice(2)))return;
+    if(premiumThemes.has(id)){
+      const access=await themeAccess(thread);
+      if(!access.premium)id='forest';
+    }
+    if(S.chatId!==thread&&!(S.chatId===thread.slice(2)))return;
     const holder=document.querySelector('#conversation #msgs');
-    if(holder&&themes.some(t=>t[0]===id))holder.dataset.mwTheme=id;
+    if(!holder||!themes.some(t=>t[0]===id))return;
+    holder.dataset.mwTheme=id;
+    holder.querySelector('.mw-theme-particles')?.remove();
+    const symbols={autumn:'🍂',embers:'✦',snow:'❄',portal:'✧',fireflies:'✳'};
+    if(symbols[id]){
+      const particles=document.createElement('div');
+      particles.className='mw-theme-particles';
+      particles.setAttribute('aria-hidden','true');
+      for(let i=0;i<12;i++){
+        const particle=document.createElement('span');
+        particle.className='mw-theme-particle';
+        particle.textContent=symbols[id];
+        particle.style.left=((i*19+7)%94)+'%';
+        particle.style.animationDelay=(-i*1.8)+'s';
+        particle.style.animationDuration=(13+i%4*3)+'s';
+        particles.append(particle);
+      }
+      holder.prepend(particles);
+    }
   }
   async function themePicker(thread){
     const access=await themeAccess(thread);
