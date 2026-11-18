@@ -5669,11 +5669,6 @@ if('serviceWorker'in navigator){
 // Cleanup runs on Supabase after fresh chat activity. Browser never deletes storage objects.
 async function mwMaybeExpireImages(){
   if(!S.u)return;
-  const key='mw_last_media_cleanup';
-  let last=0;
-  try{last=Number(localStorage.getItem(key)||0)}catch{}
-  if(Date.now()-last<45000)return;
-  try{localStorage.setItem(key,String(Date.now()))}catch{}
   const {error}=await DB.functions.invoke('mw-expire-chat-images',{method:'POST',body:{}});
   if(error)console.warn('Expired chat images:',error.message);
 }
