@@ -452,12 +452,79 @@ window.MWV11=(()=>{
     S.chatId=dest.startsWith('u:')?dest.slice(2):dest;
     await go('chat');
   }
+  const themes=[
+    ['forest','🌲','O‘rmon'],['stone','🪨','Tosh'],['grass','🌿','Maysa'],
+    ['oak','🪵','Eman'],['sunset','🌅','Quyosh botishi'],
+    ['night','🌙','Tun'],['desert','🏜️','Cho‘l'],
+    ['nether','🔥','Nether'],['ocean','🌊','Okean'],['sky','☁️','Osmon'],
+    ['autumn','🍂','Kuzgi yaproqlar'],['embers','✨','Uchqunlar'],
+    ['snow','❄️','Qor'],['portal','💜','Portal'],['fireflies','🌟','Yorug‘ hasharotlar']
+  ];
+  const premiumThemes=new Set(themes.slice(10).map(x=>x[0]));
+  const themeStorage=thread=>'mw_theme_'+(authUser()||'guest')+'_'+thread;
+  async function themeAccess(thread){
+    if(thread==='world')return {edit:!!(S.me?.is_admin&&S.me?.username==='admin'),premium:false};
+    if(thread.startsWith('g:')){
+      const id=thread.slice(2);
+      const [g,mark]=await Promise.all([
+        DB.from('mw_groups').select('owner_id').eq('id',id).maybeSingle(),
+        DB.from('mw_group_badges').select('group_id').eq('group_id',id).maybeSingle()
+      ]);
+      if(g.error)throw g.error;if(mark.error)throw mark.error;
+      return {edit:!!(S.me?.is_admin&&S.me?.username==='admin'||g.data?.owner_id===authUser()),premium:!!mark.data};
+    }
+    const valid=!!S.me?.verified&&(!S.me?.verified_until||new Date(S.me.verified_until)>new Date());
+    return {edit:true,premium:valid};
+  }
+  async function applyTheme(thread){
+    const target=document.querySelector('#conversation #msgs');
+    if(!target||!thread)return;
+    let id='forest';
+    if(thread==='world'){
+      const r=await DB.from('mw_world_theme').select('theme_id').eq('singleton',true).maybeSingle();
+      if(!r.error)id=r.data?.theme_id||id;
+    }else if(thread.startsWith('g:')){
+      const r=await DB.from('mw_group_themes').select('theme_id').eq('group_id',thread.slice(2)).maybeSingle();
+      if(!r.error)id=r.data?.theme_id||id;
+    }else{
+      try{id=localStorage.getItem(themeStorage(thread))||id}catch{}
+    }
+    if(S.chatId!==thread&&!(S.chatId===thread.slice(2)))return;
+    const holder=document.querySelector('#conversation #msgs');
+    if(holder&&themes.some(t=>t[0]===id))holder.dataset.mwTheme=id;
+  }
+  async function themePicker(thread){
+    const access=await themeAccess(thread);
+    const current=document.querySelector('#conversation #msgs')?.dataset.mwTheme||'forest';
+    dialog('Minecraft chat fonlari','<p class="muted">10 ta oddiy fon, yana 5 ta ko‘k belgili chat uchun maxsus fon.</p>'+
+      '<div class="mw-theme-grid">'+themes.map(([id,emoji,label])=>
+        '<button type="button" data-v11="theme-select" data-thread="'+esc(thread)+'" data-theme="'+id+'" '+
+        ((!access.edit||(premiumThemes.has(id)&&!access.premium))?'disabled ':'')+
+        'class="mw-theme-choice '+(id===current?'chosen':'')+'">'+
+        '<span class="mw-theme-swatch" data-theme="'+id+'">'+emoji+'</span>'+
+        '<strong>'+esc(label)+'</strong><small>'+(premiumThemes.has(id)?'🔵 Premium':'Oddiy')+'</small></button>').join('')+'</div>'+
+      (!access.edit?'<p class="muted">Bu chat fonini faqat chat egasi yoki admin o‘zgartiradi.</p>':''));
+  }
+  async function selectTheme(thread,id){
+    if(!themes.some(t=>t[0]===id))throw Error('Fon topilmadi');
+    const access=await themeAccess(thread);
+    if(!access.edit)throw Error('Bu chat fonini o‘zgartirishga ruxsat yo‘q');
+    if(premiumThemes.has(id)&&!access.premium)throw Error('Bu fon faqat ko‘k belgili chatlar uchun');
+    if(thread==='world'){
+      check(await DB.from('mw_world_theme').upsert({singleton:true,theme_id:id,updated_at:new Date().toISOString()},{onConflict:'singleton'}));
+    }else if(thread.startsWith('g:')){
+      check(await DB.from('mw_group_themes').upsert({group_id:thread.slice(2),theme_id:id,updated_at:new Date().toISOString()},{onConflict:'group_id'}));
+    }else localStorage.setItem(themeStorage(thread),id);
+    close();await applyTheme(thread);toast('Chat foni o‘zgartirildi');
+  }
+
   function chatOptions(thread){
     const pref=getPref(thread);
     dialog('Chat', '<div class="mw11-actions">'+
       '<button data-v11="pref" data-thread="'+esc(thread)+'" data-field="pinned">'+ico('bookmark',18)+' '+T(pref.pinned?'unpin':'pin')+'</button>'+
       '<button data-v11="pref" data-thread="'+esc(thread)+'" data-field="muted">'+ico('bell',18)+' '+T(pref.muted?'unmute':'mute')+'</button>'+
-      '<button data-v11="pref" data-thread="'+esc(thread)+'" data-field="archived">'+ico('folder',18)+' '+T(pref.archived?'unarch':'arch')+'</button></div>');
+      '<button data-v11="pref" data-thread="'+esc(thread)+'" data-field="archived">'+ico('folder',18)+' '+T(pref.archived?'unarch':'arch')+'</button>'+
+      '<button data-v11="theme-open" data-thread="'+esc(thread)+'">'+ico('image',18)+' Chat fonini tanlash</button></div>');
   }
   function handle(e){
     if(V.longPressTriggered){V.longPressTriggered=false;e.preventDefault();e.stopImmediatePropagation();return}
@@ -507,6 +574,8 @@ window.MWV11=(()=>{
       if(act==='saved-delete')return deleteSaved(id);
       if(act==='menu')return menu(scope,id);
       if(act==='options')return chatOptions(a.dataset.thread);
+      if(act==='theme-open')return themePicker(a.dataset.thread);
+      if(act==='theme-select')return selectTheme(a.dataset.thread,a.dataset.theme);
       if(act==='filter'){V.filter=a.dataset.filter;document.querySelectorAll('.mw11-tabs button').forEach(x=>x.classList.toggle('active',x.dataset.filter===V.filter));return decorateInbox()}
       if(act==='clear-reply'){clearReply();return}
       if(act==='pref')return changePref(a.dataset.thread,a.dataset.field);
@@ -635,5 +704,5 @@ window.MWV11=(()=>{
     return true;
   }
 
-  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate,uploadAttachment,selectedAttachments,loadMedia,clearAttachment,refreshDmReceipts};
+  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate,uploadAttachment,selectedAttachments,loadMedia,clearAttachment,refreshDmReceipts,themePicker,applyTheme};
 })();
