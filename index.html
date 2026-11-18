@@ -1920,6 +1920,71 @@ body:before,.hero:after{display:none!important}
  }
 }
 
+
+/* Upload form V1.2 — compact Minecraft World native controls */
+.mw-new-mod-form{display:grid;gap:17px}
+.mw-new-mod-form .formgroup{margin:0}
+.mw-mod-language-picker{display:grid;gap:10px}
+.mw-mod-language-title{font-weight:850;font-size:15px;color:#f7e6c2}
+.mw-mod-language-buttons{display:flex;gap:9px;flex-wrap:wrap}
+.mw-mod-lang-pill{min-width:75px;min-height:44px;padding:10px 17px;
+ border:1px solid #c39a59aa;border-radius:14px;background:#37291e;
+ color:#f8e9cd;font-weight:900;cursor:pointer}
+.mw-mod-lang-pill.on{background:linear-gradient(140deg,#f0c775,#c18a45);
+ border-color:#ffe5ad;color:#2b1b0c;box-shadow:0 3px 0 #7e5828}
+.mw-mod-lang-pill:focus-visible,.mw-mod-choice-button:focus-visible,
+.mw-mod-picker-option:focus-visible{outline:2px solid #f2ce84;outline-offset:2px}
+.mw-mod-language-hint{font-size:12px;margin:0!important}
+.mw-mod-language-sections{display:grid;gap:13px}
+.mw-mod-language-card{display:grid;gap:9px;border:1px solid #b18d576a;
+ background:linear-gradient(135deg,#2b231b,#30291e);padding:17px;border-radius:17px}
+.mw-mod-language-card[hidden]{display:none!important}
+.mw-mod-language-header{display:flex;align-items:center;justify-content:space-between;
+ margin-bottom:5px;color:#f1cf8c}
+.mw-mod-language-header span{font-size:11px;font-weight:850;padding:5px 9px;
+ border:1px solid #edc67877;border-radius:8px}
+.mw-mod-language-card>label{font-weight:750;font-size:13px;color:#f5dba6}
+.mw-mod-language-card .field{width:100%;background:#201812!important;border:1px solid #ab8d6270;
+ border-radius:11px!important}
+.mw-mod-language-card textarea{min-height:120px;resize:vertical}
+.mw-new-mod-form .mw-mod-choice-row{gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.mw-mod-choice-button{display:flex;align-items:center;justify-content:space-between;gap:8px;
+ width:100%;min-height:53px;text-align:left;background:#211911;color:#f8e6c7;
+ border:1px solid #ad8b615e;border-radius:13px;padding:13px;font-weight:750;cursor:pointer}
+.mw-mod-choice-button>span:last-child{font-size:21px;color:#eecb8b}
+.mw-mod-choice-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mw-mod-picker-overlay{position:fixed;inset:0;z-index:999999;
+ background:#070805ba;backdrop-filter:blur(7px);display:flex;align-items:center;justify-content:center;padding:16px}
+.mw-mod-picker-dialog{width:min(100%,500px);max-height:min(80vh,700px);
+ overflow:hidden;display:flex;flex-direction:column;color:#ffefd2;
+ background:linear-gradient(145deg,#38291d,#221c17);border:2px solid #b18a52;
+ border-radius:22px;box-shadow:0 20px 80px #000b}
+.mw-mod-picker-header{display:flex;align-items:center;justify-content:space-between;
+ padding:17px 19px;border-bottom:1px solid #b48c535b;font-size:20px}
+.mw-mod-picker-x{display:grid;place-items:center;width:37px;height:37px;
+ border:1px solid #d5a75a8f;background:#64442d;color:#f4d5a3;border-radius:11px;
+ font-size:26px;cursor:pointer}
+.mw-mod-picker-search-wrap{padding:13px 17px 10px}
+.mw-mod-picker-search{width:100%;min-height:47px;border-radius:13px!important}
+.mw-mod-picker-options{overflow-y:auto;overscroll-behavior:contain;padding:4px 12px 12px;
+ display:grid;gap:5px;min-height:0}
+.mw-mod-picker-option{display:flex;align-items:center;justify-content:space-between;
+ text-align:left;gap:10px;padding:13px 15px;min-height:47px;border:1px solid transparent;
+ border-radius:12px;background:#3d3024;color:#f4e2c6;cursor:pointer}
+.mw-mod-picker-option.selected{border-color:#e9ba68;background:#74552e;color:#fff5df}
+.mw-mod-picker-option[hidden]{display:none!important}
+.mw-mod-picker-option:active{background:#987145}
+.mw-mod-picker-check{font-weight:900;color:#ffdb87;min-width:20px}
+.mw-mod-picker-footnote{padding:11px 17px;color:#c2b29a;font-size:11px;
+ border-top:1px solid #b48c535b;text-align:center}
+.mw-mod-submit{min-height:50px}
+@media(max-width:480px){
+ .mw-new-mod-form .mw-mod-choice-row{grid-template-columns:1fr}
+ .mw-mod-language-card{padding:13px}
+ .mw-mod-picker-dialog{max-height:82dvh}
+ .mw-mod-lang-pill{flex:1;min-width:0}
+}
+
 </style>
 </head>
 <body>
@@ -3528,6 +3593,106 @@ function modFields(m,adminEdit=false){
     <button class="btn mw-mod-submit" type="submit">${adminEdit?'O‘zgarishlarni saqlash':t('send')}</button>
   </form>`
 }
+
+/* Custom mod-upload language chips and Minecraft World category/version picker. */
+function mwCloseModPicker(){
+  document.getElementById('mwModPicker')?.remove();
+}
+function mwOpenModPicker(kind){
+  const form=document.getElementById('modForm');
+  if(!form||!['category','version'].includes(kind))return;
+  mwCloseModPicker();
+  const input=form.querySelector('[name="'+kind+'"]');
+  const selected=input?.value||'';
+  const options=kind==='category'?C.map(x=>({value:x,label:categoryName(x)})):
+    BEDROCK_VERSIONS.map(x=>({value:x,label:x}));
+  if(selected&&!options.some(x=>x.value===selected))
+    options.unshift({value:selected,label:kind==='category'?categoryName(selected):selected});
+  const title=kind==='category'?t('category'):t('version');
+  const modal=document.createElement('div');
+  modal.id='mwModPicker';
+  modal.className='mw-mod-picker-overlay';
+  modal.innerHTML='<div class="mw-mod-picker-dialog" role="dialog" aria-modal="true" aria-label="'+e(title)+'">'+
+    '<div class="mw-mod-picker-header"><strong>'+e(title)+'</strong>'+
+    '<button type="button" class="mw-mod-picker-x" data-mod-close aria-label="Yopish">×</button></div>'+
+    '<div class="mw-mod-picker-search-wrap"><input class="field mw-mod-picker-search" type="search" placeholder="Qidirish..." aria-label="Qidirish" autocomplete="off"></div>'+
+    '<div class="mw-mod-picker-options" role="listbox">'+
+    options.map(x=>'<button type="button" class="mw-mod-picker-option'+
+       (x.value===selected?' selected':'')+'" data-mod-value="'+e(x.value)+
+       '" role="option" aria-selected="'+(x.value===selected)+'">'+
+       '<span>'+e(x.label)+'</span><span class="mw-mod-picker-check">'+
+       (x.value===selected?'✓':'')+'</span></button>').join('')+'</div>'+
+    '<div class="mw-mod-picker-footnote">'+(kind==='version'?'Minecraft Bedrock 1.10 — 26.63':'12 ta asosiy kategoriya')+'</div>'+
+    '</div>';
+  modal.dataset.kind=kind;
+  document.body.appendChild(modal);
+  modal.querySelector('.mw-mod-picker-search')?.focus();
+}
+document.addEventListener('click',event=>{
+  const langButton=event.target.closest('[data-mod-lang]');
+  if(langButton){
+    const form=langButton.closest('#modForm');if(!form)return;
+    const lang=langButton.dataset.modLang;
+    const selected=langButton.getAttribute('aria-pressed')==='true';
+    const count=form.querySelectorAll('[data-mod-lang][aria-pressed="true"]').length;
+    if(selected&&count<=1){toast('Kamida bitta til tanlanishi kerak');return}
+    langButton.setAttribute('aria-pressed',String(!selected));
+    langButton.classList.toggle('on',!selected);
+    const area=form.querySelector('[data-mod-lang-section="'+lang+'"]');
+    if(area){
+      area.hidden=selected;
+      for(const input of area.querySelectorAll('input,textarea')){
+        input.disabled=selected;input.required=!selected;
+      }
+      if(!selected)area.querySelector('input')?.focus();
+    }
+    return;
+  }
+  const picker=event.target.closest('[data-mod-picker]');
+  if(picker){mwOpenModPicker(picker.dataset.modPicker);return}
+  const modal=document.getElementById('mwModPicker');
+  if(!modal)return;
+  if(event.target===modal||event.target.closest('[data-mod-close]')){
+    mwCloseModPicker();return;
+  }
+  const option=event.target.closest('[data-mod-value]');
+  if(option){
+    const kind=modal.dataset.kind,form=document.getElementById('modForm');
+    const value=option.dataset.modValue;
+    const input=form?.querySelector('[name="'+kind+'"]');
+    const button=form?.querySelector('[data-mod-picker="'+kind+'"]');
+    if(input&&button){
+      input.value=value;
+      const label=kind==='category'?categoryName(value):value;
+      const text=button.querySelector('.mw-mod-choice-text');
+      if(text)text.textContent=label;
+      button.focus();
+    }
+    mwCloseModPicker();
+  }
+});
+document.addEventListener('input',event=>{
+  if(!event.target.matches('#mwModPicker .mw-mod-picker-search'))return;
+  const word=event.target.value.trim().toLowerCase();
+  for(const option of document.querySelectorAll('#mwModPicker .mw-mod-picker-option'))
+    option.hidden=!option.textContent.toLowerCase().includes(word);
+});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&document.getElementById('mwModPicker')){
+    event.preventDefault();mwCloseModPicker();
+  }
+});
+document.addEventListener('change',event=>{
+  const input=event.target;
+  if(!input.matches('#modForm input[type="file"]'))return;
+  if(input.files?.[0]?.size>2097152){
+    const name=input.files[0].name;
+    input.value='';
+    toast(name+': 2 MB dan katta fayl. Kichikroq fayl tanlang.');
+    event.stopImmediatePropagation();
+  }
+},true);
+
 function create(){
   if(!requireUser()){
     $('#app').innerHTML=blank();
