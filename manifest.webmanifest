@@ -12,9 +12,9 @@
   "lang": "uz",
   "icons": [
     {
-      "src": "./favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "./assets/autumn-world-user-logo.png?v=18",
+      "sizes": "64x64",
+      "type": "image/png",
       "purpose": "any"
     }
   ],
@@ -25,9 +25,9 @@
       "url": "/Web/",
       "icons": [
         {
-          "src": "./favicon.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
+          "src": "./assets/autumn-world-user-logo.png?v=18",
+          "sizes": "64x64",
+          "type": "image/png"
         }
       ]
     }

@@ -1,8 +1,8 @@
-const CACHE='mw-public-shell-mcaddon-telegram-v3';
+const CACHE='mw-public-shell-user-selected-autumn-logo-v18';
 const SCOPE=self.registration.scope;
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>
-    cache.addAll([new URL('./favicon.svg',SCOPE).href,new URL('./manifest.webmanifest',SCOPE).href]))
+    cache.addAll([new URL('./assets/autumn-world-user-logo.png',SCOPE).href,new URL('./manifest.webmanifest',SCOPE).href]))
     .then(()=>self.skipWaiting()));
 });
 self.addEventListener('activate',event=>{
