@@ -1961,9 +1961,11 @@ body:before,.hero:after{display:none!important}
  border-radius:22px;box-shadow:0 20px 80px #000b}
 .mw-mod-picker-header{display:flex;align-items:center;justify-content:space-between;
  padding:17px 19px;border-bottom:1px solid #b48c535b;font-size:20px}
-.mw-mod-picker-x{display:grid;place-items:center;width:37px;height:37px;
+.mw-mod-picker-x{display:flex;align-items:center;justify-content:center;flex:0 0 37px;
+ width:37px;height:37px;min-width:37px;padding:0;line-height:1;
  border:1px solid #d5a75a8f;background:#64442d;color:#f4d5a3;border-radius:11px;
- font-size:26px;cursor:pointer}
+ cursor:pointer}
+.mw-mod-picker-x svg{display:block;width:20px;height:20px;flex:none}
 .mw-mod-picker-search-wrap{padding:13px 17px 10px}
 .mw-mod-picker-search{width:100%;min-height:47px;border-radius:13px!important}
 .mw-mod-picker-options{overflow-y:auto;overscroll-behavior:contain;padding:4px 12px 12px;
@@ -3621,7 +3623,7 @@ function mwOpenModPicker(kind){
   modal.className='mw-mod-picker-overlay';
   modal.innerHTML='<div class="mw-mod-picker-dialog" role="dialog" aria-modal="true" aria-label="'+e(title)+'">'+
     '<div class="mw-mod-picker-header"><strong>'+e(title)+'</strong>'+
-    '<button type="button" class="mw-mod-picker-x" data-mod-close aria-label="Yopish">×</button></div>'+
+    '<button type="button" class="mw-mod-picker-x" data-mod-close aria-label="Yopish">${ico('x',20)}</button></div>'+
     '<div class="mw-mod-picker-search-wrap"><input class="field mw-mod-picker-search" type="search" placeholder="Qidirish..." aria-label="Qidirish" autocomplete="off"></div>'+
     '<div class="mw-mod-picker-options" role="listbox">'+
     options.map(x=>'<button type="button" class="mw-mod-picker-option'+
