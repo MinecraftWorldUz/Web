@@ -2020,6 +2020,43 @@ body:before,.hero:after{display:none!important}
 .mw-verified-chat{display:inline-grid;place-items:center;vertical-align:middle;margin-left:5px;
  background:#1a9bff;color:white;font-size:11px;font-weight:900;border-radius:50%;
  width:17px;height:17px;line-height:1;box-shadow:0 0 0 2px #8ed3ff35}
+
+/* Minecraft messenger background selector */
+.mw-theme-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:13px 0}
+.mw-theme-choice{display:flex;align-items:center;flex-direction:column;gap:3px;border:1px solid #977a4f;
+ background:#2b261e;color:#ffeed2;border-radius:12px;padding:8px 5px;cursor:pointer;min-width:0}
+.mw-theme-choice.chosen{outline:2px solid #e5bb73}
+.mw-theme-choice:disabled{opacity:.4;cursor:not-allowed}
+.mw-theme-choice strong{font-size:12px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mw-theme-choice small{font-size:10px;color:#d6b783}
+.mw-theme-swatch{display:grid;place-items:center;width:100%;height:62px;border-radius:8px;font-size:27px}
+#app.mw11-chat-page #msgs[data-mw-theme]{position:relative;background-attachment:local!important}
+#app.mw11-chat-page #msgs[data-mw-theme]>*{position:relative;z-index:1}
+#app.mw11-chat-page #msgs[data-mw-theme]::before{
+ content:"";position:sticky;top:0;left:0;display:block;height:0;pointer-events:none;z-index:0}
+#app.mw11-chat-page #msgs[data-mw-theme="forest"],.mw-theme-swatch[data-theme="forest"]{background:repeating-linear-gradient(45deg,#25392c 0 38px,#2d4330 39px 40px,#223329 42px 75px)!important}
+#app.mw11-chat-page #msgs[data-mw-theme="stone"],.mw-theme-swatch[data-theme="stone"]{background:repeating-linear-gradient(90deg,#525b59 0 47px,#3b4543 48px 50px,#60706a 52px 98px)!important}
+#app.mw11-chat-page #msgs[data-mw-theme="grass"],.mw-theme-swatch[data-theme="grass"]{background:linear-gradient(155deg,#335c31,#193f2a,#55753f)!important}
+#app.mw11-chat-page #msgs[data-mw-theme="oak"],.mw-theme-swatch[data-theme="oak"]{background:repeating-linear-gradient(0deg,#493623 0 34px,#6a4a2c 35px 38px,#352b20 39px 74px)!important}
+#app.mw11-chat-page #msgs[data-mw-theme="sunset"],.mw-theme-swatch[data-theme="sunset"]{background:linear-gradient(170deg,#ba6a3f,#68435e 56%,#202d42)!important}
+#app.mw11-chat-page #msgs[data-mw-theme="night"],.mw-theme-swatch[data-theme="night"]{background:radial-gradient(circle at 75% 18%,#8e8eaa 0 3px,transparent 5px),linear-gradient(160deg,#10213c,#1c2543,#0f191f)!important}
+#app.mw11-chat-page #msgs[data-mw-theme="desert"],.mw-theme-swatch[data-theme="desert"]{background:repeating-linear-gradient(155deg,#99814b 0 46px,#b09a60 47px 50px,#766339 51px 90px)!important}
+#app.mw11-chat-page #msgs[data-mw-theme="nether"],.mw-theme-swatch[data-theme="nether"]{background:radial-gradient(ellipse at 24% 70%,#a74421,#411719 65%,#211319)!important}
+#app.mw11-chat-page #msgs[data-mw-theme="ocean"],.mw-theme-swatch[data-theme="ocean"]{background:repeating-linear-gradient(165deg,#174b59 0 50px,#246775 52px 58px,#163c57 60px 110px)!important}
+#app.mw11-chat-page #msgs[data-mw-theme="sky"],.mw-theme-swatch[data-theme="sky"]{background:linear-gradient(180deg,#4f84a9,#83adbb,#346075)!important}
+#app.mw11-chat-page #msgs[data-mw-theme="autumn"],.mw-theme-swatch[data-theme="autumn"]{background:radial-gradient(circle at 18% 24%,#c48330 0 5px,transparent 7px),linear-gradient(160deg,#54331a,#7f522a,#28261d)!important}
+#app.mw11-chat-page #msgs[data-mw-theme="embers"],.mw-theme-swatch[data-theme="embers"]{background:radial-gradient(circle at 30% 70%,#e08b37 0 3px,transparent 5px),linear-gradient(165deg,#42251c,#713b26,#22161b)!important}
+#app.mw11-chat-page #msgs[data-mw-theme="snow"],.mw-theme-swatch[data-theme="snow"]{background:linear-gradient(160deg,#507584,#a4c1bc,#567c90)!important}
+#app.mw11-chat-page #msgs[data-mw-theme="portal"],.mw-theme-swatch[data-theme="portal"]{background:repeating-radial-gradient(ellipse at center,#5940a0 0 16px,#2a1b5c 20px 40px,#4b2b78 46px 61px)!important}
+#app.mw11-chat-page #msgs[data-mw-theme="fireflies"],.mw-theme-swatch[data-theme="fireflies"]{background:radial-gradient(circle at 20% 45%,#b6eb77 0 3px,transparent 5px),radial-gradient(circle at 75% 70%,#c6ee9c 0 3px,transparent 6px),linear-gradient(165deg,#17392c,#173329,#081e20)!important}
+@keyframes mwThemeFloat{0%{background-position:0 0,0 0,0 0}50%{background-position:70px 90px,-45px 55px,0 0}100%{background-position:0 0,0 0,0 0}}
+#app.mw11-chat-page #msgs[data-mw-theme="autumn"],
+#app.mw11-chat-page #msgs[data-mw-theme="embers"],
+#app.mw11-chat-page #msgs[data-mw-theme="snow"],
+#app.mw11-chat-page #msgs[data-mw-theme="portal"],
+#app.mw11-chat-page #msgs[data-mw-theme="fireflies"]{background-size:260px 340px,290px 320px,auto!important;animation:mwThemeFloat 24s ease-in-out infinite alternate}
+@media(prefers-reduced-motion:reduce){#app.mw11-chat-page #msgs[data-mw-theme]{animation:none!important}}
+@media(max-width:480px){.mw-theme-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -4539,6 +4576,7 @@ async function conversation(id){
   if(!area)return;
   chatRows();
   area.innerHTML=chatWindowShell(id);
+  window.MWV11?.applyTheme?.('u:'+id).catch(console.warn);
   if(S.mw11MobileOpen)window.MWV11?.openMobileThread?.();
   const key=S.u.id+'|'+id;
   const recent=recentThreads.get(key);
@@ -4590,6 +4628,7 @@ async function worldConversation(){
   chatRows();
   const prefPromise=worldPref();
   area.innerHTML=chatWindowShell('world');
+  window.MWV11?.applyTheme?.('world').catch(console.warn);
   if(S.mw11MobileOpen)window.MWV11?.openMobileThread?.();
   const uid=S.u.id;
   const pref=S.worldPref;
@@ -5686,8 +5725,8 @@ setInterval(()=>{mwPingPresence().catch(console.warn);if(S.page==='chat'&&S.chat
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=5"></script>
+<script src="./mw-live-chat.js?v=6"></script>
 <script src="./mw-social.js?v=2"></script>
-<script src="./mw-v11.js?v=5"></script>
+<script src="./mw-v11.js?v=6"></script>
 </body>
 </html>
