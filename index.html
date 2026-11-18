@@ -2473,10 +2473,20 @@ function avatar(p,large=false){
       :e(nick(p)[0]?.toUpperCase()||'?')
   }</span>`
 }
+function officialModUrl(path,kind){
+  const prefix='2ea37f4b-aa38-4328-a07f-ea1b31879996/';
+  if(typeof path!=='string'||!path.startsWith(prefix))return null;
+  const rel=path.slice(prefix.length);
+  const legacy=kind==='cover'?'site-mods/mw-explorer-recipes-cover.svg':'site-mods/mw-explorer-recipes.mcaddon';
+  const batch=kind==='cover'
+    ?/^site-mods\/mixed-v1\/[a-z0-9-]+\.svg$/
+    :/^site-mods\/mixed-v1\/[a-z0-9-]+\.(?:mcpack|zip)$/;
+  if(rel!==legacy&&!batch.test(rel))return null;
+  return new URL('./'+rel,window.location.href).href;
+}
 function cover(path){
-  if(path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/mw-explorer-recipes-cover.svg')
-    return new URL('./site-mods/mw-explorer-recipes-cover.svg',window.location.href).href;
-  return path?DB.storage.from('covers').getPublicUrl(path).data.publicUrl:''
+  const original=officialModUrl(path,'cover');
+  return original||(path?DB.storage.from('covers').getPublicUrl(path).data.publicUrl:'');
 }
 function btn(a,text,id='',extra=''){
   return `<button class="btn small ${extra}" data-act="${a}"
@@ -3605,7 +3615,7 @@ async function getMod(id){
 function renderMod(m){
   const isApproved=m.status==='approved';
   const actions=isApproved?`
-    ${btn('download',(m.file_path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/mw-explorer-recipes.mcaddon'?
+    ${btn('download',(officialModUrl(m.file_path,'download')?
       'Yuklab olish':telegramApp()?'Telegramga yuborish':t('downloads'))+' · '+count(m.downloads_count),m.id)}
     <button class="btn small ghost mod-toggle" data-act="like" data-id="${e(m.id)}"
       data-mod-toggle="like" aria-pressed="false">
@@ -3880,19 +3890,17 @@ async function download(id){
     toast('Mod tekshiruvda. Tasdiqlangach yuklab olish mumkin.');
     return;
   }
-  if(mod.file_path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/mw-explorer-recipes.mcaddon'){
-    // The first original, site-owned add-on is hosted as a genuine binary
-    // on the same-origin GitHub Pages site. All other mods use Supabase.
+  const publicFile=officialModUrl(mod.file_path,'download');
+  if(publicFile){
     const registered=check(await DB.rpc('register_download',{p_mod:id}));
-    if(registered!==mod.file_path)throw Error('Mod yuklash manzili o‘zgargan');
-    const url=new URL('./site-mods/mw-explorer-recipes.mcaddon',window.location.href).href;
+    if(registered!==mod.file_path)throw Error('Fayl manzili o‘zgargan');
     const tg=telegramApp();
     if(tg?.openLink){
-      tg.openLink(url);
+      tg.openLink(publicFile);
     }else{
       const link=document.createElement('a');
-      link.href=url;
-      link.download='MW_Explorer_Recipes.mcaddon';
+      link.href=publicFile;
+      link.download=mod.file_path.split('/').pop();
       link.target='_blank';
       link.rel='noopener noreferrer';
       document.body.appendChild(link);
@@ -3901,7 +3909,7 @@ async function download(id){
     }
     const cached=getCachedMod(id);
     if(cached)cached.downloads_count=(cached.downloads_count||0)+1;
-    toast('Addon yuklab olinmoqda');
+    toast('Fayl yuklab olinmoqda');
     return;
   }
   const tg=telegramApp();
@@ -5308,7 +5316,7 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js?v=16').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=17').catch(console.warn);
   });
 }
 
