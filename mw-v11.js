@@ -86,12 +86,30 @@ window.MWV11=(()=>{
       mark.title=readAt>=sent?'O‘qildi':'Yuborildi';
     });
   }
+  async function refreshRoomReceipts(scope,rows){
+    if(!authUser()||!['world','group'].includes(scope))return;
+    const mine=(rows||[]).filter(m=>isMine(m,scope)&&m.id);
+    if(!mine.length)return;
+    const thread=S.chatId;
+    const {data,error}=await DB.rpc('mw_room_read_receipts',{p_scope:scope,p_ids:mine.map(m=>m.id)});
+    if(error){console.warn('Room receipt:',error.message);return}
+    if(S.chatId!==thread)return;
+    const seen=new Set((data||[]).filter(x=>x.is_read).map(x=>x.message_id));
+    for(const m of mine){
+      const marker=document.querySelector('#msgs .mw11-bubble[data-v11-msg="'+m.id+'"] .mw11-delivery');
+      if(marker){
+        marker.textContent=seen.has(m.id)?' ✓✓':' ✓';
+        marker.title=seen.has(m.id)?'Kamida bir ishtirokchi o‘qidi':'Yuborildi';
+      }
+    }
+  }
   function afterRender(rows,scope){
     if(!rows?.length)return;
     syncLastDate(rows);
     for(const m of rows)if(m.id)V.rows.set(rxKey(scope,m.id),m);
     loadMedia(rows).catch(err=>console.warn('Chat media:',err));
     if(scope==='dm')refreshDmReceipts().catch(console.warn);
+    if(scope==='world'||scope==='group')refreshRoomReceipts(scope,rows).catch(console.warn);
     const ids=rows.map(m=>m.id).filter(Boolean);
     if(!ids.length)return;
     DB.from('mw_message_reactions').select('message_id,user_id,emoji').eq('scope',scope).in('message_id',ids).then(({data,error})=>{
@@ -704,5 +722,14 @@ window.MWV11=(()=>{
     return true;
   }
 
-  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate,uploadAttachment,selectedAttachments,loadMedia,clearAttachment,refreshDmReceipts,themePicker,applyTheme};
+  // Refresh visible check marks while someone keeps a conversation open.
+  setInterval(()=>{
+    if(!authUser()||S.page!=='chat'||!document.getElementById('msgs'))return;
+    const scope=S.chatId==='world'?'world':S.chatId?.startsWith('g:')?'group':'dm';
+    const rows=[...V.rows.values()].filter(m=>m.id&&document.querySelector('#msgs [data-v11-msg="'+m.id+'"]'));
+    if(scope==='dm')refreshDmReceipts().catch(console.warn);
+    else refreshRoomReceipts(scope,rows).catch(console.warn);
+  },30000);
+
+  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate,uploadAttachment,selectedAttachments,loadMedia,clearAttachment,refreshDmReceipts,refreshRoomReceipts,themePicker,applyTheme};
 })();
