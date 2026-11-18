@@ -1938,9 +1938,7 @@ body:before,.hero:after{display:none!important}
     </div>
   </header>
   <main id="app"></main>
-  <div class="footer">
-    Minecraft World · Mustaqil muxlislar loyihasi
-  </div>
+
 </div>
 <nav class="bottom">
   <button data-go="home" class="on">
@@ -2075,7 +2073,8 @@ const BEDROCK_VERSIONS=[
   'Bedrock 1.21.60','Bedrock 1.21.50','Bedrock 1.21.40',
   'Bedrock 1.21.30','Bedrock 1.21.20','Bedrock 1.21.0',
   'Bedrock 1.20.0','Bedrock 1.19.0','Bedrock 1.18.0',
-  'Bedrock 1.17.0','Bedrock 1.16.0','Bedrock 1.14.0'
+  'Bedrock 1.17.0','Bedrock 1.16.0','Bedrock 1.14.0',
+  'Bedrock 1.13.0','Bedrock 1.12.0','Bedrock 1.11.0','Bedrock 1.10.0'
 ];
 const JAVA_VERSIONS=[
   'Java 26.3','Java 26.2','Java 26.1.2','Java 26.1.1','Java 26.1',
@@ -2092,13 +2091,7 @@ const LEGACY_VERSIONS=[
   '1.20.4','1.20.1','1.20','1.19','1.18','1.17','1.16','Other'
 ];
 const V=[...BEDROCK_VERSIONS,...JAVA_VERSIONS,...LEGACY_VERSIONS];
-const C=[
-  'addon','mod','world','map','texture','resource','behavior',
-  'skin','shader','animation','furniture','mobs','animals','biomes',
-  'structures','survival','adventure','building','decor','redstone',
-  'technology','performance','setting','ui','sounds','vehicles',
-  'tools','minigame','pvp','economy','other'
-];
+const C=['addon','mod','world','map','texture','resource','behavior','shader','mobs','survival','adventure','building'];
 const CATEGORY_NAMES={
   addon:['Addonlar','Аддоны','Add-ons'],
   mod:['Modlar','Моды','Mods'],
@@ -2169,7 +2162,7 @@ send:'Yuborish',cancel:'Bekor',likes:'Layklar',comments:'Izohlar',
 downloads:'Yuklab olish',saved:'Saqlangan',report:'Shikoyat',
 addMod:'Mod qo‘shish',name:'Mod nomi',desc:'Tavsif',
 category:'Kategoriya',version:'Versiya',
-image:'Rasm (2 MB gacha)',file:'Fayl (10 MB gacha)',
+image:'Rasm (2 MB gacha)',file:'Fayl (2 MB gacha)',
 pending:'Tekshiruvda',approved:'Tasdiqlangan',rejected:'Rad etilgan',
 play:'O‘ynash',accounts:'Akkauntlar',invite:'O‘ynashga taklif',
 join:'Qo‘shilish',request:'Ko‘k belgi arizasi',
@@ -2195,7 +2188,7 @@ cancel:'Отмена',likes:'Нравится',comments:'Комментарии'
 downloads:'Скачать',saved:'Сохранено',report:'Жалоба',
 addMod:'Добавить мод',name:'Название мода',desc:'Описание',
 category:'Категория',version:'Версия',
-image:'Изображение (до 2 МБ)',file:'Файл (до 10 МБ)',
+image:'Изображение (до 2 МБ)',file:'Файл (до 2 МБ)',
 pending:'На проверке',approved:'Одобрено',rejected:'Отклонено',
 play:'Играть',accounts:'Аккаунты',invite:'Пригласить играть',
 join:'Присоединиться',request:'Заявка на галочку',
@@ -2556,7 +2549,7 @@ function close(){
 function filePicker(name,accept,required=false){
   const picture=name==='image',attachment=name==='file';
   const text=picture?'Mod uchun muqova rasmini tanlash':attachment?'Mod faylini tanlash':'Avatar rasmini tanlash';
-  const detail=picture?'JPEG, PNG, WebP yoki GIF':attachment?'ZIP, JAR, MCPACK va boshqa mos fayllar':'Rasm tanlash';
+  const detail=picture?'JPEG, PNG, WebP yoki GIF · 2 MB gacha':attachment?'MCADDON, MCPACK, ZIP, JAR · 2 MB gacha':'Rasm tanlash';
   return `<label class="mw-upload-tile file-picker" for="pick-${name}">
     <span class="mw-upload-icon">${ico(attachment?'package':picture?'image':'user',25)}</span>
     <span class="mw-upload-details">
@@ -3465,50 +3458,56 @@ async function saveProfile(f){
   close();
   await go('profile',S.u.id)
 }
+
+function modLanguageBlock(m){
+  const anyTranslations=Boolean(m?.title_uz||m?.title_ru||m?.title_en);
+  const active={
+    uz:!m||Boolean(m?.title_uz)||!anyTranslations,
+    ru:Boolean(m?.title_ru),
+    en:Boolean(m?.title_en)
+  };
+  const fields=[
+    ['uz','UZB','O‘zbekcha','Mod nomi','Tavsif'],
+    ['ru','RUS','Русский','Название мода','Описание'],
+    ['en','ENG','English','Mod title','Description']
+  ];
+  const buttons=fields.map(([lang,short])=>
+    '<button type="button" data-mod-lang="'+lang+'" aria-pressed="'+(active[lang]?'true':'false')+
+    '" class="mw-mod-lang-pill '+(active[lang]?'on':'')+'">'+short+'</button>').join('');
+  const sections=fields.map(([lang,short,title,n,d])=>{
+    const oldTitle=m?.['title_'+lang]||(lang==='uz'&&!anyTranslations?m?.title:'')||'';
+    const oldDesc=m?.['description_'+lang]||(lang==='uz'&&!anyTranslations?m?.description:'')||'';
+    return '<section class="mw-mod-language-card" data-mod-lang-section="'+lang+'"'+(active[lang]?'':' hidden')+'>'+
+      '<div class="mw-mod-language-header"><strong>'+title+'</strong><span>'+short+'</span></div>'+
+      '<label for="mw-mod-title-'+lang+'">'+n+'</label>'+
+      '<input id="mw-mod-title-'+lang+'" class="field" name="title_'+lang+'" type="text" maxlength="160"'+
+      (active[lang]?' required':' disabled')+' value="'+e(oldTitle)+'" placeholder="'+e(n)+'">'+
+      '<label for="mw-mod-desc-'+lang+'">'+d+'</label>'+
+      '<textarea id="mw-mod-desc-'+lang+'" class="field" name="description_'+lang+'" maxlength="6000"'+
+      (active[lang]?' required':' disabled')+' rows="5" placeholder="'+e(d)+'">'+e(oldDesc)+'</textarea></section>';
+  }).join('');
+  return '<div class="mw-mod-language-picker">'+
+    '<div class="mw-mod-language-title">Mod nomi va tavsifi qaysi tilda?</div>'+
+    '<div class="mw-mod-language-buttons" role="group" aria-label="Mod uchun tillarni tanlash">'+buttons+'</div>'+
+    '<p class="muted mw-mod-language-hint">Kamida bitta tilni to‘ldiring. Boshqa tillar ixtiyoriy.</p></div>'+
+    '<div class="mw-mod-language-sections">'+sections+'</div>';
+}
+function modCustomSelect(kind,value){
+  const category=kind==='category';
+  const selected=category?categoryName(value):value;
+  const caption=category?t('category'):t('version');
+  return '<div class="formgroup mw-mod-choice-field"><label>'+caption+'</label>'+
+    '<input type="hidden" name="'+kind.replace('version','version')+'" value="'+e(value)+'">'+
+    '<button type="button" class="mw-mod-choice-button" data-mod-picker="'+kind+'" aria-haspopup="dialog">'+
+    '<span class="mw-mod-choice-text">'+e(selected)+'</span><span aria-hidden="true">⌄</span></button></div>';
+}
 function modFields(m,adminEdit=false){
-  return `<form id="modForm" data-id="${m?.id||''}" data-admin="${adminEdit}">
-    ${adminEdit?`<div class="buttons">
-      ${btn('adminModDetail','← Tekshiruvga qaytish',m.id,'ghost')}
-    </div>`:''}
-    ${formField(t('name'),'title','text',m?.title||'')}
-    <div class="formgroup">
-      <label>${t('desc')}</label>
-      <textarea class="field" name="description"
-        maxlength="6000" required>${e(m?.description||'')}</textarea>
-    </div>
-    <details class="translation-fields">
-      <summary>${ux('Mod tarjimalari (RU / EN)')}</summary>
-      <p class="muted mini">${ux('Asosiy nom va tavsif o‘zbekcha. Boshqa tillar uchun tarjimalarni kiriting.')}</p>
-      <div class="formgroup">
-        <label>Русский — ${ux('nom')}</label>
-        <input class="field" name="title_ru" maxlength="160" value="${e(m?.title_ru||'')}">
-      </div>
-      <div class="formgroup">
-        <label>Русский — ${ux('tavsif')}</label>
-        <textarea class="field" name="description_ru" maxlength="6000">${e(m?.description_ru||'')}</textarea>
-      </div>
-      <div class="formgroup">
-        <label>English — ${ux('nom')}</label>
-        <input class="field" name="title_en" maxlength="160" value="${e(m?.title_en||'')}">
-      </div>
-      <div class="formgroup">
-        <label>English — ${ux('tavsif')}</label>
-        <textarea class="field" name="description_en" maxlength="6000">${e(m?.description_en||'')}</textarea>
-      </div>
-    </details>
-    <div class="two">
-      <div class="formgroup">
-        <label>${t('category')}</label>
-        <select class="field" name="category">
-          ${categoryOptions(m?.category||'addon')}
-        </select>
-      </div>
-      <div class="formgroup">
-        <label>${t('version')}</label>
-        <select class="field" name="version">
-          ${versionOptions(m?.game_version||'Bedrock 26.63')}
-        </select>
-      </div>
+  return `<form id="modForm" class="mw-new-mod-form" data-id="${m?.id||''}" data-admin="${adminEdit}">
+    ${adminEdit?`<div class="buttons">${btn('adminModDetail','← Tekshiruvga qaytish',m.id,'ghost')}</div>`:''}
+    ${modLanguageBlock(m)}
+    <div class="two mw-mod-choice-row">
+      ${modCustomSelect('category',m?.category||'addon')}
+      ${modCustomSelect('version',m?.game_version||'Bedrock 26.63')}
     </div>
     <div class="formgroup">
       <label>${t('image')}</label>
@@ -3526,7 +3525,7 @@ function modFields(m,adminEdit=false){
         'O‘zgartirishlar saqlanadi. Modni tasdiqlash yoki rad etish alohida bajariladi.':
         'Mod admin tasdig‘idan keyin ko‘rinadi. Tahrirlangan mod qayta tekshiriladi.'}
     </div>
-    <button class="btn" type="submit">${adminEdit?'O‘zgarishlarni saqlash':t('send')}</button>
+    <button class="btn mw-mod-submit" type="submit">${adminEdit?'O‘zgarishlarni saqlash':t('send')}</button>
   </form>`
 }
 function create(){
@@ -3554,30 +3553,37 @@ async function saveMod(f){
       throw Error('Bu mod endi tekshiruvda emas');
   }
   let image=x.get('image'),file=x.get('file');
+  const maxModBytes=2097152;
+  if(image?.size>maxModBytes||file?.size>maxModBytes)
+    throw Error('Rasm va mod fayli 2 MB dan oshmasligi kerak');
+  const titles={},descs={};
+  for(const lang of ['uz','ru','en']){
+    const section=f.querySelector('[data-mod-lang-section="'+lang+'"]');
+    if(!section||section.hidden)continue;
+    titles[lang]=String(x.get('title_'+lang)||'').trim();
+    descs[lang]=String(x.get('description_'+lang)||'').trim();
+    if(titles[lang].length<3||descs[lang].length<10)
+      throw Error(lang.toUpperCase()+': mod nomi yoki tavsifi juda qisqa');
+  }
+  const primary=['uz','ru','en'].find(lang=>titles[lang]);
+  if(!primary)throw Error('Kamida bitta tilni tanlang va to‘ldiring');
   let cover_path=m?.cover_path||'',file_path=m?.file_path||'';
   if(image?.size){
     cover_path=await upload('covers',image,2097152,
       ['image/jpeg','image/png','image/webp','image/gif'])
   }
   if(file?.size){
-    file_path=await upload('mod-files',file,10485760)
+    file_path=await upload('mod-files',file,2097152)
   }
   if(!cover_path||!file_path)throw Error('Rasm va fayl kerak');
   let data={
-    title:String(x.get('title')).trim(),
-    description:String(x.get('description')).trim(),
-    title_uz:String(x.get('title')).trim(),
-    description_uz:String(x.get('description')).trim(),
-    title_ru:String(x.get('title_ru')||'').trim()||null,
-    description_ru:String(x.get('description_ru')||'').trim()||null,
-    title_en:String(x.get('title_en')||'').trim()||null,
-    description_en:String(x.get('description_en')||'').trim()||null,
-    category:x.get('category'),
-    game_version:x.get('version'),
+    title:titles[primary],description:descs[primary],
+    title_uz:titles.uz||null,description_uz:descs.uz||null,
+    title_ru:titles.ru||null,description_ru:descs.ru||null,
+    title_en:titles.en||null,description_en:descs.en||null,
+    category:x.get('category'),game_version:x.get('version'),
     cover_path,file_path
   };
-  if(data.title.length<3||data.description.length<10)
-    throw Error('Mod nomi yoki tavsifi juda qisqa');
   if(m){
     let query=DB.from('mods').update(data).eq('id',id);
     if(adminEdit)query=query.eq('status','pending');
