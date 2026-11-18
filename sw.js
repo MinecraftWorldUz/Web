@@ -1,4 +1,4 @@
-const CACHE='mw-public-shell-mixed-archive-v2';
+const CACHE='mw-public-shell-mcaddon-telegram-v3';
 const SCOPE=self.registration.scope;
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>
