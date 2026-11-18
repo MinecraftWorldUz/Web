@@ -1,4 +1,4 @@
-const CACHE='mw-public-shell-user-selected-autumn-logo-v18';
+const CACHE='mw-public-shell-mod-upload-v19';
 const SCOPE=self.registration.scope;
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>
