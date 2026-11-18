@@ -102,12 +102,38 @@ window.MWV11=(()=>{
     'application/pdf':['pdf','file'],'text/plain':['txt','file'],
     'application/zip':['zip','file'],'application/x-zip-compressed':['zip','file']
   };
-  async function uploadAttachment(form,scope,threadId){
-    const file=form?.querySelector('input[name="attachment"]')?.files?.[0];
+  async function compressChatImage(file){
+    if(file.size<=512000)return file;
+    if(!confirm('Rasm 500 KB dan katta. Sifatini biroz pasaytirib 500 KB gacha kichraytirishga rozimisiz?'))throw Error('Rasm yuborish bekor qilindi');
+    const bmp=await createImageBitmap(file);
+    try{
+      let scale=Math.min(1,1600/Math.max(bmp.width,bmp.height));
+      for(let step=0;step<12;step++){
+        const canvas=document.createElement('canvas');
+        canvas.width=Math.max(1,Math.round(bmp.width*scale));
+        canvas.height=Math.max(1,Math.round(bmp.height*scale));
+        const context=canvas.getContext('2d');
+        context.drawImage(bmp,0,0,canvas.width,canvas.height);
+        const quality=Math.max(.35,.86-step*.045);
+        const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',quality));
+        if(blob&&blob.size<=512000){
+          return new File([blob],file.name.replace(/\\.[^.]+$/,'')+'.webp',{type:'image/webp'});
+        }
+        scale*=.82;
+      }
+      throw Error('Bu rasmni 500 KB gacha kichraytirib bo‘lmadi. Boshqa rasm tanlang.');
+    }finally{bmp.close?.()}
+  }
+  async function uploadAttachment(form,scope,threadId,selectedFile){
+    let file=selectedFile||form?.querySelector('input[name="attachment"]')?.files?.[0];
     if(!file)return {};
     const type=mimeTypes[file.type];
     if(!type)throw Error('Bu fayl turi qo‘llab-quvvatlanmaydi');
-    if(file.size>10485760)throw Error('Fayl 10 MB dan oshmasin');
+    if(type[1]==='image'){
+      if(file.type==='image/gif'&&file.size>512000)throw Error('500 KB dan katta GIF avtomatik kichraytirilmaydi. Boshqa format tanlang.');
+      file=await compressChatImage(file);
+      if(file.size>512000)throw Error('Rasm 500 KB dan oshmasin');
+    }else if(file.size>10485760)throw Error('Fayl 10 MB dan oshmasin');
     if(!file.size)throw Error('Bo‘sh faylni yuborib bo‘lmaydi');
     const uid=authUser(),id=String(threadId||'');
     if(!uid)throw Error('Akkauntga kiring');
@@ -115,10 +141,17 @@ window.MWV11=(()=>{
     if((scope==='dm'||scope==='group')&&!isUUID)throw Error('Suhbat topilmadi');
     const folder=scope==='dm'?'dm/'+uid+'/'+id:
       scope==='group'?'group/'+id+'/'+uid:'world/'+uid;
-    const path=folder+'/'+crypto.randomUUID()+'.'+type[0];
+    const ext=file.type==='image/webp'?'webp':type[0];
+    const path=folder+'/'+crypto.randomUUID()+'.'+ext;
     const result=await DB.storage.from('mw-chat').upload(path,file,{contentType:file.type,upsert:false});
     if(result.error)throw result.error;
-    return {attachment_path:path,attachment_name:file.name.slice(0,140)||'Fayl',attachment_type:type[1]};
+    return {attachment_path:path,attachment_name:file.name.slice(0,140)||'Rasm',attachment_type:type[1]};
+  }
+  function selectedAttachments(form){
+    const files=[...(form?.querySelector('input[name="attachment"]')?.files||[])];
+    if(files.length>5)throw Error('Bir vaqtda ko‘pi bilan 5 ta rasm tanlang');
+    if(files.length>1&&files.some(f=>!f.type.startsWith('image/')))throw Error('Bir nechta fayl yuborishda faqat rasm tanlang');
+    return files;
   }
   async function loadMedia(rows){
     if(!rows?.length||!authUser())return;
@@ -149,6 +182,11 @@ window.MWV11=(()=>{
       }
     }
   }
+  const previewUrls=new WeakMap();
+  function clearPreviewUrls(form){
+    for(const url of previewUrls.get(form)||[])URL.revokeObjectURL(url);
+    previewUrls.delete(form);
+  }
   function clearAttachment(form){
     const file=form?.querySelector('input[name="attachment"]');
     if(file)file.value='';
@@ -158,12 +196,21 @@ window.MWV11=(()=>{
     const el=form?.querySelector('input[name="attachment"]');
     const box=form?.querySelector('.mw11-attachment-preview');
     if(!box)return;
-    const file=el?.files?.[0];
-    if(!file){box.hidden=true;box.innerHTML='';return}
+    clearPreviewUrls(form);
+    const files=[...(el?.files||[])];
+    if(!files.length){box.hidden=true;box.innerHTML='';return}
+    if(files.length>5){toast('Ko‘pi bilan 5 ta rasm tanlang');el.value='';box.hidden=true;box.innerHTML='';return}
+    if(files.length>1&&files.some(f=>!f.type.startsWith('image/'))){toast('Bir nechta faylda faqat rasm bo‘lishi mumkin');el.value='';box.hidden=true;box.innerHTML='';return}
+    const urls=[];
     box.hidden=false;
-    const type=mimeTypes[file.type],kind=type?.[1]==='image'?'🖼':type?.[1]==='video'?'🎞':'📎';
-    box.innerHTML='<span>'+kind+' '+esc(file.name.slice(0,80))+' · '+Math.ceil(file.size/1024)+' KB</span>'+
-      '<button type="button" data-v11="clear-media" aria-label="Faylni olib tashlash">×</button>';
+    box.innerHTML='<div class="mw11-previews">'+files.map(file=>{
+      if(file.type.startsWith('image/')){
+        const url=URL.createObjectURL(file);urls.push(url);
+        return '<div class="mw11-preview-item"><img src="'+esc(url)+'" alt="Tanlangan rasm"><small>'+Math.ceil(file.size/1024)+' KB'+(file.size>512000?' · kichraytiriladi':'')+'</small></div>';
+      }
+      return '<div class="mw11-preview-item"><span>📎 '+esc(file.name.slice(0,55))+'</span></div>';
+    }).join('')+'</div><button type="button" data-v11="clear-media" aria-label="Fayllarni olib tashlash">'+ico('x',18)+'</button>';
+    previewUrls.set(form,urls);
   }
 
   function replyId(scope,thread){
@@ -514,7 +561,7 @@ window.MWV11=(()=>{
       form.insertAdjacentHTML('afterbegin',
         '<label class="mw11-attach-label" title="Rasm, video yoki fayl yuborish" aria-label="Fayl biriktirish">'+
           ico('paperclip',22)+'<input type="file" class="mw11-attachment-input" name="attachment"'+
-          ' accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,application/pdf,text/plain,application/zip,application/x-zip-compressed">'+
+          ' multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,application/pdf,text/plain,application/zip,application/x-zip-compressed">'+
         '</label><div class="mw11-attachment-preview" hidden></div>');
     }
     if(form&&!form.querySelector('[data-v11="emoji-open"]')){
@@ -567,5 +614,5 @@ window.MWV11=(()=>{
     return true;
   }
 
-  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate,uploadAttachment,loadMedia,clearAttachment};
+  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate,uploadAttachment,selectedAttachments,loadMedia,clearAttachment};
 })();
