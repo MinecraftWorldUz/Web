@@ -1,7 +1,7 @@
 /* Minecraft World — authenticated chat groups integration.
    This file is loaded only by production index.html and uses its existing DB, S, $, e, avatar, label, dialog, go helpers. */
 window.MWChat=(()=>{
- const C={groups:[],last:{},preview:{},members:[],selected:[],selectedNames:new Map(),group:null,activeId:null,queryTimer:null,userId:null,channel:null,personQuery:'',memberQuery:'',personOffset:0,memberOffset:0};
+ const C={groups:[],last:{},preview:{},members:[],selected:[],selectedNames:new Map(),group:null,badges:new Set(),activeId:null,queryTimer:null,userId:null,channel:null,personQuery:'',memberQuery:'',personOffset:0,memberOffset:0};
  const escape=e,icon=ico;
  async function load(){
   if(!S.u||S.page!=='chat')return;
@@ -44,6 +44,8 @@ window.MWChat=(()=>{
   check(groups);check(recent);
   if(S.u?.id!==uid||S.page!=='chat')return;
   C.groups=groups.data;
+  const badgeRows=ids.length?await DB.from('mw_group_badges').select('group_id').in('group_id',ids):{data:[],error:null};
+  if(!badgeRows.error)C.badges=new Set((badgeRows.data||[]).map(row=>row.group_id));
   S.mwWorldTime=worldRecent.data?.[0]?new Date(worldRecent.data[0].created_at).getTime():0;
   C.last={};C.preview={};
   for(const m of recent.data)if(!C.last[m.group_id]){C.last[m.group_id]=new Date(m.created_at).getTime();C.preview[m.group_id]=String(m.body||'').slice(0,65)}
@@ -68,7 +70,7 @@ window.MWChat=(()=>{
   for(const g of C.groups){
    const html='<button type="button" class="chat-peer mw-group-item '+(S.chatId==='g:'+g.id?'active':'')+'" data-mw="open" data-id="'+escape(g.id)+'">'+
     '<span class="account-avatar">'+(g.avatar_url?'<img class="av" src="'+escape(g.avatar_url)+'" alt="">':icon('users',25))+'</span>'+
-    '<span class="peer-text"><b>'+escape(g.name)+'</b><small>'+escape(C.preview[g.id]||('@'+(g.username||'maxfiy')))+'</small></span></button>';
+    '<span class="peer-text"><b>'+escape(g.name)+(C.badges.has(g.id)?'<span class="mw-verified-chat" title="Tasdiqlangan guruh">✓</span>':'')+'</b><small>'+escape(C.preview[g.id]||('@'+(g.username||'maxfiy')))+'</small></span></button>';
    rows.insertAdjacentHTML('beforeend',html);
   }
   // Keep world, direct and group threads together; newest activity first.
@@ -265,7 +267,7 @@ window.MWChat=(()=>{
   const area=$('#conversation');if(!area)return;
   area.innerHTML='<header class="chat-toolbar">'+
      '<span class="mw11-group-header-avatar">'+(g.avatar_url?'<img class="av" src="'+escape(g.avatar_url)+'" alt="">':icon('users',28))+'</span>'+
-     '<button class="linkbtn mw11-head-name" data-mw="group-info" data-id="'+escape(id)+'"><strong>'+escape(g.name)+'</strong><small>@'+escape(g.username||'maxfiy')+'</small></button>'+
+     '<button class="linkbtn mw11-head-name" data-mw="group-info" data-id="'+escape(id)+'"><strong>'+escape(g.name)+(C.badges.has(id)?'<span class="mw-verified-chat" title="Tasdiqlangan guruh">✓</span>':'')+'</strong><small>@'+escape(g.username||'maxfiy')+'</small></button>'+
      '<button type="button" class="mw11-chat-options-btn" data-v11="options" data-thread="g:'+escape(id)+'" aria-label="Guruh sozlamalari">'+icon('more-vertical',22)+'</button></header>'+
    '<div class="messages" id="msgs"></div><form class="chat-compose" id="mwGroupMessage" data-id="'+escape(id)+'">'+
    '<input class="field" name="body" maxlength="2000" placeholder="Xabar yozing..."><button class="btn" type="submit">'+icon('send',20)+'</button></form>';
@@ -286,6 +288,9 @@ window.MWChat=(()=>{
   const group=check(await DB.from('mw_groups').select('*').eq('id',id).single());
   const members=check(await DB.from('mw_group_members').select('user_id').eq('group_id',id));
   const own=group.owner_id===S.u.id;
+  const certified=!!check(await DB.from('mw_group_badges').select('group_id').eq('group_id',id).maybeSingle());
+  const application=own&&!certified?check(await DB.from('mw_group_badge_requests').select('id,status')
+    .eq('group_id',id).eq('status','pending').maybeSingle()):null;
   const pending=own?check(await DB.from('mw_group_join_requests')
     .select('id,requester_id').eq('group_id',id).eq('status','pending')):[];
   const map=await users([...members.map(x=>x.user_id),...pending.map(x=>x.requester_id)]);
@@ -300,7 +305,7 @@ window.MWChat=(()=>{
   dialog('Guruh ma’lumotlari',`
     <div class="mw-group-top">
       ${group.avatar_url?'<img class="av large" src="'+escape(group.avatar_url)+'" alt="">':icon('users',40)}
-      <div><h3>${escape(group.name)}</h3><p>@${escape(group.username||'maxfiy')}</p><p>${escape(group.bio||'')}</p></div>
+      <div><h3>${escape(group.name)} ${certified?'<span class="mw-verified-chat">✓</span>':''}</h3><p>@${escape(group.username||'maxfiy')}</p><p>${escape(group.bio||'')}</p></div>
     </div>
     <h3>A’zolar · ${members.length}</h3>
     <div class="mw-member-list">${membersHtml}</div>
@@ -310,6 +315,7 @@ window.MWChat=(()=>{
       '<strong>'+escape(map[req.requester_id]?.display_name||map[req.requester_id]?.username||'Foydalanuvchi')+'</strong></div>'+
       '<div class="buttons"><button class="btn" data-mw="review-join" data-id="'+escape(req.id)+'" data-status="accepted">Qabul qilish</button>'+
       '<button class="btn ghost" data-mw="review-join" data-id="'+escape(req.id)+'" data-status="declined">Rad etish</button></div></div>').join('')+'</div>':''}
+    ${own&&!certified?'<div class="buttons">'+(application?'<span class="status">Ko‘k belgi arizasi tekshiruvda</span>':'<button class="btn ghost" data-mw="group-badge-apply" data-id="'+escape(id)+'">Guruh uchun ko‘k belgi arizasi</button>')+'</div>':''}
     <div class="buttons">${own?
       '<button class="btn" data-mw="edit-group" data-id="'+escape(id)+'">Tahrirlash / a’zo qo‘shish</button>'+
       '<button class="btn danger" data-mw="delete-group" data-id="'+escape(id)+'">Guruhni o‘chirish</button>':
@@ -348,7 +354,8 @@ window.MWChat=(()=>{
 
  async function worldInfo(){
   const pref=await worldPref();
-  dialog('Umumiy chat','<h3>Umumiy chat</h3><p>Bu suhbatga barcha yangi va eski akkauntlar avtomatik qo‘shiladi.</p>'+
+  dialog('Umumiy chat','<h3>Umumiy chat</h3><p><strong>@umumiychat</strong></p>'+
+   '<p>Minecraft World jamoasining umumiy suhbati. Bu suhbatga barcha yangi va eski akkauntlar avtomatik qo‘shiladi.</p>'+
    '<div class="mw11-info-actions"><button class="btn ghost" data-mw="world-mute">'+(pref.muted?'Ovozni yoqish':'Ovozsiz qilish')+'</button>'+
    '<button class="btn danger" data-mw="world-leave">'+(pref.joined?'Guruhdan chiqish':'Qayta qo‘shilish')+'</button></div>');
  }
@@ -387,6 +394,15 @@ window.MWChat=(()=>{
   else if(command==='answer'){
    check(await DB.from('mw_group_invitations').update({status:button.dataset.status}).eq('id',id).eq('recipient_id',S.u.id));
    close();await load();
+  }
+  else if(command==='group-badge-apply'){
+   const g=check(await DB.from('mw_groups').select('owner_id,name').eq('id',id).single());
+   if(g.owner_id!==S.u.id)throw Error('Faqat guruh egasi ariza bera oladi');
+   dialog('Guruh uchun ko‘k belgi','<form id="mwGroupBadgeForm" data-id="'+escape(id)+'">'+
+    '<p>'+escape(g.name)+' uchun tasdiqlash so‘rovi</p>'+
+    '<label>Guruh nima sababdan tasdiqlanishi kerak?</label>'+
+    '<textarea class="field" name="reason" minlength="10" maxlength="800" required></textarea>'+
+    '<button type="submit" class="btn">Ariza yuborish</button></form>');
   }
   else if(command==='world-info')await worldInfo();
   else if(command==='world-mute'){
@@ -505,12 +521,16 @@ window.MWChat=(()=>{
   }
  });
  window.addEventListener('submit',async ev=>{
-  const f=ev.target;if(f.id!=='mwGroupForm'&&f.id!=='mwGroupMessage')return;
+  const f=ev.target;if(!['mwGroupForm','mwGroupMessage','mwGroupBadgeForm'].includes(f.id))return;
   ev.preventDefault();ev.stopImmediatePropagation();
   const btn=f.querySelector('[type="submit"]');if(btn)btn.disabled=true;
   try{
    if(f.id==='mwGroupForm')await saveGroup(f);
-   else{
+   else if(f.id==='mwGroupBadgeForm'){
+    const group_id=f.dataset.id,reason=String(new FormData(f).get('reason')||'').trim();
+    check(await DB.from('mw_group_badge_requests').insert({group_id,requester_id:S.u.id,reason}));
+    toast('Ko‘k belgi arizasi yuborildi');await info(group_id);
+   }else{
     const text=String(new FormData(f).get('body')||'').trim();
     const files=window.MWV11?.selectedAttachments?.(f)||[];
     if(!text&&!files.length)return;
