@@ -2046,14 +2046,18 @@ const BEDROCK_VERSIONS=[
   'Bedrock 1.21.120','Bedrock 1.21.111','Bedrock 1.21.100',
   'Bedrock 1.21.90','Bedrock 1.21.80','Bedrock 1.21.70',
   'Bedrock 1.21.60','Bedrock 1.21.50','Bedrock 1.21.40',
-  'Bedrock 1.21.30','Bedrock 1.21.20','Bedrock 1.21.0'
+  'Bedrock 1.21.30','Bedrock 1.21.20','Bedrock 1.21.0',
+  'Bedrock 1.20.0','Bedrock 1.19.0','Bedrock 1.18.0',
+  'Bedrock 1.17.0','Bedrock 1.16.0','Bedrock 1.14.0'
 ];
 const JAVA_VERSIONS=[
   'Java 26.3','Java 26.2','Java 26.1.2','Java 26.1.1','Java 26.1',
   'Java 1.21.11','Java 1.21.10','Java 1.21.9','Java 1.21.8',
   'Java 1.21.7','Java 1.21.6','Java 1.21.5','Java 1.21.4',
   'Java 1.21.3','Java 1.21.2','Java 1.21.1','Java 1.21',
-  'Java 1.20.6','Java 1.20.4','Java 1.20.1'
+  'Java 1.20.6','Java 1.20.4','Java 1.20.1',
+  'Java 1.19.4','Java 1.19.2','Java 1.18.2',
+  'Java 1.17.1','Java 1.16.5','Java 1.15.2','Java 1.14.4','Java 1.14'
 ];
 // Preserve original selection values of older community mods.
 const LEGACY_VERSIONS=[
@@ -5316,7 +5320,7 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js?v=17').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=18').catch(console.warn);
   });
 }
 
