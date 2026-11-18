@@ -183,6 +183,7 @@ window.MWChat=(()=>{
    '<div id="mwUsernameWrap" class="formgroup"><label>Guruh username</label><input class="field" id="mwGroupUsername" name="username" maxlength="25" value="'+escape(g?.username||'')+'" placeholder="minecraft_team"><small id="mwUsernameState"></small></div>'+
    '<div class="formgroup"><label>Guruhga odam qo‘shish</label><input class="field" id="mwMemberSearch" placeholder="Ism yoki @username">'+
    '<div id="mwMemberResults" class="mw-member-list"></div><small id="mwSelectedCount"></small></div>'+
+   (g?'<button type="button" class="btn ghost" data-v11="theme-open" data-thread="g:'+escape(g.id)+'">Chat fonini tanlash</button>':'')+
    '<button class="btn" type="submit">Saqlash</button></form>');
   visibility();
   searchPeople('',true);
@@ -271,6 +272,7 @@ window.MWChat=(()=>{
      '<button type="button" class="mw11-chat-options-btn" data-v11="options" data-thread="g:'+escape(id)+'" aria-label="Guruh sozlamalari">'+icon('more-vertical',22)+'</button></header>'+
    '<div class="messages" id="msgs"></div><form class="chat-compose" id="mwGroupMessage" data-id="'+escape(id)+'">'+
    '<input class="field" name="body" maxlength="2000" placeholder="Xabar yozing..."><button class="btn" type="submit">'+icon('send',20)+'</button></form>';
+  window.MWV11?.applyTheme?.('g:'+id).catch(console.warn);
   if(S.mw11MobileOpen)window.MWV11?.openMobileThread?.();
   renderGroups();
   const rows=check(await DB.from('mw_group_messages').select('id,sender_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type').eq('group_id',id).order('created_at',{ascending:false}).limit(65));
@@ -315,6 +317,7 @@ window.MWChat=(()=>{
       '<strong>'+escape(map[req.requester_id]?.display_name||map[req.requester_id]?.username||'Foydalanuvchi')+'</strong></div>'+
       '<div class="buttons"><button class="btn" data-mw="review-join" data-id="'+escape(req.id)+'" data-status="accepted">Qabul qilish</button>'+
       '<button class="btn ghost" data-mw="review-join" data-id="'+escape(req.id)+'" data-status="declined">Rad etish</button></div></div>').join('')+'</div>':''}
+    ${own||S.me?.is_admin?'<div class="buttons"><button class="btn ghost" data-v11="theme-open" data-thread="g:'+escape(id)+'">Chat fonini tanlash</button></div>':''}
     ${own&&!certified?'<div class="buttons">'+(application?'<span class="status">Ko‘k belgi arizasi tekshiruvda</span>':'<button class="btn ghost" data-mw="group-badge-apply" data-id="'+escape(id)+'">Guruh uchun ko‘k belgi arizasi</button>')+'</div>':''}
     <div class="buttons">${own?
       '<button class="btn" data-mw="edit-group" data-id="'+escape(id)+'">Tahrirlash / a’zo qo‘shish</button>'+
@@ -356,7 +359,7 @@ window.MWChat=(()=>{
   const pref=await worldPref();
   dialog('Umumiy chat','<h3>Umumiy chat</h3><p><strong>@umumiychat</strong></p>'+
    '<p>Minecraft World jamoasining umumiy suhbati. Bu suhbatga barcha yangi va eski akkauntlar avtomatik qo‘shiladi.</p>'+
-   '<div class="mw11-info-actions"><button class="btn ghost" data-mw="world-mute">'+(pref.muted?'Ovozni yoqish':'Ovozsiz qilish')+'</button>'+
+   '<div class="mw11-info-actions"><button class="btn ghost" data-v11="theme-open" data-thread="world">Chat fonini tanlash</button><button class="btn ghost" data-mw="world-mute">'+(pref.muted?'Ovozni yoqish':'Ovozsiz qilish')+'</button>'+
    '<button class="btn danger" data-mw="world-leave">'+(pref.joined?'Guruhdan chiqish':'Qayta qo‘shilish')+'</button></div>');
  }
  async function action(button){
