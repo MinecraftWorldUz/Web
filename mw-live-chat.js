@@ -296,10 +296,20 @@ window.MWChat=(()=>{
   const pending=own?check(await DB.from('mw_group_join_requests')
     .select('id,requester_id').eq('group_id',id).eq('status','pending')):[];
   const map=await users([...members.map(x=>x.user_id),...pending.map(x=>x.requester_id)]);
+  // Supabase RLS returns presence only for self and mutually following users.
+  const presenceResult=members.length?await DB.from('mw_presence').select('user_id,last_seen_at')
+    .in('user_id',members.map(x=>x.user_id)):{data:[],error:null};
+  const times=new Map((presenceResult.data||[]).map(x=>[x.user_id,x.last_seen_at]));
+  const presenceText=id=>{
+    const date=times.get(id);if(!date)return '';
+    const d=new Date(date),delta=Date.now()-d.getTime();
+    if(!Number.isFinite(delta)||delta<0)return '';
+    return delta<120000?' · 🟢 Onlayn':' · oxirgi onlayn '+d.toLocaleString('uz-UZ',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  };
   const membersHtml=members.map(m=>`<div class="mw-member-option mw11-member-manage">
       <button type="button" class="mw11-member-person" data-act="user" data-id="${escape(m.user_id)}">
         ${avatar(map[m.user_id])}
-        <span>${label(map[m.user_id])} ${m.user_id===group.owner_id?' · Egasi':''}</span>
+        <span>${label(map[m.user_id])} ${m.user_id===group.owner_id?' · Egasi':''}<small class="muted">${escape(presenceText(m.user_id))}</small></span>
       </button>
       ${own&&m.user_id!==group.owner_id?`<button type="button" class="mw11-kick" data-mw="kick" data-id="${escape(id)}"
         data-user="${escape(m.user_id)}" aria-label="A’zoni guruhdan chiqarish" title="Guruhdan chiqarish">${icon('x',18)}</button>`:''}
