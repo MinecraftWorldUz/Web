@@ -2491,7 +2491,7 @@ function officialModUrl(path,kind){
   const rel=path.slice(prefix.length);
   const legacy=kind==='cover'?'site-mods/mw-explorer-recipes-cover.svg':'site-mods/mw-explorer-recipes.mcaddon';
   const batch=kind==='cover'
-    ?/^site-mods\/mixed-v1\/[a-z0-9-]+\.svg$/
+    ?/^(?:site-mods\/mixed-v1\/[a-z0-9-]+\.svg|site-mods\/covers-v2\/[a-z0-9-]+\.webp)$/
     :/^site-mods\/mixed-v1\/[a-z0-9-]+\.(?:mcpack|mcaddon|zip)$/;
   if(rel!==legacy&&!batch.test(rel))return null;
   return new URL('./'+rel,window.location.href).href;
