@@ -268,7 +268,7 @@ window.MWChat=(()=>{
      '<button class="linkbtn mw11-head-name" data-mw="group-info" data-id="'+escape(id)+'"><strong>'+escape(g.name)+'</strong><small>@'+escape(g.username||'maxfiy')+'</small></button>'+
      '<button type="button" class="mw11-chat-options-btn" data-v11="options" data-thread="g:'+escape(id)+'" aria-label="Guruh sozlamalari">'+icon('more-vertical',22)+'</button></header>'+
    '<div class="messages" id="msgs"></div><form class="chat-compose" id="mwGroupMessage" data-id="'+escape(id)+'">'+
-   '<input class="field" name="body" maxlength="2000" placeholder="Xabar yozing..." required><button class="btn" type="submit">'+icon('send',20)+'</button></form>';
+   '<input class="field" name="body" maxlength="2000" placeholder="Xabar yozing..."><button class="btn" type="submit">'+icon('send',20)+'</button></form>';
   if(S.mw11MobileOpen)window.MWV11?.openMobileThread?.();
   renderGroups();
   const rows=check(await DB.from('mw_group_messages').select('id,sender_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type').eq('group_id',id).order('created_at',{ascending:false}).limit(65));
@@ -512,13 +512,18 @@ window.MWChat=(()=>{
    if(f.id==='mwGroupForm')await saveGroup(f);
    else{
     const text=String(new FormData(f).get('body')||'').trim();
-    const media=await window.MWV11?.uploadAttachment?.(f,'group',f.dataset.id)||{};
-    if(!text&&!media.attachment_path)return;
-    const body=text||'📎 '+media.attachment_name;
-    check(await DB.from('mw_group_messages').insert({group_id:f.dataset.id,sender_id:S.u.id,body,...media,
-      reply_to:window.MWV11?.replyId?.('group','g:'+f.dataset.id)||null}));
+    const files=window.MWV11?.selectedAttachments?.(f)||[];
+    if(!text&&!files.length)return;
+    let lastBody=text;
+    for(const [i,file] of (files.length?files:[null]).entries()){
+      const media=file?await window.MWV11.uploadAttachment(f,'group',f.dataset.id,file):{};
+      const body=(i===0&&text)||(media.attachment_type==='image'?'🖼 Rasm':'📎 '+(media.attachment_name||'Fayl'));
+      check(await DB.from('mw_group_messages').insert({group_id:f.dataset.id,sender_id:S.u.id,body,...media,
+        reply_to:i===0?(window.MWV11?.replyId?.('group','g:'+f.dataset.id)||null):null}));
+      lastBody=body;
+    }
     f.reset();window.MWV11?.clearAttachment?.(f);window.MWV11?.clearReply?.();
-    C.last[f.dataset.id]=Date.now();C.preview[f.dataset.id]='Siz: '+body.slice(0,65);await openGroup(f.dataset.id);
+    C.last[f.dataset.id]=Date.now();C.preview[f.dataset.id]='Siz: '+lastBody.slice(0,65);await openGroup(f.dataset.id);
    }
   }catch(err){console.error(err);toast(err.code==='23505'?'Username band':err.message)}
   finally{if(btn)btn.disabled=false}
