@@ -1893,6 +1893,14 @@ body:before,.hero:after{display:none!important}
  .mw-public-groups-title{margin-top:14px}
 }
 
+
+.mw-mod-install-guide{
+  padding:13px 15px;margin:13px 0 21px;background:#284131;
+  color:#f1e5cc;border-left:3px solid #e6b96a;border-radius:13px;
+}
+.mw-mod-install-guide strong{font-size:14px;color:#f6d8a0}
+.mw-mod-install-guide p{font-size:13px;line-height:1.6;margin:8px 0 0;color:#e4d4b8;white-space:normal}
+
 </style>
 </head>
 <body>
@@ -2827,7 +2835,7 @@ async function home(){
     }
   }
   const query=DB.from('mods')
-    .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
+    .select('id,author_id,title,description,category,game_version,cover_path,file_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
     .eq('status','approved')
     .order(S.sort==='popular'?'likes_count':S.sort==='views'?'views_count':'created_at',{ascending:false}).limit(60);
   const savedPromise=S.homeView==='saved'?loadSavedIds():Promise.resolve();
@@ -3605,7 +3613,7 @@ function modSkeleton(id){
 }
 async function getMod(id){
   const cached=getCachedMod(id);
-  if(cached?.title&&cached?.description&&cached?.status)return cached;
+  if(cached?.title&&cached?.description&&cached?.status&&cached?.file_path)return cached;
   if(modOpenPending.has(id))return modOpenPending.get(id);
   const load=(async()=>{
     const result=await DB.from('mods')
@@ -3615,6 +3623,30 @@ async function getMod(id){
   })().finally(()=>modOpenPending.delete(id));
   modOpenPending.set(id,load);
   return load;
+}
+function modInstallHelp(m){
+  const ext=(m?.file_path||'').split('.').pop()?.toLowerCase()||'';
+  const lang=['uz','ru','en'].includes(S.lang)?S.lang:'uz';
+  const guides={
+    mcaddon:{
+      uz:['Bedrock — bir bosishda o‘rnatish','Faylni yuklab oling va Minecraft bilan oching. Dunyo sozlamalaridagi Behavior Packs yoki Resource Packs bo‘limida paketni faollashtiring.'],
+      ru:['Bedrock — быстрая установка','Скачайте файл и откройте его в Minecraft. В настройках мира включите набор в Behavior Packs или Resource Packs.'],
+      en:['Bedrock — one-tap import','Download the file and open it with Minecraft. Enable the pack in your world’s Behavior Packs or Resource Packs settings.']},
+    mcpack:{
+      uz:['Bedrock — to‘g‘ridan-to‘g‘ri import','Faylni Minecraft bilan oching. Skin bo‘lsa kiyimlar bo‘limida, resurs paketi bo‘lsa Resource Packs ichida tanlang.'],
+      ru:['Bedrock — прямой импорт','Откройте файл в Minecraft. Выберите скин в редакторе персонажа или активируйте набор в Resource Packs.'],
+      en:['Bedrock — direct import','Open the file with Minecraft. Select skins in the character editor or enable resource packs in Resource Packs.']},
+    zip:{
+      uz:['Java — ZIP ochilmaydi','Bu Java datapack. ZIP faylni ochmasdan dunyo papkasidagi datapacks ichiga joylang, so‘ng dunyoni qayta yuklang. Bedrock uchun emas.'],
+      ru:['Java — ZIP распаковывать не нужно','Это датапак Java Edition. Поместите ZIP без распаковки в папку datapacks нужного мира и перезагрузите мир. Не для Bedrock.'],
+      en:['Java — keep the ZIP intact','This is a Java Edition datapack. Copy the ZIP into your world’s datapacks folder without extracting it, then reload the world. Not for Bedrock.']},
+    jar:{
+      uz:['Java — mod o‘rnatish','JAR faylni mods papkasiga joylang. Mod talab qiladigan Forge yoki Fabric versiyasini oldindan tekshiring.'],
+      ru:['Java — установка мода','Поместите JAR в папку mods. Сверьте требуемую версию Forge или Fabric.'],
+      en:['Java — mod installation','Place the JAR in the mods folder. Match the required Forge or Fabric version first.']}
+  };
+  const item=guides[ext]?.[lang];if(!item)return '';
+  return '<div class="mw-mod-install-guide"><strong>📥 '+e(item[0])+'</strong><p>'+e(item[1])+'</p></div>';
 }
 function renderMod(m){
   const isApproved=m.status==='approved';
@@ -3640,6 +3672,7 @@ function renderMod(m){
         <span class="mod-view-stat">${ico('eye',17)} <span data-mod-view-count>${count(m.views_count)}</span></span>
       </div>
       <p class="wrap mod-description">${e(localModDesc(m))}</p>
+      ${modInstallHelp(m)}
       <div id="modAuthor" class="mod-author"></div>
       <div class="buttons mod-actions">${actions}</div>
       ${isApproved?`
