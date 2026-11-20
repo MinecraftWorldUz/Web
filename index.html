@@ -2082,6 +2082,30 @@ body:before,.hero:after{display:none!important}
 .mw-avatar-crop-actions{display:flex;gap:10px}
 .mw-avatar-crop-actions button{flex:1;min-height:46px}
 
+
+/* Fix ONLY the small circular avatar inside Profile Edit, including narrow phones. */
+.mw-profile-edit-form .mw-avatar-edit #avatarPreview{
+  display:block!important;width:100%!important;height:100%!important;
+  min-width:0!important;min-height:0!important;
+  overflow:hidden!important;border-radius:50%!important;
+  flex:none!important;position:relative;
+}
+.mw-profile-edit-form .mw-avatar-edit #avatarPreview .av,
+.mw-profile-edit-form .mw-avatar-edit #avatarPreview .av.large{
+  display:block!important;width:100%!important;height:100%!important;
+  min-width:0!important;min-height:0!important;
+  padding:0!important;margin:0!important;
+  overflow:hidden!important;border-radius:50%!important;
+}
+.mw-profile-edit-form .mw-avatar-edit #avatarPreview img,
+.mw-profile-edit-form .mw-avatar-edit #avatarPreview img.avatar-thumb{
+  display:block!important;width:100%!important;height:100%!important;
+  max-width:none!important;max-height:none!important;
+  padding:0!important;margin:0!important;border:0!important;
+  border-radius:50%!important;object-fit:cover!important;
+  object-position:50% 50%!important;
+}
+
 </style>
 </head>
 <body>
