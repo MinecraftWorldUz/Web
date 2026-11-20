@@ -2853,8 +2853,12 @@ function screenKey(page,id){
 }
 function saveScreen(page,id){
   if(S.page!==page||(page==='profile'&&S.profileId!==id))return;
-  fastScreens.set(screenKey(page,id),{html:$('#app').innerHTML,at:Date.now()});
-  // Keep this private data only in memory; never persist profiles/chats on disk.
+  const snapshot={html:$('#app').innerHTML,at:Date.now()};
+  fastScreens.set(screenKey(page,id),snapshot);
+  // Cache only profile views, not chats or private messages.
+  if(page==='profile'&&S.u?.id){
+    try{localStorage.setItem('mw_profile_cache:'+S.u.id+':'+id+':'+S.lang,JSON.stringify(snapshot))}catch(error){}
+  }
   if(fastScreens.size>12)fastScreens.delete(fastScreens.keys().next().value);
 }
 function clearScreenCache(){
@@ -2895,12 +2899,18 @@ async function go(page='home',id=null){
     x.classList.toggle('on',x.dataset.go===page));
   const useCache=page==='community'||page==='profile';
   const key=screenKey(page,target);
-  const cached=useCache?fastScreens.get(key):null;
+  let cached=useCache?fastScreens.get(key):null;
+  if(!cached&&page==='profile'&&S.u?.id){
+    try{
+      const saved=JSON.parse(localStorage.getItem('mw_profile_cache:'+S.u.id+':'+target+':'+S.lang)||'null');
+      if(saved?.html&&Date.now()-saved.at<24*60*60*1000)cached=saved;
+    }catch(error){}
+  }
   if(cached){
     $('#app').innerHTML=cached.html;
     translateUi($('#app'));
     if(page==='profile')window.MWSocial?.renderProfile?.(target).catch(console.warn);
-    if(Date.now()-cached.at<SCREEN_TTL)return;
+    if(fastScreens.get(key)===cached&&Date.now()-cached.at<SCREEN_TTL)return;
   }else if(page==='home'){
     // homeShell() paints immediately without waiting for Supabase.
   }else if(page==='create'){
@@ -4027,8 +4037,8 @@ async function mwDraftSave(form){
     updated:Date.now(),fields,langs,
     image:image||previous?.image||null,
     file:file||previous?.file||null,
-    cover_path:form.dataset.coverPath||previous?.cover_path||'',
-    file_path:form.dataset.filePath||previous?.file_path||'',
+    cover_path:form.dataset.coverPath??previous?.cover_path??'',
+    file_path:form.dataset.filePath??previous?.file_path??'',
     state:form.dataset.draftState||'draft'
   };
   await mwDraftTx('readwrite',store=>store.put(row));
@@ -4119,7 +4129,10 @@ async function mwDraftRenderList(){
 async function mwDraftOpenForm(id){
   const form=document.getElementById('modForm');
   if(!form||!S.u)return;
-  if(mwDraftActive(form))await mwDraftSave(form);
+  if(mwDraftActive(form)){
+    clearTimeout(mwDraftTimer);
+    await mwDraftSave(form);
+  }
   const holder=document.getElementById('mwModDraftForm');
   if(!holder)return;
   holder.innerHTML=modFields();
@@ -4144,7 +4157,12 @@ document.addEventListener('input',event=>{
 });
 document.addEventListener('change',event=>{
   const form=event.target.closest?.('#modForm');
-  if(form)mwDraftSchedule(form)
+  if(!form)return;
+  if(event.target.matches('input[type="file"]')&&mwDraftActive(form)){
+    if(event.target.name==='image')form.dataset.coverPath='';
+    if(event.target.name==='file')form.dataset.filePath='';
+  }
+  mwDraftSchedule(form)
 });
 document.addEventListener('click',async event=>{
   const open=event.target.closest?.('[data-open-draft]');
