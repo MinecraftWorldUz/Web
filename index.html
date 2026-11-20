@@ -3986,6 +3986,8 @@ function modUploadProgress(form,percent,stage,hint){
   box.querySelector('[data-upload-percent]').textContent=value+'%';
   box.querySelector('[data-upload-stage]').textContent=stage;
   box.querySelector('[data-upload-hint]').textContent=hint||'Iltimos, sahifani yopmang.';
+  const submit=form.querySelector('.mw-mod-submit');
+  if(submit&&submit.disabled)submit.textContent=stage+' '+value+'%';
 }
 function modUploadReset(form){
   const box=form.querySelector('.mw-mod-upload-progress');
