@@ -2705,7 +2705,7 @@ function close(){
 function filePicker(name,accept,required=false){
   const picture=name==='image',attachment=name==='file';
   const text=picture?'Mod uchun muqova rasmini tanlash':attachment?'Mod faylini tanlash':'Avatar rasmini tanlash';
-  const detail=picture?'JPEG, PNG, WebP yoki GIF · 2 MB gacha':attachment?'MCADDON, MCPACK, ZIP, JAR · 2 MB gacha':'Rasm tanlash';
+  const detail=picture?'JPEG, PNG, WebP yoki GIF · 2 MB gacha':attachment?'MCWORLD, MCADDON, MCPACK, ZIP, JAR · 2 MB gacha':'Rasm tanlash';
   return `<label class="mw-upload-tile file-picker" for="pick-${name}">
     <span class="mw-upload-icon">${ico(attachment?'package':picture?'image':'user',25)}</span>
     <span class="mw-upload-details">
@@ -2714,7 +2714,7 @@ function filePicker(name,accept,required=false){
     </span>
     <span class="mw-upload-choose">Tanlash</span>
     <input id="pick-${name}" type="file" name="${name}"
-      accept="${e(accept)}" ${required?'required':''} aria-label="${text}">
+      accept="${attachment?'*/*':e(accept)}" ${required?'required':''} aria-label="${text}">
     <img class="mw-upload-preview" alt="Tanlangan rasm" hidden>
   </label>`
 }
