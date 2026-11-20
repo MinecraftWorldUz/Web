@@ -4346,7 +4346,13 @@ async function saveMod(f){
     const updated=check(await modDbWithTimeout(query.select('id')));
     if(!updated?.length)throw Error('Mod yangilanmadi. Sahifani qayta oching');
   }else{
-    check(await modDbWithTimeout(DB.from('mods').insert({...data,author_id:S.u.id})));
+    // A previous request may have succeeded just before a reload or timeout.
+    // Do not create the same mod twice when the owner resumes this saved draft.
+    const previous=check(await modDbWithTimeout(DB.from('mods')
+      .select('id').eq('author_id',S.u.id).eq('file_path',file_path).limit(1)));
+    if(!previous?.length){
+      check(await modDbWithTimeout(DB.from('mods').insert({...data,author_id:S.u.id})));
+    }
   }
   modUploadProgress(f,100,adminEdit?'Saqlandi!':'Adminga yuborildi!','Yuklash yakunlandi.');
   if(mwDraftActive(f)){
