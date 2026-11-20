@@ -2132,6 +2132,14 @@ body:before,.hero:after{display:none!important}
 #modForm .mw-mod-upload-progress progress::-moz-progress-bar{background:#e6b85b;border-radius:9px}
 #modForm .mw-mod-upload-progress p{font-size:12px;color:#dfc9a3;margin:5px 0 0}
 
+
+/* Only the Minecraft World mod draft controls. */
+#mwSavedModDrafts{padding:12px;margin:10px 0 18px;background:#2a2118;border:1px solid #876643;border-radius:13px}
+#mwSavedModDrafts .mw-draft-heading{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px}
+#mwSavedModDrafts .mw-draft-row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 0;border-top:1px solid #ffffff1b}
+#mwSavedModDrafts .mw-draft-row .linkbtn{flex:1;text-align:left}
+#mwSavedModDrafts small{color:var(--muted)}
+
 </style>
 </head>
 <body>
@@ -3965,6 +3973,206 @@ document.addEventListener('change',event=>{
   }
 },true);
 
+
+/* Unfinished mod drafts stay in browser IndexedDB until the owner deletes them. */
+const MW_DRAFT_DB='mw-mod-drafts-v1';
+let mwDraftOpen=null, mwDraftTimer=null, mwDraftRestoring=false;
+function mwDraftDatabase(){
+  if(!('indexedDB' in window))return Promise.reject(Error('Brauzer fayllarni saqlashni qo‘llamaydi'));
+  if(!mwDraftOpen)mwDraftOpen=new Promise((resolve,reject)=>{
+    const request=indexedDB.open(MW_DRAFT_DB,1);
+    request.onupgradeneeded=()=>{
+      const db=request.result;
+      if(!db.objectStoreNames.contains('drafts'))db.createObjectStore('drafts',{keyPath:'key'});
+    };
+    request.onsuccess=()=>resolve(request.result);
+    request.onerror=()=>reject(request.error)
+  }).catch(error=>{mwDraftOpen=null;throw error});
+  return mwDraftOpen
+}
+async function mwDraftTx(mode,operation){
+  const db=await mwDraftDatabase();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction('drafts',mode),store=tx.objectStore('drafts');
+    const request=operation(store);
+    let value;
+    request.onsuccess=()=>{value=request.result};
+    tx.oncomplete=()=>resolve(value);
+    tx.onerror=()=>reject(tx.error||Error('Qoralama saqlanmadi'));
+    tx.onabort=()=>reject(tx.error||Error('Qoralama saqlanmadi'))
+  })
+}
+function mwDraftKey(id){return S.u?.id+':'+id}
+async function mwDraftRead(id){return mwDraftTx('readonly',store=>store.get(mwDraftKey(id)))}
+async function mwDraftList(){
+  const rows=await mwDraftTx('readonly',store=>store.getAll());
+  return rows.filter(row=>row.owner===S.u?.id).sort((a,b)=>b.updated-a.updated)
+}
+async function mwDraftDelete(id){return mwDraftTx('readwrite',store=>store.delete(mwDraftKey(id)))}
+function mwDraftActive(form){return form&&form.id==='modForm'&&form.dataset.admin!=='true'&&!form.dataset.id&&form.dataset.draftId}
+async function mwDraftSave(form){
+  if(!mwDraftActive(form)||mwDraftRestoring||!S.u)return;
+  const previous=await mwDraftRead(form.dataset.draftId);
+  const fields={},langs={};
+  for(const [name,value] of new FormData(form).entries()){
+    if(name==='image'||name==='file')continue;
+    fields[name]=String(value)
+  }
+  for(const lang of ['uz','ru','en'])
+    langs[lang]=form.querySelector('[data-mod-lang="'+lang+'"]')?.getAttribute('aria-pressed')==='true';
+  const image=form.querySelector('[name="image"]')?.files?.[0];
+  const file=form.querySelector('[name="file"]')?.files?.[0];
+  const row={
+    key:mwDraftKey(form.dataset.draftId),owner:S.u.id,id:form.dataset.draftId,
+    updated:Date.now(),fields,langs,
+    image:image||previous?.image||null,
+    file:file||previous?.file||null,
+    cover_path:form.dataset.coverPath||previous?.cover_path||'',
+    file_path:form.dataset.filePath||previous?.file_path||'',
+    state:form.dataset.draftState||'draft'
+  };
+  await mwDraftTx('readwrite',store=>store.put(row));
+  return row
+}
+function mwDraftSchedule(form){
+  if(!mwDraftActive(form)||mwDraftRestoring)return;
+  clearTimeout(mwDraftTimer);
+  mwDraftTimer=setTimeout(()=>{
+    mwDraftSave(form).catch(error=>toast('Qoralama saqlanmadi: '+error.message))
+  },350)
+}
+function mwDraftFilePreview(input,file){
+  if(!input||!file)return;
+  const label=document.getElementById('pick-label-'+input.name);
+  if(label)label.textContent=file.name;
+  const tile=input.closest('.mw-upload-tile');
+  const small=tile?.querySelector('.mw-upload-details small');
+  if(small)small.textContent='Saqlangan · '+Math.max(1,Math.ceil(file.size/1024))+' KB';
+  const img=tile?.querySelector('.mw-upload-preview');
+  if(img&&file.type.startsWith('image/')){
+    const url=URL.createObjectURL(file);
+    img.onload=()=>URL.revokeObjectURL(url);
+    img.src=url;img.hidden=false
+  }
+}
+async function mwDraftRestore(form,id){
+  const row=await mwDraftRead(id);
+  if(!row||!form.isConnected||row.owner!==S.u?.id)return;
+  mwDraftRestoring=true;
+  try{
+    form.dataset.coverPath=row.cover_path||'';
+    form.dataset.filePath=row.file_path||'';
+    form.dataset.draftState='draft';
+    for(const lang of ['uz','ru','en']){
+      const chosen=Boolean(row.langs?.[lang]);
+      const button=form.querySelector('[data-mod-lang="'+lang+'"]');
+      const section=form.querySelector('[data-mod-lang-section="'+lang+'"]');
+      if(button){button.setAttribute('aria-pressed',String(chosen));button.classList.toggle('on',chosen)}
+      if(section){
+        section.hidden=!chosen;
+        section.querySelectorAll('input,textarea').forEach(field=>{
+          field.disabled=!chosen;field.required=chosen
+        })
+      }
+    }
+    for(const [name,value] of Object.entries(row.fields||{})){
+      const target=form.elements.namedItem(name);
+      if(target&&'value' in target)target.value=value
+    }
+    for(const kind of ['category','version']){
+      const input=form.querySelector('[name="'+kind+'"]');
+      const label=input?.closest('.mw-mod-choice-field')?.querySelector('.mw-mod-choice-text');
+      if(label)label.textContent=kind==='category'?categoryName(input.value):input.value
+    }
+    for(const kind of ['image','file']){
+      const input=form.querySelector('[name="'+kind+'"]');
+      if(input&&row[kind]){
+        const transfer=new DataTransfer();
+        transfer.items.add(row[kind]);input.files=transfer.files;
+        mwDraftFilePreview(input,row[kind])
+      }
+    }
+    if(row.cover_path||row.file_path){
+      modUploadProgress(form,0,'Saqlangan qoralama','Avval yuborilgan fayllar qayta yuborilmaydi. Davom ettirishni bosing.');
+    }
+  }finally{mwDraftRestoring=false}
+}
+async function mwDraftRenderList(){
+  if(!S.u)return;
+  const target=document.getElementById('mwSavedModDrafts');
+  if(!target)return;
+  try{
+    const drafts=await mwDraftList();
+    if(!target.isConnected)return;
+    target.innerHTML='<div class="mw-draft-heading"><strong>Saqlangan modlar ('+drafts.length+')</strong>'+
+      '<button type="button" class="btn small ghost" data-new-draft>+ Yangi mod</button></div>'+
+      (drafts.length?drafts.map(d=>{
+        const name=d.fields?.title_uz||d.fields?.title_en||d.fields?.title_ru||'Nomsiz mod';
+        return '<div class="mw-draft-row"><button type="button" class="linkbtn" data-open-draft="'+e(d.id)+'">'+
+          e(name)+' <small>· '+(d.state==='uploading'?'Yuklash tugallanmagan':'Saqlangan')+'</small></button>'+
+          '<button type="button" class="btn small danger" data-delete-draft="'+e(d.id)+'">O‘chirish</button></div>'
+      }).join(''):'<p class="muted mini">Hali qoralama yo‘q.</p>')
+  }catch(error){
+    target.textContent='Qoralamalarni ochib bo‘lmadi: '+error.message
+  }
+}
+async function mwDraftOpenForm(id){
+  const form=document.getElementById('modForm');
+  if(!form||!S.u)return;
+  if(mwDraftActive(form))await mwDraftSave(form);
+  const holder=document.getElementById('mwModDraftForm');
+  if(!holder)return;
+  holder.innerHTML=modFields();
+  const next=holder.querySelector('#modForm');
+  next.dataset.draftId=id;
+  await mwDraftRestore(next,id);
+}
+function mwDraftStart(){
+  const form=document.getElementById('modForm');
+  if(!form||!S.u||form.dataset.draftId)return;
+  mwDraftList().then(async drafts=>{
+    if(!form.isConnected||form.dataset.draftId)return;
+    const id=drafts[0]?.id||crypto.randomUUID();
+    form.dataset.draftId=id;
+    if(drafts.length)await mwDraftRestore(form,id);
+    mwDraftRenderList()
+  }).catch(error=>toast('Qoralamalar uchun xotira ochilmadi: '+error.message))
+}
+document.addEventListener('input',event=>{
+  const form=event.target.closest?.('#modForm');
+  if(form)mwDraftSchedule(form)
+});
+document.addEventListener('change',event=>{
+  const form=event.target.closest?.('#modForm');
+  if(form)mwDraftSchedule(form)
+});
+document.addEventListener('click',async event=>{
+  const open=event.target.closest?.('[data-open-draft]');
+  const remove=event.target.closest?.('[data-delete-draft]');
+  const fresh=event.target.closest?.('[data-new-draft]');
+  if(open){
+    await mwDraftOpenForm(open.dataset.openDraft);
+    mwDraftRenderList()
+  }else if(remove){
+    if(!confirm('Bu saqlangan mod qoralamasini o‘chirasizmi?'))return;
+    await mwDraftDelete(remove.dataset.deleteDraft);
+    const form=document.getElementById('modForm');
+    if(form?.dataset.draftId===remove.dataset.deleteDraft){
+      form.dataset.draftId='';
+      await mwDraftOpenForm(crypto.randomUUID())
+    }
+    mwDraftRenderList()
+  }else if(fresh){
+    await mwDraftOpenForm(crypto.randomUUID());
+    mwDraftRenderList()
+  }
+});
+window.addEventListener('pagehide',()=>{
+  clearTimeout(mwDraftTimer);
+  const form=document.getElementById('modForm');
+  if(mwDraftActive(form))mwDraftSave(form).catch(console.warn)
+});
+
 function create(){
   if(!requireUser()){
     $('#app').innerHTML=blank();
@@ -3973,8 +4181,10 @@ function create(){
   $('#app').innerHTML=`
     <div class="banner">
       <h2>${ico('upload',26)} ${t('addMod')}</h2>
-      ${modFields()}
-    </div>`
+      <section id="mwSavedModDrafts"></section>
+      <div id="mwModDraftForm">${modFields()}</div>
+    </div>`;
+  mwDraftStart()
 }
 
 function modUploadProgress(form,percent,stage,hint){
@@ -4047,6 +4257,11 @@ async function modDbWithTimeout(promise){
 }
 
 async function saveMod(f){
+  if(mwDraftActive(f)){
+    clearTimeout(mwDraftTimer);
+    f.dataset.draftState='uploading';
+    await mwDraftSave(f);
+  }
   modUploadProgress(f,0,'Yuborilmoqda...','Ma’lumotlar tekshirilmoqda.');
   if(!requireUser())return;
   const adminEdit=f.dataset.admin==='true';
@@ -4075,23 +4290,27 @@ async function saveMod(f){
   }
   const primary=['uz','ru','en'].find(lang=>titles[lang]);
   if(!primary)throw Error('Kamida bitta tilni tanlang va to‘ldiring');
-  let cover_path=m?.cover_path||'',file_path=m?.file_path||'';
+  let cover_path=m?.cover_path||f.dataset.coverPath||'',file_path=m?.file_path||f.dataset.filePath||'';
   const bytesTotal=(image?.size||0)+(file?.size||0);
   let bytesDone=0;
   const showTransfer=(loaded,total,label)=>{
     const percent=bytesTotal?95*(bytesDone+loaded)/bytesTotal:95;
     modUploadProgress(f,Math.min(95,percent),label,'Yuborilmoqda... Iltimos, kuting.');
   };
-  if(image?.size){
+  if(image?.size&&!cover_path){
     modUploadProgress(f,0,'Rasm yuklanmoqda...','Yuborilmoqda... Iltimos, kuting.');
     cover_path=await modUploadWithProgress('covers',image,(loaded,total)=>showTransfer(loaded,total,'Rasm yuklanmoqda...'));
+    f.dataset.coverPath=cover_path;
     bytesDone+=image.size;
-  }
-  if(file?.size){
+    if(mwDraftActive(f))await mwDraftSave(f);
+  }else if(image?.size){bytesDone+=image.size}
+  if(file?.size&&!file_path){
     modUploadProgress(f,bytesTotal?95*bytesDone/bytesTotal:0,'Fayl yuklanmoqda...','Yuborilmoqda... Iltimos, kuting.');
     file_path=await modUploadWithProgress('mod-files',file,(loaded,total)=>showTransfer(loaded,total,'Fayl yuklanmoqda...'));
+    f.dataset.filePath=file_path;
     bytesDone+=file.size;
-  }
+    if(mwDraftActive(f))await mwDraftSave(f);
+  }else if(file?.size){bytesDone+=file.size}
   if(!cover_path||!file_path)throw Error('Rasm va fayl kerak');
   modUploadProgress(f,99,'Adminga yuborilmoqda...','Fayllar yuklandi. Server tasdig‘i kutilmoqda.');
   let data={
@@ -4112,6 +4331,10 @@ async function saveMod(f){
     check(await modDbWithTimeout(DB.from('mods').insert({...data,author_id:S.u.id})));
   }
   modUploadProgress(f,100,adminEdit?'Saqlandi!':'Adminga yuborildi!','Yuklash yakunlandi.');
+  if(mwDraftActive(f)){
+    clearTimeout(mwDraftTimer);
+    await mwDraftDelete(f.dataset.draftId);
+  }
   toast(adminEdit?'Mod tahrirlandi':'Mod adminga tekshirish uchun yuborildi!');
   close();
   invalidateProfileData();feedLoadedAt=0;feedLoaded=false;
@@ -5882,6 +6105,8 @@ window.addEventListener('submit',async ev=>{
     toast(err.code==='23505'?'Bu username band':err.message)
   }finally{
     if(f.id==='modForm'&&f.isConnected){
+      f.dataset.draftState='draft';
+      if(mwDraftActive(f))mwDraftSave(f).catch(console.warn);
       const progress=f.querySelector('.mw-mod-upload-progress');
       if(button)button.textContent=progress?.querySelector('[data-upload-stage]')?.textContent==='Yuborishda xatolik'?
         'Qayta yuborish':(f.dataset.admin==='true'?'O‘zgarishlarni saqlash':'Yuborish');
