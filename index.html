@@ -2121,6 +2121,17 @@ body:before,.hero:after{display:none!important}
   margin-top:14px!important;
 }
 
+
+/* Mod publishing progress only; preserves all other form styles. */
+#modForm .mw-mod-upload-progress{margin-top:10px;padding:13px 14px;border:1px solid #c19b63a3;background:#30261b;border-radius:12px}
+#modForm .mw-mod-upload-progress[hidden]{display:none!important}
+#modForm .mw-mod-upload-progress .mw-upload-progress-top{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:750}
+#modForm .mw-mod-upload-progress progress{appearance:none;display:block;width:100%;height:12px;border:0;border-radius:9px;overflow:hidden;background:#5a4832;margin:10px 0}
+#modForm .mw-mod-upload-progress progress::-webkit-progress-bar{background:#5a4832;border-radius:9px}
+#modForm .mw-mod-upload-progress progress::-webkit-progress-value{background:#e6b85b;border-radius:9px}
+#modForm .mw-mod-upload-progress progress::-moz-progress-bar{background:#e6b85b;border-radius:9px}
+#modForm .mw-mod-upload-progress p{font-size:12px;color:#dfc9a3;margin:5px 0 0}
+
 </style>
 </head>
 <body>
@@ -3847,6 +3858,11 @@ function modFields(m,adminEdit=false){
         'Mod admin tasdig‘idan keyin ko‘rinadi. Tahrirlangan mod qayta tekshiriladi.'}
     </div>
     <button class="btn mw-mod-submit" type="submit">${adminEdit?'O‘zgarishlarni saqlash':t('send')}</button>
+    <div class="mw-mod-upload-progress" hidden role="status" aria-live="polite">
+      <div class="mw-upload-progress-top"><span data-upload-stage>Yuborishga tayyorlanmoqda...</span><strong data-upload-percent>0%</strong></div>
+      <progress max="100" value="0"></progress>
+      <p data-upload-hint>Iltimos, sahifani yopmang.</p>
+    </div>
   </form>`
 }
 
@@ -3960,7 +3976,76 @@ function create(){
       ${modFields()}
     </div>`
 }
+
+function modUploadProgress(form,percent,stage,hint){
+  const box=form.querySelector('.mw-mod-upload-progress');
+  if(!box)return;
+  box.hidden=false;
+  const value=Math.min(100,Math.max(0,Math.floor(percent)));
+  box.querySelector('progress').value=value;
+  box.querySelector('[data-upload-percent]').textContent=value+'%';
+  box.querySelector('[data-upload-stage]').textContent=stage;
+  box.querySelector('[data-upload-hint]').textContent=hint||'Iltimos, sahifani yopmang.';
+}
+function modUploadReset(form){
+  const box=form.querySelector('.mw-mod-upload-progress');
+  if(box)box.hidden=true;
+  const button=form.querySelector('.mw-mod-submit');
+  if(button)button.textContent=form.dataset.admin==='true'?'O‘zgarishlarni saqlash':'Yuborish';
+}
+// XHR provides actual transfer byte progress; the final 5% is reserved for database confirmation.
+async function modUploadWithProgress(bucket,file,onProgress){
+  if(!file?.size)throw Error('Fayl tanlanmagan');
+  if(file.size>2097152)throw Error('Fayl 2 MB dan katta');
+  const ext=bucket==='covers'?
+    ({'image/png':'png','image/jpeg':'jpg','image/webp':'webp','image/gif':'gif'}[file.type]):
+    file.name.split('.').pop().toLowerCase();
+  if(bucket==='covers'&&!ext)throw Error('Rasm turi noto‘g‘ri');
+  if(bucket==='mod-files'&&!['zip','jar','mcpack','mcaddon','mcworld','rar','7z'].includes(ext))
+    throw Error('Noto‘g‘ri mod fayl turi');
+  const sessionResult=await DB.auth.getSession();
+  if(sessionResult.error)throw sessionResult.error;
+  const token=sessionResult.data?.session?.access_token;
+  if(!token)throw Error('Sessiya tugagan. Qayta kiring.');
+  const path=S.u.id+'/'+crypto.randomUUID()+'.'+ext;
+  const endpoint='https://ruovdgyfcucspffrvijh.supabase.co/storage/v1/object/'+
+    encodeURIComponent(bucket)+'/'+path.split('/').map(encodeURIComponent).join('/');
+  return await new Promise((resolve,reject)=>{
+    const request=new XMLHttpRequest();
+    request.open('POST',endpoint,true);
+    request.timeout=60000;
+    request.setRequestHeader('Authorization','Bearer '+token);
+    request.setRequestHeader('apikey','sb_publishable_L3WnUsSn6GBh16nqZTxisQ_eJu8uIrw');
+    request.setRequestHeader('Content-Type',file.type||'application/octet-stream');
+    request.setRequestHeader('x-upsert','false');
+    request.upload.onprogress=event=>{
+      if(event.lengthComputable)onProgress(Math.min(file.size,event.loaded),file.size)
+    };
+    request.onerror=()=>reject(Error('Internet aloqasi uzildi. Qayta tekshiring.'));
+    request.ontimeout=()=>reject(Error('Server 60 soniya ichida javob bermadi. Internetni tekshiring.'));
+    request.onload=()=>{
+      if(request.status>=200&&request.status<300){onProgress(file.size,file.size);resolve(path);return}
+      let message='';
+      try{
+        const body=JSON.parse(request.responseText||'{}');
+        message=body.message||body.error||body.msg||''
+      }catch(error){}
+      reject(Error(message||('Fayl serverga yuklanmadi (HTTP '+request.status+').'))
+    };
+    request.send(file)
+  })
+}
+async function modDbWithTimeout(promise){
+  let timeoutId;
+  try{
+    return await Promise.race([promise,new Promise((_,reject)=>{
+      timeoutId=setTimeout(()=>reject(Error('Server javobi kechikdi. Qayta yuborishdan oldin profilingizda mod bor-yo‘qligini tekshiring.')),35000)
+    })])
+  }finally{clearTimeout(timeoutId)}
+}
+
 async function saveMod(f){
+  modUploadProgress(f,0,'Yuborilmoqda...','Ma’lumotlar tekshirilmoqda.');
   if(!requireUser())return;
   const adminEdit=f.dataset.admin==='true';
   if(adminEdit && (!S.me?.is_admin||S.me.username!=='admin'))
@@ -3989,14 +4074,24 @@ async function saveMod(f){
   const primary=['uz','ru','en'].find(lang=>titles[lang]);
   if(!primary)throw Error('Kamida bitta tilni tanlang va to‘ldiring');
   let cover_path=m?.cover_path||'',file_path=m?.file_path||'';
+  const bytesTotal=(image?.size||0)+(file?.size||0);
+  let bytesDone=0;
+  const showTransfer=(loaded,total,label)=>{
+    const percent=bytesTotal?95*(bytesDone+loaded)/bytesTotal:95;
+    modUploadProgress(f,Math.min(95,percent),label,'Yuborilmoqda... Iltimos, kuting.');
+  };
   if(image?.size){
-    cover_path=await upload('covers',image,2097152,
-      ['image/jpeg','image/png','image/webp','image/gif'])
+    modUploadProgress(f,0,'Rasm yuklanmoqda...','Yuborilmoqda... Iltimos, kuting.');
+    cover_path=await modUploadWithProgress('covers',image,(loaded,total)=>showTransfer(loaded,total,'Rasm yuklanmoqda...'));
+    bytesDone+=image.size;
   }
   if(file?.size){
-    file_path=await upload('mod-files',file,2097152)
+    modUploadProgress(f,bytesTotal?95*bytesDone/bytesTotal:0,'Fayl yuklanmoqda...','Yuborilmoqda... Iltimos, kuting.');
+    file_path=await modUploadWithProgress('mod-files',file,(loaded,total)=>showTransfer(loaded,total,'Fayl yuklanmoqda...'));
+    bytesDone+=file.size;
   }
   if(!cover_path||!file_path)throw Error('Rasm va fayl kerak');
+  modUploadProgress(f,99,'Adminga yuborilmoqda...','Fayllar yuklandi. Server tasdig‘i kutilmoqda.');
   let data={
     title:titles[primary],description:descs[primary],
     title_uz:titles.uz||null,description_uz:descs.uz||null,
@@ -4009,12 +4104,13 @@ async function saveMod(f){
     let query=DB.from('mods').update(data).eq('id',id);
     if(adminEdit)query=query.eq('status','pending');
     else query=query.eq('author_id',S.u.id);
-    const updated=check(await query.select('id'));
+    const updated=check(await modDbWithTimeout(query.select('id')));
     if(!updated?.length)throw Error('Mod yangilanmadi. Sahifani qayta oching');
   }else{
-    check(await DB.from('mods').insert({...data,author_id:S.u.id}));
+    check(await modDbWithTimeout(DB.from('mods').insert({...data,author_id:S.u.id})));
   }
-  toast(adminEdit?'Mod tahrirlandi':t('pending'));
+  modUploadProgress(f,100,adminEdit?'Saqlandi!':'Adminga yuborildi!','Yuklash yakunlandi.');
+  toast(adminEdit?'Mod tahrirlandi':'Mod adminga tekshirish uchun yuborildi!');
   close();
   invalidateProfileData();feedLoadedAt=0;feedLoaded=false;
   if(adminEdit)await adminModDetail(id);
@@ -5657,7 +5753,10 @@ window.addEventListener('submit',async ev=>{
   try{
     if(f.id==='authForm')await submitAuth(f);
     else if(f.id==='editProfileForm')await saveProfile(f);
-    else if(f.id==='modForm')await saveMod(f);
+    else if(f.id==='modForm'){
+      if(button)button.textContent='Yuborilmoqda... 0%';
+      await saveMod(f);
+    }
     else if(f.id==='inviteForm'){
       if(!requireUser())return;
       let x=new FormData(f);
@@ -5773,8 +5872,18 @@ window.addEventListener('submit',async ev=>{
     }
   }catch(err){
     console.error(err);
+    if(f.id==='modForm'){
+      modUploadProgress(f,
+        Number(f.querySelector('.mw-mod-upload-progress progress')?.value||0),
+        'Yuborishda xatolik',err.message||'Internet yoki serverda muammo.');
+    }
     toast(err.code==='23505'?'Bu username band':err.message)
   }finally{
+    if(f.id==='modForm'&&f.isConnected){
+      const progress=f.querySelector('.mw-mod-upload-progress');
+      if(button)button.textContent=progress?.querySelector('[data-upload-stage]')?.textContent==='Yuborishda xatolik'?
+        'Qayta yuborish':(f.dataset.admin==='true'?'O‘zgarishlarni saqlash':'Yuborish');
+    }
     if(button)button.disabled=false
   }
 });
