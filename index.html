@@ -4265,7 +4265,7 @@ async function modUploadWithProgress(bucket,file,onProgress){
         const body=JSON.parse(request.responseText||'{}');
         message=body.message||body.error||body.msg||''
       }catch(error){}
-      reject(Error(message||('Fayl serverga yuklanmadi (HTTP '+request.status+').'))
+      reject(new Error(message || ('Fayl serverga yuklanmadi (HTTP ' + request.status + ').')))
     };
     request.send(file)
   })
