@@ -2068,6 +2068,20 @@ body:before,.hero:after{display:none!important}
 @keyframes mwSeasonalFall{0%{opacity:0;transform:translate3d(-15px,-20px,0) rotate(0deg)}
  10%{opacity:.75}80%{opacity:.8}100%{opacity:0;transform:translate3d(60px,600px,0) rotate(280deg)}}
 @media(prefers-reduced-motion:reduce){#app.mw11-chat-page #msgs .mw-theme-particle{animation:none!important;display:none}}
+
+/* Profile avatar cropper: scoped to the avatar selection dialog only. */
+.mw-avatar-crop-overlay{position:fixed;inset:0;z-index:150;background:#000d;display:grid;place-items:center;padding:16px}
+.mw-avatar-crop-panel{width:min(420px,100%);max-height:95dvh;overflow:auto;background:#1d2b22;color:var(--text);border:1px solid #ffffff36;border-radius:22px;padding:20px;text-align:center;box-shadow:0 20px 70px #000b}
+.mw-avatar-crop-panel h3{margin:0 0 7px}
+.mw-avatar-crop-panel p{margin:0 0 15px;font-size:13px;color:var(--muted)}
+.mw-avatar-crop-circle{width:min(300px,75vw);height:min(300px,75vw);margin:0 auto 18px;border-radius:50%;overflow:hidden;border:3px solid var(--orange);touch-action:none;cursor:grab;background:#142018;box-shadow:0 0 0 6px #ffffff11}
+.mw-avatar-crop-circle:active{cursor:grabbing}
+.mw-avatar-crop-circle canvas{display:block;width:100%;height:100%}
+.mw-avatar-crop-zoom{display:flex;align-items:center;gap:12px;margin:9px 5px 21px}
+.mw-avatar-crop-zoom input{width:100%;accent-color:var(--orange)}
+.mw-avatar-crop-actions{display:flex;gap:10px}
+.mw-avatar-crop-actions button{flex:1;min-height:46px}
+
 </style>
 </head>
 <body>
@@ -3537,7 +3551,119 @@ async function upload(bucket,file,max,types=null){
   }));
   return path
 }
+
+function showAvatarCrop(file,input){
+  if(!file||!file.type.startsWith('image/')){toast('Rasm faylini tanlang');input.value='';return}
+  const oldFile=avatarCroppedFile;
+  const url=URL.createObjectURL(file);
+  const img=new Image();
+  img.onerror=()=>{URL.revokeObjectURL(url);input.value='';toast('Rasmni ochib bo‘lmadi')};
+  img.onload=()=>{
+    URL.revokeObjectURL(url);
+    const overlay=document.createElement('div');
+    overlay.className='mw-avatar-crop-overlay';
+    overlay.setAttribute('role','dialog');
+    overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-label','Profil rasmini moslash');
+    overlay.innerHTML='<div class="mw-avatar-crop-panel"><h3>Profil rasmini moslash</h3>'+
+      '<p>Rasmni suring yoki ikki barmoq bilan kattalashtiring. Doira ichida qanday ko‘rinsa, profilda ham shunday bo‘ladi.</p>'+
+      '<div class="mw-avatar-crop-circle"><canvas width="320" height="320" aria-label="Dumaloq avatar oldindan ko‘rinishi"></canvas></div>'+
+      '<div class="mw-avatar-crop-zoom"><span>−</span><input type="range" min="1" max="4" step=".01" value="1.15" aria-label="Rasmni kattalashtirish"><span>+</span></div>'+
+      '<div class="mw-avatar-crop-actions"><button type="button" class="btn ghost" data-avatar-cancel>Bekor qilish</button>'+
+      '<button type="button" class="btn" data-avatar-done>Tayyor</button></div></div>';
+    document.body.appendChild(overlay);
+    const canvas=overlay.querySelector('canvas'),ctx=canvas.getContext('2d');
+    const slider=overlay.querySelector('input[type="range"]');
+    const area=overlay.querySelector('.mw-avatar-crop-circle');
+    const pointers=new Map();
+    const base=Math.max(320/img.naturalWidth,320/img.naturalHeight);
+    let zoom=1.15,dx=0,dy=0,pinch=null,closed=false;
+    function constrain(){
+      const w=img.naturalWidth*base*zoom,h=img.naturalHeight*base*zoom;
+      dx=Math.max(-(w-320)/2,Math.min((w-320)/2,dx));
+      dy=Math.max(-(h-320)/2,Math.min((h-320)/2,dy))
+    }
+    function draw(target=ctx,size=320){
+      const ratio=size/320;
+      target.clearRect(0,0,size,size);
+      target.drawImage(img,(160+dx-img.naturalWidth*base*zoom/2)*ratio,
+        (160+dy-img.naturalHeight*base*zoom/2)*ratio,
+        img.naturalWidth*base*zoom*ratio,img.naturalHeight*base*zoom*ratio)
+    }
+    function setZoom(z){
+      zoom=Math.max(1,Math.min(4,z));slider.value=String(zoom);constrain();draw()
+    }
+    function restorePrevious(){
+      if(oldFile){const dt=new DataTransfer();dt.items.add(oldFile);input.files=dt.files}
+      else input.value=''
+    }
+    function cancel(){if(closed)return;closed=true;restorePrevious();overlay.remove()}
+    slider.addEventListener('input',()=>setZoom(Number(slider.value)));
+    area.addEventListener('pointerdown',event=>{
+      event.preventDefault();area.setPointerCapture(event.pointerId);
+      pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
+      if(pointers.size===2){
+        const pts=[...pointers.values()];
+        pinch={distance:Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y),zoom}
+      }
+    });
+    area.addEventListener('pointermove',event=>{
+      if(!pointers.has(event.pointerId))return;
+      event.preventDefault();
+      const last=pointers.get(event.pointerId);
+      pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
+      if(pointers.size===2){
+        const pts=[...pointers.values()];
+        const d=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+        if(pinch&&pinch.distance>0)setZoom(pinch.zoom*d/pinch.distance)
+      }else{
+        const scale=320/area.getBoundingClientRect().width;
+        dx+=(event.clientX-last.x)*scale;
+        dy+=(event.clientY-last.y)*scale;
+        constrain();draw()
+      }
+    });
+    const stop=event=>{
+      pointers.delete(event.pointerId);
+      if(pointers.size<2)pinch=null
+    };
+    area.addEventListener('pointerup',stop);
+    area.addEventListener('pointercancel',stop);
+    overlay.querySelector('[data-avatar-cancel]').addEventListener('click',cancel);
+    overlay.addEventListener('click',event=>{if(event.target===overlay)cancel()});
+    overlay.querySelector('[data-avatar-done]').addEventListener('click',()=>{
+      if(closed)return;
+      const output=document.createElement('canvas');
+      output.width=512;output.height=512;
+      draw(output.getContext('2d'),512);
+      output.toBlob(blob=>{
+        if(!blob){toast('Rasmni saqlab bo‘lmadi');return}
+        if(blob.size>2097152){toast('Rasm 2 MB dan katta');return}
+        const cropped=new File([blob],'avatar.jpg',{type:'image/jpeg'});
+        const dt=new DataTransfer();dt.items.add(cropped);input.files=dt.files;
+        avatarCroppedFile=cropped;
+        const preview=document.getElementById('avatarPreview');
+        if(preview){
+          const previewUrl=URL.createObjectURL(cropped);
+          const previous=preview.querySelector('img');
+          preview.innerHTML='';
+          const thumb=document.createElement('img');
+          thumb.alt='Profil rasmi';thumb.className='avatar-thumb';
+          thumb.src=previewUrl;
+          thumb.onload=()=>URL.revokeObjectURL(previewUrl);
+          preview.appendChild(thumb)
+        }
+        closed=true;overlay.remove()
+      },'image/jpeg',.88)
+    });
+    constrain();draw()
+  };
+  img.src=url
+}
+
+let avatarCroppedFile=null;
 function editProfile(){
+  avatarCroppedFile=null;
   if(!requireUser())return;
   dialog(t('editProfile'),`
     <form id="editProfileForm" class="mw-profile-edit-form">
@@ -5456,15 +5582,7 @@ window.addEventListener('change',async ev=>{
         reader.readAsDataURL(x.files[0]);
       }
     }
-    if(x.name==='avatar'&&x.files?.[0]?.type.startsWith('image/')){
-      const preview=$('#avatarPreview');
-      if(preview){
-        const reader=new FileReader();
-        reader.onload=()=>{if(preview.isConnected)
-          preview.innerHTML='<img src="'+reader.result+'" alt="Avatar" class="avatar-thumb">';};
-        reader.readAsDataURL(x.files[0]);
-      }
-    }
+    if(x.name==='avatar'&&x.files?.[0])showAvatarCrop(x.files[0],x);
   }
   if(ev.target.id==='category'){
     S.category=ev.target.value;
