@@ -4153,7 +4153,6 @@ function mwDraftStart(){
     const id=drafts[0]?.id||crypto.randomUUID();
     form.dataset.draftId=id;
     if(drafts.length)await mwDraftRestore(form,id);
-    mwDraftRenderList()
   }).catch(error=>toast('Qoralamalar uchun xotira ochilmadi: '+error.message))
 }
 document.addEventListener('input',event=>{
@@ -4204,7 +4203,6 @@ function create(){
   $('#app').innerHTML=`
     <div class="banner">
       <h2>${ico('upload',26)} ${t('addMod')}</h2>
-      <section id="mwSavedModDrafts"></section>
       <div id="mwModDraftForm">${modFields()}</div>
     </div>`;
   mwDraftStart()
