@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#102237">
 <title>Minecraft World 2.0 | Mods & Community</title>
 <link rel="icon" type="image/x-icon" sizes="16x16 32x32 48x48 64x64" href="./favicon.ico?v=21"><link rel="apple-touch-icon" href="./assets/winter-logo-192.png?v=21">
+<link rel="preconnect" href="https://ruovdgyfcucspffrvijh.supabase.co" crossorigin>
 <link rel="manifest" href="./manifest.webmanifest">
 <script src="https://telegram.org/js/telegram-web-app.js?65" defer></script>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2369,6 +2370,21 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
 #exploreMods .sort-tabs button .svg-icon { color:inherit!important; }
 #exploreMods :is(.autumn-heading h2,.search-wrap) .svg-icon { color:#a4daf9!important; }
 #exploreMods .card .art, #exploreMods .card .art img { background-color:#0c1b2c!important; }
+.activity-list,.settings-stack { display:grid; gap:12px; }
+.activity-card { display:flex; align-items:flex-start; gap:12px; padding:14px; border:1px solid #385772; border-radius:14px; color:#edf7ff; background:#12263b; }
+.activity-card.unread { border-inline-start:3px solid #8dd4ff; }
+.activity-card>div { min-width:0; overflow-wrap:anywhere; }
+.activity-card p,.activity-card small { margin:3px 0; display:block; color:#bfd2e2; }
+.activity-card .btn { margin-top:7px; }
+.activity-icon { flex:none; display:grid; place-items:center; width:36px; height:36px; border-radius:50%; color:#a7dfff; background:#24465f; }
+#toast:has(.activity-card) { padding:0!important; border:0!important; pointer-events:auto; }
+@media(prefers-reduced-motion:no-preference){ #toast .activity-icon { animation:notice-arrive .45s ease-out; } @keyframes notice-arrive { from {opacity:0;transform:translateY(4px) scale(.82)} to {opacity:1;transform:none} } }
+#push-offer {position:fixed;z-index:150;bottom:calc(85px + env(safe-area-inset-bottom));right:12px;width:min(360px,calc(100vw - 24px));padding:16px;border-radius:16px;background:#162e46;color:#eff8ff;border:1px solid #6389a5;box-shadow:0 8px 28px #0006}
+#push-offer p {margin:6px 0;color:#c1d6e6}
+.settings-stack .settings-row { padding:14px 16px;border-radius:12px!important;border:1px solid #304f67!important;box-shadow:none!important; }
+.settings-stack h3 { margin:8px 0 0; color:#a8d9f8; font-size:.85rem; letter-spacing:.035em; }
+.settings-stack .settings-row b { display:inline-flex;align-items:center;gap:8px;color:#deeffa; }
+.settings-stack .settings-row .btn.ghost { border-radius:8px!important;box-shadow:none!important;font-weight:600; }
 </style>
 </head>
 <body>
@@ -3047,11 +3063,11 @@ function localModDesc(m){
   // Older uploads stored escaped line breaks as literal backslash-n.
   return String(description).replace(/\\r\\n|\\n|\\r/g,'\n');
 }
-function card(m,p,own=false){
+function card(m,p,own=false,priority=false){
   cacheMod(m);
   return `<article class="card clickable-mod" data-act="mod" data-id="${e(m.id)}">
     <div class="art" data-act="mod" data-id="${m.id}">
-      ${cover(m.cover_path)?`<img loading="lazy"
+      ${cover(m.cover_path)?`<img loading="${priority?'eager':'lazy'}" fetchpriority="${priority?'high':'auto'}" crossorigin="anonymous" decoding="async"
         src="${e(cover(m.cover_path))}" alt="">`:ico('package',58)}
       <span class="chip">${e(categoryName(m.category))}</span>
       ${m.status==='approved'?`<button class="quick-save ${S.savedIds?.has(m.id)?'saved':''}"
@@ -3370,7 +3386,7 @@ function filterMods(){
   const shown=result.slice(0,S.visibleMods||12);
   $('#resultsCount').textContent=result.length+' ta mod topildi';
   $('#modGrid').innerHTML=shown.length?
-    shown.map(m=>card(m,S.cache[m.author_id])).join(''):
+    shown.map((m,index)=>card(m,S.cache[m.author_id],false,index<4)).join(''):
     `<div class="empty wide-empty">${ico(view==='saved'?'bookmark':'package',32)}
     <b>${view==='saved'?'Hozircha saqlangan mod yo‘q':'Hech narsa topilmadi'}</b>
     <span>${view==='saved'?'Mod sahifasida Saqlash tugmasini bosing.':'Boshqa so‘z yoki kategoriya bilan qidiring.'}</span></div>`;
@@ -3781,6 +3797,7 @@ async function refreshUser(){
     S.listenUserId=S.u?.id||null;
     listen();
   }
+  syncPushDevice().catch(console.warn);
   notificationCount().catch(console.warn);
   if(S.u){
     worldPref().then(async pref=>{
@@ -5562,7 +5579,7 @@ async function notificationCount(){
   const uid=S.u.id;
   const [base,invites,owners]=await Promise.all([
     DB.from('notifications').select('id',{count:'exact',head:true})
-      .eq('user_id',uid).eq('is_read',false),
+      .eq('user_id',uid).neq('kind','message').eq('is_read',false),
     DB.from('mw_group_invitations').select('id',{count:'exact',head:true})
       .eq('recipient_id',uid).eq('status','pending'),
     pendingOwnerJoinCount(uid)
@@ -5630,7 +5647,7 @@ async function onIncomingWorld(msg){
   }
   if(!S.worldPref?.muted&&!window.MWV11?.isMuted?.('world')&&notificationEnabled()&&document.visibilityState==='hidden'&&
      'Notification'in window&&Notification.permission==='granted')
-    new Notification('Umumiy chat',{body:msg.body.slice(0,120)});
+    navigator.serviceWorker?.ready.then(reg=>reg.showNotification('Umumiy chat',{body:String(msg.body||'').slice(0,120)})).catch(console.warn);
 }
 function listen(){
   if(S.channel){DB.removeChannel(S.channel);S.channel=null}
@@ -5638,11 +5655,11 @@ function listen(){
   S.channel=DB.channel('world-'+S.u.id)
     .on('postgres_changes',{event:'INSERT',schema:'public',
       table:'notifications',filter:`user_id=eq.${S.u.id}`},p=>{
-      notificationCount();
-      if(notificationEnabled()&&!window.MWV11?.isMuted?.('u:'+p.new.actor_id))toast(p.new.title);
-      if(notificationEnabled()&&!window.MWV11?.isMuted?.('u:'+p.new.actor_id)&&document.visibilityState==='hidden'&&
-        'Notification'in window&&Notification.permission==='granted')
-        new Notification(p.new.title,{body:p.new.body});
+      if(p.new.kind==='message')return;
+      notificationCount().catch(console.warn);
+      if(notificationEnabled()&&document.visibilityState==='visible'){
+        showActivityToast(p.new).catch(console.warn);
+      }
     })
     .on('postgres_changes',{event:'INSERT',schema:'public',
       table:'mw_group_invitations',filter:`recipient_id=eq.${S.u.id}`},p=>{
@@ -5668,44 +5685,101 @@ function listen(){
       p=>{onIncomingWorld(p.new).catch(console.warn)})
     .subscribe();
 }
+function activityCard(n,people){
+  const actor=people[n.actor_id];
+  const follower=n.kind==='follow';
+  const review=n.kind==='review'&&S.me?.is_admin&&S.me.username==='admin';
+  const heading=follower?'Yangi obunachi':n.title;
+  const detail=follower&&actor?'@'+actor.username+' sizga obuna bo‘ldi.':n.body;
+  return `<article class="activity-card ${n.is_read?'':'unread'}">
+    <span class="activity-icon">${ico(follower?'user':review?'package':'bell',20)}</span>
+    <div><strong>${e(heading)}</strong><p>${e(detail||'')}</p><small>${when(n.created_at)}</small>
+    ${review?btn('admin','Ko‘rish','','ghost'):follower&&actor?btn('user','Profilni ko‘rish',actor.id,'ghost'):''}</div>
+  </article>`;
+}
+async function showActivityToast(n){
+  const uid=S.u?.id;
+  const people=n.kind==='follow'&&n.actor_id?await users([n.actor_id]).catch(()=>({})):{};
+  if(uid!==S.u?.id)return;
+  toast(n.title);
+  const box=$('#toast');
+  box.innerHTML=activityCard(n,people);
+}
 async function notifications(){
   if(!requireUser())return;
   const uid=S.u.id;
   const [r,invites,owners]=await Promise.all([
-    DB.from('notifications').select('*').eq('user_id',uid)
+    DB.from('notifications').select('*').eq('user_id',uid).neq('kind','message')
       .order('created_at',{ascending:false}).limit(35),
     DB.from('mw_group_invitations').select('id',{count:'exact',head:true})
       .eq('recipient_id',uid).eq('status','pending'),
     pendingOwnerJoinCount(uid)
   ]);
   check(r);if(S.u?.id!==uid)return;
+  const people=await users(r.data.filter(n=>n.kind==='follow').map(n=>n.actor_id)).catch(()=>({}));
+  if(S.u?.id!==uid)return;
   const pending=(invites.count||0)+owners;
   dialog(t('notifications'),`
     ${pending?'<button class="btn" data-mw="invites">'+ico('users',17)+' Guruh taklif va so‘rovlari ('+pending+')</button>':''}
     ${btn('markRead',t('mark'))}
     <div class="divider"></div>
-    ${r.data.map(n=>`
-      <div class="item" style="border-left:3px solid ${n.is_read?'#567':'#9ad8ff'}">
-        <b>${e(n.title)}</b>
-        <p>${e(n.body)}</p>
-        <small class="muted">${when(n.created_at)}</small>
-      </div>`).join('')||(!pending?blank():'')}
+    <div class="activity-list">${r.data.map(n=>activityCard(n,people)).join('')||(!pending?blank():'')}</div>
   `);
 }
 function notificationEnabled(){
   return localStorage.getItem('mw_notifs_ui')!=='off';
 }
-async function toggleNotifications(){
-  const next=!notificationEnabled();
-  if(next&&'Notification'in window&&Notification.permission==='default'){
-    try{
-      const permission=await Notification.requestPermission();
-      if(permission!=='granted')
-        toast('Brauzer ruxsati berilmadi. Saytdagi belgilar ishlaydi.');
-    }catch(err){console.warn('Notification permission:',err)}
+const pushPublicKey='BJqPU4nlhyEUPhnK2C0NqBOonmyXVs-xZnMdmpKR3yzTySJruuxu16aqOsiLzB0N68MUo9AGvLCGlVgy1EI_Glk';
+function pushSupported(){
+  return 'Notification' in window&&'serviceWorker' in navigator&&'PushManager' in window;
+}
+async function syncPushDevice(){
+  if(!pushSupported()||!('caches' in window))return;
+  const uid=S.u?.id;
+  const cache=await caches.open('mw-device-notification-settings');
+  const record=new URL('push-device',location.href).href;
+  if(!uid||!notificationEnabled()||Notification.permission!=='granted'){
+    await cache.delete(record);
+    return;
   }
-  localStorage.setItem('mw_notifs_ui',next?'on':'off');
-  toast(next?'Bildirishnomalar yoqildi':'Bildirishnomalar o‘chirildi');
+  const reg=await navigator.serviceWorker.ready;
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub){
+    const bytes=Uint8Array.from(atob(pushPublicKey.replace(/-/g,'+').replace(/_/g,'/')),ch=>ch.charCodeAt(0));
+    sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:bytes});
+  }
+  if(S.u?.id!==uid||!notificationEnabled())return;
+  const keys=sub.toJSON().keys;
+  check(await DB.from('mw_push_devices').upsert({user_id:uid,endpoint:sub.endpoint,p256dh:keys.p256dh,auth:keys.auth}));
+  if(S.u?.id===uid&&notificationEnabled())await cache.put(record,new Response(uid));
+}
+function offerPush(){
+  if(!pushSupported()||Notification.permission!=='default'||!notificationEnabled()||localStorage.getItem('mw-push-asked-v1'))return;
+  if(document.getElementById('push-offer'))return;
+  const offer=document.createElement('aside');
+  offer.id='push-offer';
+  offer.innerHTML='<strong>Telefon bildirishnomalari</strong><p>Yangi xabar va obunachilar haqida telefoningizda bildirishnoma olasizmi?</p><div class="buttons">'+btn('pushAllow','Ruxsat berish')+btn('pushLater','Hozircha yo‘q','','ghost')+'</div>';
+  document.body.appendChild(offer);
+}
+async function enablePhonePush(){
+  if(!pushSupported()){toast('Bu brauzer telefon bildirishnomalarini qo‘llamaydi.');return}
+  const permission=Notification.permission==='default'?await Notification.requestPermission():Notification.permission;
+  if(permission!=='granted'){toast('Bildirishnomalarni brauzerning sayt sozlamalaridan yoqishingiz mumkin.');return}
+  localStorage.setItem('mw_notifs_ui','on');
+  await syncPushDevice();
+  toast(S.u?'Telefon bildirishnomalari yoqildi.':'Ruxsat berildi. Akkauntga kirganda bildirishnomalar ulanadi.');
+}
+async function toggleNotifications(){
+  if(notificationEnabled()&&pushSupported()&&Notification.permission==='granted'){
+    localStorage.setItem('mw_notifs_ui','off');
+    await syncPushDevice();
+    const reg=await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.getSubscription();
+    if(sub){
+      await sub.unsubscribe();
+      if(S.u)await DB.from('mw_push_devices').delete().eq('user_id',S.u.id).eq('endpoint',sub.endpoint);
+    }
+  }else await enablePhonePush();
   settings();
 }
 async function savedModal(){
@@ -5750,14 +5824,16 @@ function winterSetting(){
 }
 function settings(){
   if(!S.u){
-    dialog(t('settings'),`<div class="settings-stack">${winterSetting()}</div>`);
+    dialog(t('settings'),`<div class="settings-stack">${winterSetting()}<div class="settings-row"><b>${ico('bell',19)} Telefon bildirishnomalari</b>${btn('notificationToggle',notificationEnabled()&&pushSupported()&&Notification.permission==='granted'?'O‘chirish':'Yoqish','','ghost')}</div></div>`);
     return;
   }
   if(!requireUser())return;
-  const on=notificationEnabled();
+  const on=notificationEnabled()&&pushSupported()&&Notification.permission==='granted';
   dialog(t('settings'),`
     <div class="settings-stack">
+      <h3>Ko‘rinish</h3>
       ${winterSetting()}
+      <h3>Akkaunt</h3>
       <div class="settings-row">
         <b>${ico('user',19)} ${e(S.me?.username||'Profil')}</b>
         <div class="buttons">${btn('editProfile','Profilni tahrirlash','','ghost')}</div>
@@ -5774,14 +5850,14 @@ function settings(){
           <option value="en" ${S.lang==='en'?'selected':''}>English</option>
         </select>
       </div>
+      <h3>Bildirishnomalar va ilova</h3>
       <div class="settings-row">
         <b>${ico('bell',19)} Bildirishnomalar</b>
         <div class="row">
           <span class="muted">${on?'Yoqilgan':'O‘chirilgan'}</span>
           ${btn('notificationToggle',on?'O‘chirish':'Yoqish','','ghost')}
         </div>
-        <p class="mini muted">Bu sayt ichidagi ogohlantirishlarni boshqaradi.
-          Brauzer ruxsatini o‘chirish uchun uning sayt sozlamalaridan foydalaning.</p>
+        <p class="mini muted">Yangi xabar, obunachi va mod tekshiruvi haqida telefoningizda xabar oling.</p>
       </div>
       <div class="settings-row">
         <b>${ico('badge',18)} ${t('request')}</b>
@@ -6090,6 +6166,11 @@ window.addEventListener('click',async event=>{
       await go('profile',id)
     }
     else if(act==='mod')await openMod(id);
+    else if(act==='pushAllow'||act==='pushLater'){
+      localStorage.setItem('mw-push-asked-v1','1');
+      document.getElementById('push-offer')?.remove();
+      if(act==='pushAllow')await enablePhonePush();
+    }
     else if(act==='settings')settings();
     else if(act==='notificationToggle')toggleNotifications();
     else if(act==='savedFromSettings')await savedModal();
@@ -6491,7 +6572,7 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js?v=21').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=22').catch(console.warn);
   });
 }
 
@@ -6535,6 +6616,7 @@ setInterval(()=>{mwPingPresence().catch(console.warn);if(S.page==='chat'&&S.chat
   uiObserver.observe($('#overlay'),{childList:true,subtree:true});
   await Promise.allSettled([go('home'),refreshUser()]);
   mwInitialNavigation=false;
+  offerPush();
   if(S.u?.id){
     try{
       const last=JSON.parse(localStorage.getItem('mw_last_page:'+S.u.id)||'null');
@@ -6547,6 +6629,13 @@ setInterval(()=>{mwPingPresence().catch(console.warn);if(S.page==='chat'&&S.chat
   const deepId=new URLSearchParams(location.search).get('mod');
   if(deepId&&/^[0-9a-f-]{36}$/i.test(deepId)){
     openMod(deepId).catch(err=>console.warn('Mod havolasi:',err));
+  }
+  const noticeLink=new URLSearchParams(location.search);
+  if(S.u&&noticeLink.get('recipient')===S.u.id){
+    const kind=noticeLink.get('notice'),actor=noticeLink.get('actor');
+    if(kind==='review'&&S.me?.is_admin)await admin();
+    if(kind==='follow'&&actor)await go('profile',actor);
+    if(kind==='message'&&actor){S.chatId=actor;S.mw11MobileOpen=true;await go('chat')}
   }
   // Supabase may emit SIGNED_IN again when the browser tab regains focus.
   // Update account data without forcing the user back to the home screen.

@@ -21,6 +21,26 @@ self.addEventListener('fetch',event=>{
     event.respondWith(caches.open(CACHE).then(async cache=>(await cache.match(req))||fetch(req)));
     return;
   }
+  // Reuse public mod covers only; storage paths are unique per upload.
+  const publicCover=url.origin==='https://ruovdgyfcucspffrvijh.supabase.co'&&url.pathname.startsWith('/storage/v1/object/public/covers/');
+  const bundledCover=url.origin===self.location.origin&&url.pathname.startsWith(new URL('./site-mods/',SCOPE).pathname);
+  if(req.destination==='image'&&(publicCover||bundledCover)){
+    event.respondWith((async()=>{
+      const cache=await caches.open('mw-public-covers-v1');
+      const cached=await cache.match(req);
+      if(cached)return cached;
+      const response=await fetch(req);
+      if(response.ok){
+        try{
+          await cache.put(req,response.clone());
+          const entries=await cache.keys();
+          await Promise.all(entries.slice(0,Math.max(0,entries.length-16)).map(entry=>cache.delete(entry)));
+        }catch{}
+      }
+      return response;
+    })());
+    return;
+  }
   // Never cache Supabase API, user sessions, or private data.
   if(req.mode==='navigate'&&url.origin===self.location.origin&&url.pathname.startsWith('/Web/')){
     event.respondWith((async()=>{
@@ -38,4 +58,28 @@ self.addEventListener('fetch',event=>{
       }
     })());
   }
+});
+
+const DEVICE_CACHE='mw-device-notification-settings';
+const deviceKey=new URL('push-device',SCOPE).href;
+self.addEventListener('push',event=>{
+  if(!event.data)return;
+  event.waitUntil((async()=>{
+    const n=event.data.json();
+    const settings=await (await caches.open(DEVICE_CACHE)).match(deviceKey);
+    if(!settings||await settings.text()!==n.user)return;
+    const link=new URL(SCOPE);
+    link.searchParams.set('notice',n.kind);
+    link.searchParams.set('recipient',n.user);
+    if(n.actor)link.searchParams.set('actor',n.actor);
+    await self.registration.showNotification(n.title,{
+      body:n.body,icon:new URL('assets/winter-logo-192.png?v=21',SCOPE).href,
+      tag:'mw-'+n.id,data:{link:link.href}
+    });
+  })());
+});
+self.addEventListener('notificationclick',event=>{
+  event.notification.close();
+  const url=new URL(event.notification.data?.link||SCOPE,SCOPE);
+  if(url.origin===self.location.origin)event.waitUntil(self.clients.openWindow(url.href));
 });
