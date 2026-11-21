@@ -2358,6 +2358,26 @@ body:before,.hero:after{display:none!important}
   .mw-profile-actions.mw-own-profile-actions{gap:5px!important}
   .mw-profile-actions.mw-own-profile-actions>.btn{gap:4px;padding:7px 3px!important}
 }
+
+/* Compact owner status and edit controls; destructive action belongs in edit form. */
+.mw-profile-mods .card .cardbody .mw-mod-owner-actions{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px!important;
+ width:100%;margin:7px 0 0!important;align-items:stretch;
+}
+.mw-profile-mods .mw-mod-owner-actions>.status,.mw-profile-mods .mw-mod-owner-actions>.btn{
+ display:flex!important;align-items:center;justify-content:center;min-width:0;width:100%;
+ min-height:34px!important;padding:5px 3px!important;font-size:clamp(9px,2.5vw,12px)!important;
+ text-align:center;white-space:normal!important;overflow-wrap:anywhere;line-height:1.2;gap:3px;
+}
+.mw-profile-mods .mw-mod-owner-actions>.btn .svg-icon{width:13px;height:13px;flex:none}
+.mw-mod-delete-area{margin-top:20px;padding-top:15px;border-top:1px solid var(--edge)}
+.mw-new-mod-form .mw-mod-delete{width:100%;min-height:48px;justify-content:center}
+.mw-delete-confirm{z-index:10000!important}
+.mw-delete-confirm-body{padding:15px}
+.mw-delete-confirm-body p{line-height:1.5;margin:0 0 16px}
+.mw-delete-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.mw-delete-confirm-actions .btn{justify-content:center;min-height:42px}
+
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -2543,7 +2563,7 @@ function hydrateIcons(root=document){
 }
 // Static navigation icons are hydrated once; dynamic UI uses inline SVGs.
 function btnIcon(action){
- return ({settings:'settings',notifications:'bell',self:'user',auth:'login',like:'heart',saveMod:'bookmark',
+ return ({settings:'settings',notifications:'bell',self:'user',auth:'login',like:'heart',saveMod:'bookmark',likedFromProfile:'heart',savedFromProfile:'bookmark',savedFromSettings:'bookmark',
  download:'download',reportMod:'flag',reportUser:'flag',reportMsg:'flag',removeMod:'trash',removeInvite:'trash',
  removeComment:'trash',editMod:'edit',editProfile:'edit',adminEditMod:'edit',adminModDetail:'eye',admin:'shield',
  adminAction:'shield',badgeRequest:'badge',startChat:'chat',chatStart:'chat',chooseChat:'plus',
@@ -3124,10 +3144,9 @@ function card(m,p,own=false,priority=false){
       <small class="card-game-version">${e(m.game_version)}</small>
       <div class="divider"></div>
       <div class="row">${avatar(p)}${miniUser(p)}</div>
-      ${own?`<div class="buttons">
+      ${own?`<div class="buttons mw-mod-owner-actions">
         <span class="status">${t(m.status)}</span>
         ${btn('editMod',t('edit'),m.id,'ghost')}
-        ${btn('removeMod',t('delete'),m.id,'danger')}
       </div>`:''}
     </div>
   </article>`
@@ -4136,6 +4155,7 @@ function modFields(m,adminEdit=false){
       <progress max="100" value="0"></progress>
       <p data-upload-hint>Iltimos, sahifani yopmang.</p>
     </div>
+    ${m?.id&&!adminEdit?`<div class="mw-mod-delete-area"><button class="btn danger mw-mod-delete" type="button" data-act="removeMod" data-id="${e(m.id)}">${ico('trash',19)}<span>${t('delete')}</span></button></div>`:''}
   </form>`
 }
 
@@ -4722,17 +4742,42 @@ async function editMod(id){
     .eq('id',id).eq('author_id',S.u.id).single());
   dialog(t('edit'),modFields(m))
 }
+function confirmModDeletion(id,name){
+  return new Promise(resolve=>{
+    const layer=document.createElement('div');
+    layer.className='mw-mod-picker-overlay mw-delete-confirm';
+    layer.innerHTML='<div class="mw-mod-picker-dialog" role="alertdialog" aria-modal="true" aria-labelledby="mwDeleteTitle"><div class="mw-mod-picker-header"><strong id="mwDeleteTitle">Modni o‘chirish</strong></div><div class="mw-delete-confirm-body"><p>«'+e(name)+'» modini butunlay o‘chirishni tasdiqlaysizmi? Bu amalni ortga qaytarib bo‘lmaydi.</p><div class="mw-delete-confirm-actions"><button type="button" class="btn ghost" data-delete-cancel>'+e(t('cancel'))+'</button><button type="button" class="btn danger" data-delete-confirm>'+ico('trash',17)+' '+e(t('delete'))+'</button></div></div></div>';
+    const prior=document.activeElement;
+    const finish=value=>{layer.remove();document.removeEventListener('keydown',onKey,true);if(prior?.isConnected)prior.focus();resolve(value)};
+    const onKey=event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();finish(false)}};
+    layer.addEventListener('click',event=>{
+      if(event.target===layer||event.target.closest('[data-delete-cancel]'))finish(false);
+      else if(event.target.closest('[data-delete-confirm]'))finish(true);
+    });
+    document.body.appendChild(layer);
+    document.addEventListener('keydown',onKey,true);
+    layer.querySelector('[data-delete-cancel]').focus();
+  });
+}
+const modDeletePending=new Set();
 async function removeMod(id){
-  if(!requireUser())return;
-  const name=getCachedMod(id)?.title||'bu mod';
-  if(!confirm('«'+name+'» modini butunlay o‘chirasizmi? Bu amalga qaytish qiyin.'))return;
-  if(!confirm('Yakuniy tasdiq: modni butunlay o‘chirishga rozimisiz?'))return;
-  check(await DB.from('mods').delete()
-    .eq('id',id).eq('author_id',S.u.id));
-  modCache.delete(id);
-  invalidateProfileData();feedLoadedAt=0;feedLoaded=false;
-  S.feed=S.feed.filter(m=>m.id!==id);
-  await go('profile',S.u.id);
+  if(!requireUser()||modDeletePending.has(id))return;
+  const uid=S.u.id;
+  modDeletePending.add(id);
+  try{
+    const m=check(await DB.from('mods').select('id,title').eq('id',id).eq('author_id',uid).single());
+    if(S.u?.id!==uid)return;
+    if(!await confirmModDeletion(id,m.title||'Mod')||S.u?.id!==uid)return;
+    const deleted=check(await DB.from('mods').delete().eq('id',id).eq('author_id',uid).select('id'));
+    if(!deleted?.length)throw Error('Mod o‘chirilmadi');
+    modCache.delete(id);
+    invalidateProfileData();feedLoadedAt=0;feedLoaded=false;
+    S.feed=S.feed.filter(m=>m.id!==id);
+    try{localStorage.removeItem('mw_profile_cache_v4:'+uid+':'+uid+':'+S.lang)}catch{}
+    close();
+    toast('Mod o‘chirildi');
+    await go('profile',uid);
+  }finally{modDeletePending.delete(id)}
 }
 
 const modCache=new Map();
