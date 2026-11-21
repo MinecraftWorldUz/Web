@@ -2324,6 +2324,23 @@ body:before,.hero:after{display:none!important}
   #profileMods+.mw-profile-mods>.card .cardbody>.row:last-child .linkbtn{font-size:11px}
 }
 
+
+/* Account control is icon-only from the first paint, on every viewport. */
+.top .head-actions>#accountTop{
+  width:43px!important;min-width:43px!important;max-width:43px!important;
+  height:43px!important;min-height:43px!important;max-height:43px!important;
+  flex:0 0 43px!important;padding:0!important;gap:0!important;
+  display:inline-flex!important;align-items:center;justify-content:center;
+}
+.top #accountTop>.mw-account-icon{display:block!important;flex:none;width:21px;height:21px}
+@media(max-width:650px){
+  .top .head-actions>#accountTop{width:38px!important;min-width:38px!important;max-width:38px!important;height:38px!important;min-height:38px!important;max-height:38px!important;flex-basis:38px!important}
+  .top #accountTop>.mw-account-icon{width:19px;height:19px}
+}
+@media(max-width:375px){
+  .top .head-actions>#accountTop{width:34px!important;min-width:34px!important;max-width:34px!important;height:34px!important;min-height:34px!important;max-height:34px!important;flex-basis:34px!important}
+}
+
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -2404,7 +2421,7 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
         <span data-icon="bell" data-size="21"></span><span id="alertCount" class="dot" hidden></span>
       </button>
       <button class="iconbtn" data-act="settings" aria-label="Sozlamalar"><span data-icon="settings" data-size="21"></span></button>
-      <button class="iconbtn account-trigger" data-act="accounts" id="accountTop" aria-label="Akkauntlarni almashtirish">Kirish</button>
+      <button class="iconbtn account-trigger" data-act="accounts" id="accountTop" aria-label="Profil va akkauntlar" title="Profil va akkauntlar"><svg class="mw-account-icon" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
     </div>
   </header>
   <main id="app"></main>
@@ -3796,7 +3813,7 @@ async function refreshUser(){
   }else{
     S.savedIds=new Set();
   }
-  $('#accountTop').innerHTML=ico('users',19)+'<span>'+e(S.me?'@'+nick(S.me):t('login'))+'</span>'+ico('arrow',14);
+  // The account icon is rendered in initial HTML and stays unchanged during auth refresh.
   if(S.listenUserId!==S.u?.id){
     S.listenUserId=S.u?.id||null;
     listen();
