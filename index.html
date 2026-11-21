@@ -2282,6 +2282,50 @@ body:before,.hero:after{display:none!important}
   .mod-hero-art,.mod-hero-art img{max-height:230px}
 }
 
+
+/* Profile mod gallery: two genuinely compact columns, even at phone widths. */
+#profileMods+.mw-profile-mods{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:10px!important;
+  align-items:start;
+}
+#profileMods+.mw-profile-mods>.card{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  height:auto!important;
+}
+#profileMods+.mw-profile-mods>.card .art{
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  aspect-ratio:auto!important;
+}
+#profileMods+.mw-profile-mods>.card .art img{
+  display:block;
+  width:100%!important;
+  height:auto!important;
+  max-height:220px;
+  object-fit:contain!important;
+}
+#profileMods+.mw-profile-mods>.card .cardbody{
+  padding:10px!important;
+}
+#profileMods+.mw-profile-mods>.card .cardbody p{
+  -webkit-line-clamp:2!important;
+}
+@media(max-width:650px){
+  #profileMods+.mw-profile-mods{gap:8px!important}
+  #profileMods+.mw-profile-mods>.card .art img{max-height:170px}
+  #profileMods+.mw-profile-mods>.card .cardbody{padding:8px!important}
+  #profileMods+.mw-profile-mods>.card .cardbody h3{font-size:13px!important}
+  #profileMods+.mw-profile-mods>.card .cardbody p{font-size:11px!important;line-height:1.35!important}
+  #profileMods+.mw-profile-mods>.card .cardbody>.row:last-child{gap:4px}
+  #profileMods+.mw-profile-mods>.card .cardbody>.row:last-child .linkbtn{font-size:11px}
+}
+
 </style>
 </head>
 <body>
@@ -3053,11 +3097,13 @@ async function go(page='home',id=null){
       if(saved?.html&&Date.now()-saved.at<24*60*60*1000)cached=saved;
     }catch(error){}
   }
-  if(cached){
+  // Render fresh cached profiles once. Older snapshots should not flash before a network redraw.
+  const freshProfileCache=page==='profile'&&cached&&Date.now()-cached.at<SCREEN_TTL;
+  if(cached&&(page!=='profile'||freshProfileCache)){
     $('#app').innerHTML=cached.html;
     translateUi($('#app'));
     if(page==='profile')window.MWSocial?.renderProfile?.(target).catch(console.warn);
-    if(fastScreens.get(key)===cached&&Date.now()-cached.at<SCREEN_TTL)return;
+    if(freshProfileCache||(fastScreens.get(key)===cached&&Date.now()-cached.at<SCREEN_TTL))return;
   }else if(page==='home'){
     // homeShell() paints immediately without waiting for Supabase.
   }else if(page==='create'){
@@ -3069,7 +3115,7 @@ async function go(page='home',id=null){
   }
   try{
     if(page==='home')await home();
-    else if(page==='profile')await profile(target);
+    else if(page==='profile')await profile(target,nav);
     else if(page==='community')await community();
     else if(page==='chat'){await chats();await window.MWChat?.load?.();await window.MWV11?.loadPrefs?.();}
     else if(page==='create')create();
@@ -3391,14 +3437,14 @@ function scheduleFastPrefetch(){
     requestIdleCallback(task,{timeout:3500});
   else setTimeout(task,1400);
 }
-async function profile(id){
+async function profile(id,nav=navigationSeq){
   if(!id){
     $('#app').innerHTML=blank()+'<div class="buttons">'+btn('auth',t('login'))+'</div>';
     return;
   }
   const mine=S.u?.id===id;
   const [person,mods,pc,fc,gc,f]=await getProfileData(id);
-  if(S.page!=='profile'||S.profileId!==id)return;
+  if(nav!==navigationSeq||S.page!=='profile'||S.profileId!==id)return;
   const p=check(person);check(mods);setCachedProfiles([p]);
   $('#app').innerHTML=`
     <section class="banner mw-instagram-profile">
