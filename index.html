@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#102237">
 <title>Minecraft World 2.0 | Mods & Community</title>
-<link rel="icon" type="image/png" href="./assets/winter-logo-192.png"><link rel="apple-touch-icon" href="./assets/winter-logo-192.png">
+<link rel="icon" type="image/x-icon" sizes="16x16 32x32 48x48 64x64" href="./favicon.ico?v=21"><link rel="apple-touch-icon" href="./assets/winter-logo-192.png?v=21">
 <link rel="manifest" href="./manifest.webmanifest">
 <script src="https://telegram.org/js/telegram-web-app.js?65" defer></script>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2107,8 +2107,7 @@ body:before,.hero:after{display:none!important}
 
 /* Mobile header logo clarity and profile/header separation only. */
 .top .brand-icon.mw-brand-picture img{
-  image-rendering:-webkit-optimize-contrast!important;
-  image-rendering:crisp-edges!important;
+  image-rendering:auto!important;
 }
 @media(max-width:560px){
   .top .brand-icon.mw-brand-picture{
@@ -2378,7 +2377,7 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
 <div class="shell">
   <header class="top">
     <button class="logo" data-go="home">
-      <span class="brand-icon mw-brand-picture"><img src="./assets/winter-logo-192.png" alt="" width="56" height="56" decoding="async"></span><span class="brand-word">MINECRAFT <b>WORLD</b></span><span class="version-pill">v2.0</span>
+      <span class="brand-icon mw-brand-picture"><img src="./assets/winter-logo-192.png?v=21" alt="" width="56" height="56" decoding="async"></span><span class="brand-word">MINECRAFT <b>WORLD</b></span><span class="version-pill">v2.0</span>
     </button>
     <div class="head-actions">
       <button class="iconbtn" data-act="notifications">
@@ -6492,7 +6491,7 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js?v=20.2').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=21').catch(console.warn);
   });
 }
 

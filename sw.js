@@ -1,6 +1,6 @@
-const CACHE='mw-public-shell-winter-v20-2';
+const CACHE='mw-public-shell-winter-v21';
 const SCOPE=self.registration.scope;
-const PUBLIC_ASSETS=['./assets/winter-logo-192.png','./manifest.webmanifest','./winter.css?v=20.2','./assets/winter-mountains.webp']
+const PUBLIC_ASSETS=['./assets/winter-logo-192.png?v=21','./favicon.ico?v=21','./manifest.webmanifest','./winter.css?v=20.2','./assets/winter-mountains.webp']
   .map(path=>new URL(path,SCOPE).href);
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>
