@@ -2140,6 +2140,49 @@ body:before,.hero:after{display:none!important}
 #mwSavedModDrafts .mw-draft-row .linkbtn{flex:1;text-align:left}
 #mwSavedModDrafts small{color:var(--muted)}
 
+
+/* Compact mod cards: show the entire cover at every screen width. */
+.grid:not(.autumn-mod-list)>.card .art{
+  height:auto!important;
+  min-height:0!important;
+  aspect-ratio:16/9;
+  background:#241d17!important;
+}
+.grid>.card .art img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain!important;
+  object-position:center;
+}
+.autumn-mod-list>.card .art img{object-fit:contain!important}
+@media(max-width:650px){
+  .grid:not(.autumn-mod-list)>.card{
+    border-radius:12px;
+  }
+  .grid:not(.autumn-mod-list)>.card .cardbody{
+    padding:11px 12px!important;
+  }
+  .grid:not(.autumn-mod-list)>.card .cardbody h3{
+    font-size:18px;
+    line-height:1.25;
+    margin:2px 0 5px;
+  }
+  .grid:not(.autumn-mod-list)>.card .cardbody p{
+    min-height:0;
+    margin:5px 0 8px;
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    overflow:hidden;
+  }
+  .grid:not(.autumn-mod-list)>.card .cardbody .divider{margin:9px 0}
+  .grid:not(.autumn-mod-list)>.card .cardbody .buttons{margin:8px 0 2px}
+  .grid:not(.autumn-mod-list)>.card .cardbody .buttons .btn{
+    min-height:35px;padding:7px 10px;font-size:12px
+  }
+}
+
 </style>
 </head>
 <body>
