@@ -2378,6 +2378,44 @@ body:before,.hero:after{display:none!important}
 .mw-delete-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .mw-delete-confirm-actions .btn{justify-content:center;min-height:42px}
 
+
+/* Compact profile gallery without duplicated upload button. */
+#profileMods.mw-profile-mods-heading{
+  margin:15px 0 9px!important;padding:0!important;min-height:0!important;gap:0!important;
+}
+#profileMods.mw-profile-mods-heading h2{margin:0!important;font-size:19px;line-height:1.25}
+#profileMods+.mw-profile-mods>.card .cardbody{gap:5px!important;padding:9px!important}
+#profileMods+.mw-profile-mods>.card .mw-card-author{
+  display:flex!important;align-items:center;flex-wrap:nowrap!important;gap:5px!important;min-width:0;
+  margin:2px 0!important;
+}
+#profileMods+.mw-profile-mods>.card .mw-card-author .av{
+  width:22px!important;height:22px!important;min-width:22px!important;flex:0 0 22px;
+}
+#profileMods+.mw-profile-mods>.card .mw-card-author .linkbtn{
+  min-width:0;font-size:11px!important;line-height:1.2;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+#profileMods+.mw-profile-mods>.card .mw-mod-owner-actions{
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:4px!important;margin:3px 0 0!important;
+}
+#profileMods+.mw-profile-mods>.card .mw-mod-owner-actions>.status,
+#profileMods+.mw-profile-mods>.card .mw-mod-owner-actions>.btn{
+  box-sizing:border-box;display:flex!important;min-height:28px!important;height:28px!important;
+  padding:3px 2px!important;gap:3px!important;font-size:10px!important;
+  line-height:1!important;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis;
+}
+#profileMods+.mw-profile-mods>.card .mw-mod-owner-actions>.btn span{
+  min-width:0;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis;
+}
+#profileMods+.mw-profile-mods>.card .mw-mod-owner-actions>.btn .svg-icon{width:11px!important;height:11px!important}
+@media(max-width:420px){
+  #profileMods+.mw-profile-mods>.card .cardbody{padding:7px!important;gap:4px!important}
+  #profileMods+.mw-profile-mods>.card .mw-mod-owner-actions>.btn .svg-icon{display:none!important}
+  #profileMods+.mw-profile-mods>.card .mw-mod-owner-actions>.status,
+  #profileMods+.mw-profile-mods>.card .mw-mod-owner-actions>.btn{font-size:9px!important}
+}
+
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -3143,7 +3181,7 @@ function card(m,p,own=false,priority=false){
       </div>
       <small class="card-game-version">${e(m.game_version)}</small>
       <div class="divider"></div>
-      <div class="row">${avatar(p)}${miniUser(p)}</div>
+      <div class="row mw-card-author">${avatar(p)}${miniUser(p)}</div>
       ${own?`<div class="buttons mw-mod-owner-actions">
         <span class="status">${t(m.status)}</span>
         ${btn('editMod',t('edit'),m.id,'ghost')}
@@ -3558,7 +3596,6 @@ async function profile(id,nav=navigationSeq){
     </section>
     <div class="bar mw-profile-mods-heading" id="profileMods">
       <h2>${t('mods')}</h2>
-      ${mine?'<button class="btn" data-go="create">＋ Mod qo‘shish</button>':''}
     </div>
     <div class="grid mw-profile-mods">
       ${mods.data.length?mods.data.map(m=>card(m,p,mine)).join(''):blank()}
@@ -4773,7 +4810,7 @@ async function removeMod(id){
     modCache.delete(id);
     invalidateProfileData();feedLoadedAt=0;feedLoaded=false;
     S.feed=S.feed.filter(m=>m.id!==id);
-    try{localStorage.removeItem('mw_profile_cache_v4:'+uid+':'+uid+':'+S.lang)}catch{}
+    try{localStorage.removeItem('mw_profile_cache_v5:'+uid+':'+uid+':'+S.lang)}catch{}
     close();
     toast('Mod o‘chirildi');
     await go('profile',uid);
