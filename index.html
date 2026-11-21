@@ -2341,6 +2341,8 @@ body:before,.hero:after{display:none!important}
   .top .head-actions>#accountTop{width:34px!important;min-width:34px!important;max-width:34px!important;height:34px!important;min-height:34px!important;max-height:34px!important;flex-basis:34px!important}
 }
 
+.activity-card[data-notice-id]{cursor:pointer}
+.activity-card[data-notice-id]:focus-visible{outline:2px solid #8dd4ff;outline-offset:2px}
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -5709,15 +5711,41 @@ function listen(){
 function activityCard(n,people){
   const actor=people[n.actor_id];
   const follower=n.kind==='follow';
-  const review=n.kind==='review'&&S.me?.is_admin&&S.me.username==='admin';
+  const isAdmin=S.me?.is_admin&&S.me.username==='admin';
+  const review=n.kind==='review'&&isAdmin;
+  const badge=n.kind==='badge'&&isAdmin&&!!n.actor_id;
+  const mod=n.kind==='mod';
   const heading=follower?'Yangi obunachi':n.title;
   const detail=follower&&actor?'@'+actor.username+' sizga obuna bo‘ldi.':n.body;
-  return `<article class="activity-card ${n.is_read?'':'unread'}">
-    <span class="activity-icon">${ico(follower?'user':review?'package':'bell',20)}</span>
-    <div><strong>${e(heading)}</strong><p>${e(detail||'')}</p><small>${when(n.created_at)}</small>
-    ${review?btn('admin','Ko‘rish','','ghost'):follower&&actor?btn('user','Profilni ko‘rish',actor.id,'ghost'):''}</div>
+  const action=review?btn('admin','Ko‘rish','','ghost'):badge?btn('adminBadges','Ko‘rish','','ghost'):mod?(n.target_id?btn('mod','Ko‘rish',n.target_id,'ghost'):btn('self','Modlarimni ko‘rish','','ghost')):follower&&actor?btn('user','Profilni ko‘rish',actor.id,'ghost'):'';
+  return `<article class="activity-card ${n.is_read?'':'unread'}" data-notice-id="${e(n.id)}" tabindex="0">
+    <span class="activity-icon">${ico(follower?'user':badge?'badge':review||mod?'package':'bell',20)}</span>
+    <div><strong>${e(heading)}</strong><p>${e(detail||'')}</p><small>${when(n.created_at)}</small>${action}</div>
   </article>`;
 }
+const noticeReadPending=new Set();
+async function readActivity(card){
+  const id=card?.dataset.noticeId,uid=S.u?.id;
+  if(!id||!uid||!card.classList.contains('unread')||noticeReadPending.has(id))return;
+  noticeReadPending.add(id);
+  try{
+    check(await DB.from('notifications').update({is_read:true}).eq('id',id).eq('user_id',uid));
+    if(S.u?.id===uid){
+      document.querySelectorAll('[data-notice-id]').forEach(el=>{if(el.dataset.noticeId===id)el.classList.remove('unread')});
+      await notificationCount();
+    }
+  }finally{noticeReadPending.delete(id)}
+}
+window.addEventListener('click',event=>{
+  const card=event.target.closest?.('[data-notice-id]');
+  if(card)readActivity(card).catch(err=>{console.warn(err);toast(err.message)});
+},true);
+window.addEventListener('keydown',event=>{
+  if(event.key==='Enter'||event.key===' '){
+    const card=event.target.closest?.('[data-notice-id]');
+    if(card&&event.target===card){event.preventDefault();readActivity(card).catch(console.warn)}
+  }
+});
 async function showActivityToast(n){
   const uid=S.u?.id;
   const people=n.kind==='follow'&&n.actor_id?await users([n.actor_id]).catch(()=>({})):{};
@@ -6318,6 +6346,11 @@ window.addEventListener('click',async event=>{
     }
     else if(act==='installApp')await installApp();
     else if(act==='admin')await admin();
+    else if(act==='adminBadges'){
+      await admin();
+      const section=document.querySelector('[data-admin-section="badges"]');
+      if(section){section.open=true;section.scrollIntoView({block:'nearest',behavior:'smooth'});}
+    }
     else if(act==='adminAction')
       await adminAction(a.dataset.cmd,id);
     else if(act==='logout'){
