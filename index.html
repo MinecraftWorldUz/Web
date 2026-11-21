@@ -2338,8 +2338,9 @@ try {
 <style>
 .mod-image-wrap { position: relative; display: grid; place-items: center; max-width: 100%; }
 .mod-hero-art .mod-image-wrap img { display: block; width: auto; max-width: 100%; height: auto; }
-.mod-image-wrap .mod-like { position: absolute; right: 2px; bottom: 2px; color: white; filter: drop-shadow(0 1px 2px #102030); }
-.mod-image-wrap .mod-like span { color: white; text-shadow: 0 1px 3px #102030; }
+.mod-secondary-actions .mod-icon-action { position: relative; box-sizing: border-box; width: 44px; height: 48px; padding: 4px 0 20px; }
+.mod-secondary-actions .mod-icon-action svg { width: 24px; height: 24px; }
+.mod-secondary-actions .mod-like span { position: absolute; bottom: 2px; left: 0; right: 0; text-align: center; }
 </style>
 </head>
 <body>
@@ -4721,12 +4722,6 @@ function renderMod(m){
       <div class="mod-hero-art">
         <div class="mod-image-wrap">
         ${cover(m.cover_path)?`<img loading="eager" decoding="async" src="${e(cover(m.cover_path))}" alt="">`:ico('package',66)}
-      ${isApproved?`
-        <button type="button" class="mod-icon-action mod-like" data-act="like" data-id="${e(m.id)}"
-          data-mod-toggle="like" aria-label="Yoqtirish" aria-pressed="false">
-          ${ico('heart',26)}<span data-like-count="${e(m.id)}">${count(m.likes_count)}</span>
-        </button>
-      `:''}
         </div>
       </div>
       <div class="mod-headline">
@@ -4738,11 +4733,15 @@ function renderMod(m){
       <div class="mod-author-row">
         <div id="modAuthor" class="mod-author"></div>
         ${isApproved?`<div class="mod-secondary-actions">
+        <button type="button" class="mod-icon-action mod-like" data-act="like" data-id="${e(m.id)}"
+          data-mod-toggle="like" aria-label="Yoqtirish" aria-pressed="false">
+          ${ico('heart',24)}<span data-like-count="${e(m.id)}">${count(m.likes_count)}</span>
+        </button>
           <button type="button" class="mod-icon-action mod-save" data-act="saveMod" data-id="${e(m.id)}"
             data-mod-toggle="save" aria-label="Saqlash" title="Saqlash"
-            aria-pressed="${Boolean(S.savedIds?.has(m.id))}">${ico('bookmark',23)}</button>
+            aria-pressed="${Boolean(S.savedIds?.has(m.id))}">${ico('bookmark',24)}</button>
           <button type="button" class="mod-icon-action" data-act="reportMod" data-id="${e(m.id)}"
-            aria-label="${e(t('report'))}" title="${e(t('report'))}">${ico('flag',22)}</button>
+            aria-label="${e(t('report'))}" title="${e(t('report'))}">${ico('flag',24)}</button>
         </div>`:''}
       </div>
       ${isApproved?`
