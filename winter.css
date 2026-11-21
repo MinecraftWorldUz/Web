@@ -47,17 +47,37 @@ html[data-winter-background="off"] :is(.winter-landscape, #winterSnow) { display
 .top .brand-word {
   position: relative;
   color: #f1faff !important;
-  line-height: 1.05;
+  font-size: clamp(20px, 2.4vw, 29px) !important;
+  line-height: 1.02;
+  text-shadow: 0 2px 5px #071422;
 }
 .top .brand-word b { color: #a8dfff !important; }
 .top .brand-word::before {
   content: "";
   position: absolute;
   pointer-events: none;
-  inset: -7px 1px auto -3px;
-  height: 10px;
-  background: linear-gradient(#fff, #ceeaff);
-  clip-path: polygon(0 45%, 7% 45%, 7% 18%, 20% 18%, 20% 40%, 34% 40%, 34% 5%, 53% 5%, 53% 34%, 63% 34%, 63% 20%, 80% 20%, 80% 44%, 94% 44%, 94% 67%, 100% 67%, 100% 87%, 85% 87%, 85% 72%, 68% 72%, 68% 100%, 60% 100%, 60% 72%, 36% 72%, 36% 91%, 27% 91%, 27% 70%, 0 70%);
+  width: 59%;
+  height: 11px;
+  top: -7px;
+  left: -2%;
+  background:
+    radial-gradient(ellipse 21% 46% at 16% 62%, #fff 70%, transparent 100%),
+    radial-gradient(ellipse 25% 48% at 42% 47%, #f6fdff 74%, transparent 100%),
+    radial-gradient(ellipse 22% 39% at 67% 58%, #e6f5ff 70%, transparent 100%),
+    radial-gradient(ellipse 16% 28% at 86% 68%, #cfebff 65%, transparent 100%);
+  filter: drop-shadow(0 2px 1px #91b9d0a6);
+}
+@media (max-width: 650px) {
+  .top .brand-word { font-size: 17px !important; }
+}
+@media (max-width: 445px) {
+  .top .brand-word {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px !important;
+    font-size: clamp(14px, 4vw, 18px) !important;
+  }
+  .top .brand-word::before { width: 98%; }
 }
 .top .brand-icon.mw-brand-picture img { border-radius: 11px !important; }
 .top .head-actions > .iconbtn, .top #accountTop {
@@ -225,3 +245,20 @@ body .status { background: #254662; color: #e3f4ff; border-color: #4f7c9f; }
   background: #234763 !important;
   box-shadow: none !important;
 }
+
+.cover-consent {
+  box-sizing: border-box;
+  width: min(430px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px);
+  padding: clamp(16px, 5vw, 24px);
+  background: #142b43;
+  color: #edf7ff;
+  border: 1px solid #709cbd;
+  border-radius: 18px;
+  box-shadow: 0 20px 70px #030a16ae;
+}
+.cover-consent::backdrop { background: #050d1ab3; backdrop-filter: blur(3px); }
+.cover-consent h2 { margin: 0 0 10px; font-size: 1.25rem; }
+.cover-consent p { margin: 0 0 10px; color: #c6ddf1; overflow-wrap: anywhere; }
+.cover-consent .buttons { justify-content: flex-end; margin: 14px 0 0; }
+.cover-consent .btn { min-height: 44px; }

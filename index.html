@@ -2327,7 +2327,7 @@ body:before,.hero:after{display:none!important}
 }
 
 </style>
-<link rel="stylesheet" href="./winter.css?v=2">
+<link rel="stylesheet" href="./winter.css?v=20.1">
 <script>
 try {
   if (localStorage.getItem('mw:winter-background') === 'off') {
@@ -2975,7 +2975,7 @@ function close(){
 function filePicker(name,accept,required=false){
   const picture=name==='image',attachment=name==='file';
   const text=picture?'Mod uchun muqova rasmini tanlash':attachment?'Mod faylini tanlash':'Avatar rasmini tanlash';
-  const detail=picture?'JPEG, PNG, WebP yoki GIF · 2 MB gacha':attachment?'MCWORLD, MCADDON, MCPACK, ZIP, JAR · 2 MB gacha':'Rasm tanlash';
+  const detail=picture?'JPEG, PNG, WebP yoki GIF · 2 MB dan katta bo‘lsa siqiladi':attachment?'MCWORLD, MCADDON, MCPACK, ZIP, JAR · 2 MB gacha':'Rasm tanlash';
   return `<label class="mw-upload-tile file-picker" for="pick-${name}">
     <span class="mw-upload-icon">${ico(attachment?'package':picture?'image':'user',25)}</span>
     <span class="mw-upload-details">
@@ -4175,17 +4175,106 @@ document.addEventListener('keydown',event=>{
     event.preventDefault();mwCloseModPicker();
   }
 });
+const MOD_UPLOAD_LIMIT=2097152;
+const acceptedCovers=new WeakMap();
+
+function setModCover(input,file){
+  const transfer=new DataTransfer();
+  if(file)transfer.items.add(file);
+  input.files=transfer.files;
+}
+
+async function compressModCover(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const image=new Image();
+    image.src=url;
+    await image.decode();
+    const canvas=document.createElement('canvas');
+    const context=canvas.getContext('2d');
+    if(!context)throw Error('Rasmni siqib bo‘lmadi.');
+    const largest=Math.max(image.naturalWidth,image.naturalHeight);
+    let edge=Math.min(2560,largest);
+    for(let attempt=0;attempt<8;attempt++){
+      const scale=edge/largest;
+      canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
+      canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+      context.drawImage(image,0,0,canvas.width,canvas.height);
+      for(const quality of [.9,.76,.62]){
+        const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',quality));
+        if(blob?.size&&blob.size<=MOD_UPLOAD_LIMIT){
+          const ext=blob.type==='image/webp'?'webp':'png';
+          return new File([blob],file.name.replace(/\.[^.]+$/,'')+'.'+ext,{type:blob.type});
+        }
+      }
+      edge=Math.max(1,Math.round(edge*.72));
+    }
+    throw Error('Rasmni 2 MB gacha siqib bo‘lmadi. Boshqa rasm tanlang.');
+  }finally{URL.revokeObjectURL(url)}
+}
+
+function requestCoverCompression(input,file){
+  const popup=document.createElement('dialog');
+  popup.className='cover-consent';
+  popup.setAttribute('aria-labelledby','cover-consent-title');
+  popup.innerHTML=`
+    <h2 id="cover-consent-title">Rasmni siqishga ruxsat berasizmi?</h2>
+    <p>${e(file.name)} · ${(file.size/1048576).toFixed(1)} MB</p>
+    <p>Rasmni 2 MB gacha kichraytiramiz. Sifati biroz pasayishi mumkin.
+      ${['image/gif','image/webp','image/png'].includes(file.type)?'Animatsiyali rasm bitta kadrga aylanadi.':''}</p>
+    <p role="status" hidden></p>
+    <div class="buttons">
+      <button type="button" class="btn ghost" data-cancel autofocus>Bekor qilish</button>
+      <button type="button" class="btn" data-compress>Siqish va tanlash</button>
+    </div>`;
+  const status=popup.querySelector('[role="status"]');
+  const confirmButton=popup.querySelector('[data-compress]');
+  popup.querySelector('[data-cancel]').onclick=()=>popup.close();
+  popup.addEventListener('keydown',event=>{
+    if(event.key==='Escape')event.stopPropagation();
+  });
+  popup.addEventListener('close',()=>popup.remove(),{once:true});
+  confirmButton.onclick=async()=>{
+    confirmButton.disabled=true;
+    status.hidden=false;
+    status.textContent='Rasm siqilmoqda…';
+    try{
+      const compressed=await compressModCover(file);
+      if(!popup.open)return;
+      if(input.isConnected){
+        setModCover(input,compressed);
+        input.dispatchEvent(new Event('change',{bubbles:true}));
+      }
+      popup.close();
+    }catch(error){
+      if(!popup.open)return;
+      status.textContent='Rasmni siqib bo‘lmadi. Boshqa rasm tanlang.';
+      confirmButton.disabled=false;
+    }
+  };
+  document.body.append(popup);
+  popup.showModal();
+}
+
 document.addEventListener('change',event=>{
   const input=event.target;
   if(!input.matches('#modForm input[type="file"]'))return;
-  if(input.files?.[0]?.size>2097152){
-    const name=input.files[0].name;
+  const file=input.files?.[0];
+  if(input.name==='image'){
+    if(file?.size>MOD_UPLOAD_LIMIT){
+      setModCover(input,acceptedCovers.get(input));
+      event.stopImmediatePropagation();
+      if(['image/jpeg','image/png','image/webp','image/gif'].includes(file.type)){
+        requestCoverCompression(input,file);
+      }else toast('JPEG, PNG, WebP yoki GIF rasm tanlang.');
+    }else if(file)acceptedCovers.set(input,file);
+    else acceptedCovers.delete(input);
+  }else if(file?.size>MOD_UPLOAD_LIMIT){
     input.value='';
-    toast(name+': 2 MB dan katta fayl. Kichikroq fayl tanlang.');
+    toast(file.name+': 2 MB dan katta fayl. Kichikroq fayl tanlang.');
     event.stopImmediatePropagation();
   }
 },true);
-
 
 /* Unfinished mod drafts stay in browser IndexedDB until the owner deletes them. */
 const MW_DRAFT_DB='mw-mod-drafts-v1';
@@ -4302,6 +4391,7 @@ async function mwDraftRestore(form,id){
       if(input&&row[kind]){
         const transfer=new DataTransfer();
         transfer.items.add(row[kind]);input.files=transfer.files;
+        if(kind==='image')acceptedCovers.set(input,row[kind]);
         mwDraftFilePreview(input,row[kind])
       }
     }
@@ -4360,9 +4450,9 @@ document.addEventListener('input',event=>{
 document.addEventListener('change',event=>{
   const form=event.target.closest?.('#modForm');
   if(!form)return;
-  if(event.target.matches('input[type="file"]')&&mwDraftActive(form)){
+  if(event.target.matches('input[type="file"]')){
     if(event.target.name==='image')form.dataset.coverPath='';
-    if(event.target.name==='file')form.dataset.filePath='';
+    if(event.target.name==='file'&&mwDraftActive(form))form.dataset.filePath='';
   }
   mwDraftSchedule(form)
 });
@@ -4509,7 +4599,7 @@ async function saveMod(f){
   }
   const primary=['uz','ru','en'].find(lang=>titles[lang]);
   if(!primary)throw Error('Kamida bitta tilni tanlang va to‘ldiring');
-  let cover_path=m?.cover_path||f.dataset.coverPath||'',file_path=m?.file_path||f.dataset.filePath||'';
+  let cover_path=f.dataset.coverPath||(!image?.size?m?.cover_path:'')||'',file_path=m?.file_path||f.dataset.filePath||'';
   const bytesTotal=(image?.size||0)+(file?.size||0);
   let bytesDone=0;
   const showTransfer=(loaded,total,label)=>{
@@ -6412,7 +6502,7 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js?v=20').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=20.1').catch(console.warn);
   });
 }
 
