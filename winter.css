@@ -1,0 +1,227 @@
+:root {
+  color-scheme: dark;
+  --bg: #091321;
+  --panel: #102236;
+  --panel2: #18314b;
+  --winter-surface: #101f32f2;
+  --winter-border: #365571;
+  --text: #f1f8ff;
+  --muted: #b4c9dc;
+  --gold: #a9dfff;
+  --orange: #79c4f7;
+  --green: #9de2d3;
+  --edge: #7fb8e33a;
+}
+body { background: #091321 !important; color: var(--text) !important; }
+.winter-landscape, #winterSnow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+.winter-landscape {
+  z-index: 0;
+  background: linear-gradient(180deg, #08152436, #091321cf 72%, #091321),
+    url("./assets/winter-mountains.webp") center / cover no-repeat;
+}
+#winterSnow { z-index: 1; overflow: hidden; }
+html[data-winter-background="off"] :is(.winter-landscape, #winterSnow) { display: none; }
+.winter-flake {
+  position: absolute;
+  top: -14px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: #f0f9ff;
+  opacity: var(--opacity);
+  animation: winter-fall var(--duration) var(--delay) linear infinite;
+}
+@keyframes winter-fall {
+  to { transform: translate3d(var(--drift), calc(100vh + 24px), 0); }
+}
+.top, .bottom {
+  background: #102237f5 !important;
+  border-color: var(--winter-border) !important;
+  box-shadow: 0 5px 20px #040b1699 !important;
+}
+.top .logo { min-width: 0; }
+.top .brand-word {
+  position: relative;
+  color: #f1faff !important;
+  line-height: 1.05;
+}
+.top .brand-word b { color: #a8dfff !important; }
+.top .brand-word::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  inset: -7px 1px auto -3px;
+  height: 10px;
+  background: linear-gradient(#fff, #ceeaff);
+  clip-path: polygon(0 45%, 7% 45%, 7% 18%, 20% 18%, 20% 40%, 34% 40%, 34% 5%, 53% 5%, 53% 34%, 63% 34%, 63% 20%, 80% 20%, 80% 44%, 94% 44%, 94% 67%, 100% 67%, 100% 87%, 85% 87%, 85% 72%, 68% 72%, 68% 100%, 60% 100%, 60% 72%, 36% 72%, 36% 91%, 27% 91%, 27% 70%, 0 70%);
+}
+.top .brand-icon.mw-brand-picture img { border-radius: 11px !important; }
+.top .head-actions > .iconbtn, .top #accountTop {
+  background: #1b3650 !important;
+  border-color: #4a7194 !important;
+  color: #d9eeff !important;
+  box-shadow: none !important;
+}
+.top .head-actions > .iconbtn:hover { background: #274c6d !important; }
+.bottom [data-go] { color: #b8cfe5 !important; }
+.bottom [data-go].on {
+  background: #254b69 !important;
+  color: #f0faff !important;
+  border-color: #6598bc !important;
+  box-shadow: inset 0 1px 0 #ade2ff4d !important;
+}
+.winter-hero.autumn-world-hero {
+  min-height: clamp(290px, 42vw, 465px) !important;
+  padding: clamp(24px, 5vw, 60px) !important;
+  display: flex;
+  align-items: center;
+  background-image: linear-gradient(90deg, #0a1728f5, #0c1c34ad 39%, #102e5214 83%),
+    url("./assets/winter-mountains.webp") !important;
+  background-position: center 54% !important;
+  border: 1px solid #708ca9 !important;
+  border-radius: 24px !important;
+  box-shadow: 0 14px 30px #02081585 !important;
+}
+.winter-release {
+  display: inline-block;
+  color: #c1e9ff;
+  padding: 5px 11px;
+  border: 1px solid #79b8df80;
+  border-radius: 7px;
+  background: #14304ae8;
+  font: 750 12px/1.3 ui-monospace, monospace;
+  letter-spacing: .06em;
+  margin-bottom: 14px;
+}
+.winter-hero.autumn-world-hero h1 {
+  color: #f4fbff !important;
+  font-size: clamp(36px, 6.7vw, 76px) !important;
+  line-height: .99;
+  letter-spacing: -.05em !important;
+  text-shadow: 0 3px 20px #08101e;
+}
+.winter-hero.autumn-world-hero h1 span { color: #a9e1ff !important; }
+.winter-hero.autumn-world-hero p { color: #d3e6f6 !important; }
+body :is(.btn:not(.danger):not(.ghost), .hero-primary):not(.mw11-theme-reset) {
+  background: linear-gradient(#bce9ff, #82c5ef) !important;
+  color: #0a2339 !important;
+  border-color: #bbe6ff !important;
+  box-shadow: 0 2px 0 #35658b !important;
+}
+body :is(.btn.ghost, .hero-secondary), body .tabs button {
+  background: #17334d !important;
+  color: #e2f2ff !important;
+  border-color: #436581 !important;
+  box-shadow: none !important;
+}
+body .tabs button.on, body .mod-toggle[aria-pressed="true"] {
+  background: #bce9ff !important;
+  color: #102b43 !important;
+  border-color: #bce9ff !important;
+}
+body .mod-toggle[data-mod-toggle="like"][aria-pressed="true"] {
+  background: #ffd3e4 !important;
+  border-color: #ffd3e4 !important;
+  color: #581632 !important;
+}
+body :is(.autumn-categories, .autumn-mod-heading, .autumn-filter-shell, .card, .banner, .dialog, .settings-row, .item, .empty) {
+  background: var(--winter-surface) !important;
+  color: var(--text) !important;
+  border-color: var(--winter-border) !important;
+  box-shadow: 0 3px 14px #040b1655 !important;
+}
+body :is(.autumn-heading h2, .autumn-see-all, .results-label, .muted, .autumn-mod-list > .card .cardbody p) { color: var(--muted) !important; }
+body :is(.field, .autumn-filter-shell .field, .category-tile) {
+  background: #152b43 !important;
+  color: #edf7ff !important;
+  border-color: #496b8b !important;
+  box-shadow: none !important;
+}
+body .category-tile .svg-icon { color: #a8defe !important; }
+body .category-tile.on { background: #294f6d !important; border-color: #98d8ff !important; }
+body .autumn-mod-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+body .autumn-mod-list > .card {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  border-radius: 17px !important;
+  background: #101f32 !important;
+}
+body .autumn-mod-list > .card:hover { border-color: #83caff !important; }
+body .autumn-mod-list > .card .art {
+  height: clamp(113px, 20vw, 214px) !important;
+  min-height: 0 !important;
+  background: #0a1626 !important;
+}
+body .autumn-mod-list > .card .cardbody { justify-content: flex-start; }
+body .autumn-mod-list > .card .cardbody h3 .linkbtn { color: #f0f9ff !important; overflow-wrap: anywhere; }
+body .autumn-mod-list > .card .cardbody .row.mini,
+body .autumn-mod-list > .card .cardbody .row.mini .svg-icon { color: #bddef5 !important; }
+body .autumn-mod-list > .card .art .chip { background: #142d47f2 !important; border-color: #6c9cc3 !important; color: #eff9ff !important; max-width: calc(100% - 54px); overflow-wrap: anywhere; }
+body :is(.quick-save, .autumn-mod-list > .card .art .quick-save) {
+  background: #0f2840f5 !important;
+  color: #b7e5ff !important;
+  border-color: #6d9cba !important;
+}
+body :is(.quick-save.saved, .autumn-mod-list > .card .art .quick-save.saved) { background: #c5ecff !important; color: #173149 !important; }
+.winter-community {
+  padding: clamp(20px, 5vw, 44px) !important;
+  background: linear-gradient(110deg, #10263eef, #204d70bb) !important;
+  border: 1px solid #5b8bb0 !important;
+  border-radius: 20px !important;
+}
+.winter-community h1 { color: #f0faff !important; }
+.winter-community p { margin-bottom: 0; color: #c7e2f5 !important; }
+#communityResults, #accountRows { display: grid; gap: 12px; }
+#communityResults > .item { padding: 18px; border-left: 3px solid #79c4f7 !important; }
+#app.mw11-chat-page :is(.chatlist, .chat-toolbar, .chat-compose, .chat-window) {
+  background: #10243af5 !important;
+  border-color: #365571 !important;
+  color: #e4f4ff !important;
+}
+#app.mw11-chat-page .chat-peer { color: #e4f4ff !important; border-color: #365571 !important; }
+#app.mw11-chat-page .chat-peer:is(.active, :hover) { background: #244963 !important; }
+#app.mw11-chat-page :is(#msgs:not([data-mw-theme]), #msgs[data-mw-theme="default"]) { background: #0b192a !important; }
+#app.mw11-chat-page .bubble { background: #203d57 !important; color: #f2f8ff !important; border-color: #426784 !important; }
+#app.mw11-chat-page .bubble.mine { background: #28536a !important; border-color: #6db4cd !important; }
+body .dialoghead { background: #152c44 !important; border-color: var(--winter-border) !important; color: var(--text) !important; }
+body .mod-actions { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); }
+body .mod-actions .btn { min-height: 42px; white-space: normal; }
+.winter-control { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+.winter-control input { width: 19px; height: 19px; accent-color: #8ed1fa; }
+.winter-setting p { margin: 4px 0 0; }
+:focus-visible { outline: 2px solid #a9dfff !important; outline-offset: 3px; }
+@media (max-width: 560px) {
+  .winter-hero.autumn-world-hero { background-image: linear-gradient(90deg,#0b1b2ee8,#11284159),url("./assets/winter-mountains.webp") !important; }
+  .winter-hero.autumn-world-hero .hero-copy { max-width: 100%; }
+  body .autumn-mod-list { gap: 8px !important; }
+  body .autumn-mod-list > .card .cardbody { padding: 8px !important; }
+  body .autumn-mod-list > .card .cardbody h3 { font-size: 15px !important; }
+  body .autumn-mod-list > .card .cardbody .row.mini { flex-wrap: wrap; }
+  body .autumn-mod-list > .card .art .quick-save { width: 36px !important; height: 36px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #winterSnow { display: none !important; }
+  .winter-flake { animation: none; }
+}
+.bottom [data-go] .navicon { color: #a9d7f6 !important; }
+.bottom [data-go].on .navicon { color: #edfaff !important; }
+body :is(.mod-hero-art, .mw-mod-install-guide, .skeleton-art) { background: #172f46 !important; }
+body .mw-mod-install-guide { border-color: #81caff; color: var(--text); }
+body .mw-mod-install-guide :is(strong, p) { color: #d3e9fa; }
+body .status { background: #254662; color: #e3f4ff; border-color: #4f7c9f; }
+#app.mw11-chat-page :is(.chat-title, .mw11-chat-options-btn, .mw11-new-chat-fab, #mw11SavedOpen) {
+  color: #e4f4ff !important;
+  border-color: #527fa1 !important;
+}
+#app.mw11-chat-page :is(.mw11-chat-options-btn, .mw11-new-chat-fab, #mw11SavedOpen) {
+  background: #234763 !important;
+  box-shadow: none !important;
+}

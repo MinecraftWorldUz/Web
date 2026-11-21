@@ -1,8 +1,10 @@
-const CACHE='mw-public-shell-mod-upload-v19';
+const CACHE='mw-public-shell-winter-v20';
 const SCOPE=self.registration.scope;
+const PUBLIC_ASSETS=['./assets/winter-logo-192.png','./manifest.webmanifest','./winter.css?v=2','./assets/winter-mountains.webp']
+  .map(path=>new URL(path,SCOPE).href);
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>
-    cache.addAll([new URL('./assets/autumn-world-user-logo.png',SCOPE).href,new URL('./manifest.webmanifest',SCOPE).href]))
+    cache.addAll(PUBLIC_ASSETS))
     .then(()=>self.skipWaiting()));
 });
 self.addEventListener('activate',event=>{
@@ -15,6 +17,10 @@ self.addEventListener('fetch',event=>{
   const req=event.request;
   if(req.method!=='GET')return;
   const url=new URL(req.url);
+  if(PUBLIC_ASSETS.includes(url.href)){
+    event.respondWith(caches.open(CACHE).then(async cache=>(await cache.match(req))||fetch(req)));
+    return;
+  }
   // Never cache Supabase API, user sessions, or private data.
   if(req.mode==='navigate'&&url.origin===self.location.origin&&url.pathname.startsWith('/Web/')){
     event.respondWith((async()=>{

@@ -4,9 +4,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#16211b">
-<title>Minecraft World | Mods & Community</title>
-<link rel="icon" type="image/png" href="./assets/autumn-world-user-logo.png?v=18"><link rel="apple-touch-icon" href="./assets/autumn-world-user-logo.png?v=18">
+<meta name="theme-color" content="#102237">
+<title>Minecraft World 2.0 | Mods & Community</title>
+<link rel="icon" type="image/png" href="./assets/winter-logo-192.png"><link rel="apple-touch-icon" href="./assets/winter-logo-192.png">
 <link rel="manifest" href="./manifest.webmanifest">
 <script src="https://telegram.org/js/telegram-web-app.js?65" defer></script>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2327,13 +2327,22 @@ body:before,.hero:after{display:none!important}
 }
 
 </style>
+<link rel="stylesheet" href="./winter.css?v=2">
+<script>
+try {
+  if (localStorage.getItem('mw:winter-background') === 'off') {
+    document.documentElement.dataset.winterBackground = 'off';
+  }
+} catch {}
+</script>
 </head>
 <body>
-<div id="leaves" aria-hidden="true"></div>
+<div class="winter-landscape" aria-hidden="true"></div>
+<div id="winterSnow" aria-hidden="true"></div>
 <div class="shell">
   <header class="top">
     <button class="logo" data-go="home">
-      <span class="brand-icon mw-brand-picture"><img src="./assets/autumn-world-user-logo.png?v=18" alt="" width="56" height="56" decoding="async"></span><span class="brand-word">MINECRAFT <b>WORLD</b></span>
+      <span class="brand-icon mw-brand-picture"><img src="./assets/winter-logo-192.png" alt="" width="56" height="56" decoding="async"></span><span class="brand-word">MINECRAFT <b>WORLD</b></span>
     </button>
     <div class="head-actions">
       <button class="iconbtn" data-act="notifications">
@@ -2567,6 +2576,7 @@ chat:'Chat',profile:'Profil',login:'Kirish',register:'Yangi akkaunt',
 logout:'Chiqish',settings:'Sozlamalar',notifications:'Bildirishnomalar',
 welcome:'Kuzgi Minecraft olami',
 intro:'Modlarni kashf eting, baham ko‘ring va birga o‘ynang.',
+winterBackground:'Qishki fon',winterBackgroundHelp:'Butun sayt fonidagi tog‘ manzarasi va yog‘ayotgan qor.',
 mods:'Modlar',search:'Mod qidirish...',all:'Barcha kategoriyalar',
 new:'Yangi',popular:'Mashhur',empty:'Hozircha hech narsa yo‘q',
 posts:'Postlar',followers:'Obunachilar',following:'Obunalar',
@@ -2593,6 +2603,7 @@ chat:'Чат',profile:'Профиль',login:'Войти',register:'Регист
 logout:'Выйти',settings:'Настройки',notifications:'Уведомления',
 welcome:'Осенний мир Minecraft',
 intro:'Исследуйте моды, делитесь ими и играйте вместе.',
+winterBackground:'Зимний фон',winterBackgroundHelp:'Горный пейзаж и падающий снег на фоне сайта.',
 mods:'Моды',search:'Поиск модов...',all:'Все категории',
 new:'Новые',popular:'Популярные',empty:'Пока ничего нет',
 posts:'Посты',followers:'Подписчики',following:'Подписки',
@@ -2620,6 +2631,7 @@ chat:'Chat',profile:'Profile',login:'Log in',register:'Sign up',
 logout:'Log out',settings:'Settings',notifications:'Notifications',
 welcome:'Autumn Minecraft World',
 intro:'Explore mods, share creations and play together.',
+winterBackground:'Winter background',winterBackgroundHelp:'Show the mountain scenery and falling snow behind the site.',
 mods:'Mods',search:'Search mods...',all:'All categories',
 new:'New',popular:'Popular',empty:'Nothing here yet',
 posts:'Posts',followers:'Followers',following:'Following',
@@ -3009,14 +3021,14 @@ function card(m,p,own=false){
       <span class="chip">${e(categoryName(m.category))}</span>
       ${m.status==='approved'?`<button class="quick-save ${S.savedIds?.has(m.id)?'saved':''}"
         data-act="quickSave" data-id="${e(m.id)}" title="Saqlash"
-        aria-label="Modni saqlash">${ico('bookmark',21)}</button>`:''}
+        aria-label="Modni saqlash" aria-pressed="${Boolean(S.savedIds?.has(m.id))}">${ico('bookmark',21)}</button>`:''}
     </div>
     <div class="cardbody">
       <h3><button class="linkbtn" data-act="mod"
         data-id="${m.id}">${e(localModTitle(m))}</button></h3>
       <p class="muted smalltext">${e(localModDesc(m).slice(0,125))}</p>
       <div class="row mini muted">
-        ${ico('heart',14)} ${count(m.likes_count)}
+        ${ico('heart',14)} <span data-like-count="${e(m.id)}">${count(m.likes_count)}</span>
         · ${ico('eye',14)} <span data-view-count="${e(m.id)}">${count(m.views_count)}</span>
         · ${ico('download',14)} ${count(m.downloads_count)}
         · ${e(m.game_version)}
@@ -3044,7 +3056,7 @@ function saveScreen(page,id){
   fastScreens.set(screenKey(page,id),snapshot);
   // Cache only profile views, not chats or private messages.
   if(page==='profile'&&S.u?.id){
-    try{localStorage.setItem('mw_profile_cache:'+S.u.id+':'+id+':'+S.lang,JSON.stringify(snapshot))}catch(error){}
+    try{localStorage.setItem('mw_profile_v2:'+S.u.id+':'+id+':'+S.lang,JSON.stringify(snapshot))}catch(error){}
   }
   if(fastScreens.size>12)fastScreens.delete(fastScreens.keys().next().value);
 }
@@ -3093,7 +3105,7 @@ async function go(page='home',id=null){
   let cached=useCache?fastScreens.get(key):null;
   if(!cached&&page==='profile'&&S.u?.id){
     try{
-      const saved=JSON.parse(localStorage.getItem('mw_profile_cache:'+S.u.id+':'+target+':'+S.lang)||'null');
+      const saved=JSON.parse(localStorage.getItem('mw_profile_v2:'+S.u.id+':'+target+':'+S.lang)||'null');
       if(saved?.html&&Date.now()-saved.at<24*60*60*1000)cached=saved;
     }catch(error){}
   }
@@ -3173,8 +3185,9 @@ function saveFeedCache(){
 function homeShell(){
   const saved=S.homeView==='saved';
   $('#app').innerHTML=`
-    <section class="hero compact-hero autumn-world-hero" aria-label="Minecraft World kuzgi manzarasi">
+    <section class="hero compact-hero autumn-world-hero winter-hero" aria-label="Minecraft World 2.0">
       <div class="hero-copy">
+        <span class="winter-release">MINECRAFT WORLD 2.0</span>
         <h1>${ux('O‘yin dunyongni')}<br><span>${ux('kengaytir.')}</span></h1>
         <p>${ux('Eng qiziqarli Minecraft modlarini kashf et, saqla va do‘stlaring bilan bo‘lish.')}</p>
         <div class="hero-cta">
@@ -4838,6 +4851,12 @@ async function toggleTable(table,id,detail=true){
     if(m){
       const field=type==='like'?'likes_count':'saves_count';
       m[field]=Math.max(0,(m[field]||0)+(current?-1:1));
+      if(type==='like'){
+        document.querySelectorAll('[data-like-count]').forEach(node=>{
+          if(node.dataset.likeCount===String(id))node.textContent=count(m[field]);
+        });
+        clearScreenCache();
+      }
       if(btnEl?.isConnected){
         const label=btnEl.querySelector('span');
         if(label)label.textContent=(type==='like'?'Like':'Saqlash')+' · '+count(m[field]);
@@ -4846,8 +4865,11 @@ async function toggleTable(table,id,detail=true){
     if(table==='mod_saves'){
       if(current)S.savedIds?.delete(id);else S.savedIds?.add(id);
       // Do not rerender the grid while the modal is open.
-      const quick=document.querySelector('.quick-save[data-id="'+CSS.escape(id)+'"]');
-      quick?.classList.toggle('saved',!current);
+      document.querySelectorAll('.quick-save[data-id="'+CSS.escape(id)+'"]').forEach(quick=>{
+        quick.classList.toggle('saved',!current);
+        quick.setAttribute('aria-pressed',String(!current));
+      });
+      clearScreenCache();
     }
     if(btnEl?.isConnected)btnEl.setAttribute('aria-pressed',String(!current));
     if(!detail)toast(current?'Saqlanganlardan olib tashlandi':'Mod saqlandi');
@@ -4946,7 +4968,7 @@ const COMMUNITY_TTL=60000;
 function communityShell(tab){
   if(tab==='play'){
     $('#app').innerHTML=`
-      <div class="hero" style="padding:25px">
+      <div class="hero winter-community">
         <h1>${ico('users',32)} ${t('community')}</h1>
         <p>${t('intro')}</p>
       </div>
@@ -4964,7 +4986,7 @@ function communityShell(tab){
       </div>`;
   }else{
     $('#app').innerHTML=`
-      <h2>${ico('globe',25)} ${t('community')}</h2>
+      <div class="hero winter-community"><h1>${ico('users',32)} ${t('community')}</h1><p>${t('intro')}</p></div>
       <div class="tabs">
         <button data-act="tab" data-tab="play">${t('play')}</button>
         <button class="on" data-act="tab" data-tab="accounts">${t('accounts')}</button>
@@ -5622,11 +5644,25 @@ async function savedModal(){
     if(holder.isConnected)holder.textContent=err.message;
   }
 }
+function winterSetting(){
+  return `<div class="settings-row winter-setting">
+    <label class="winter-control">
+      <input type="checkbox" id="winterBackground" ${document.documentElement.dataset.winterBackground==='off'?'':'checked'}>
+      <b>${t('winterBackground')}</b>
+    </label>
+    <p class="mini muted">${t('winterBackgroundHelp')}</p>
+  </div>`;
+}
 function settings(){
+  if(!S.u){
+    dialog(t('settings'),`<div class="settings-stack">${winterSetting()}</div>`);
+    return;
+  }
   if(!requireUser())return;
   const on=notificationEnabled();
   dialog(t('settings'),`
     <div class="settings-stack">
+      ${winterSetting()}
       <div class="settings-row">
         <b>${ico('user',19)} ${e(S.me?.username||'Profil')}</b>
         <div class="buttons">${btn('editProfile','Profilni tahrirlash','','ghost')}</div>
@@ -6139,6 +6175,13 @@ window.addEventListener('input',ev=>{
   }
 });
 window.addEventListener('change',async ev=>{
+  if(ev.target.id==='winterBackground'){
+    const enabled=ev.target.checked;
+    if(enabled)delete document.documentElement.dataset.winterBackground;
+    else document.documentElement.dataset.winterBackground='off';
+    try{localStorage.setItem('mw:winter-background',enabled?'on':'off')}catch{}
+    return;
+  }
   if(ev.target.matches('.file-picker input[type="file"], .mw-avatar-edit input[type="file"]')){
     const x=ev.target;
     const label=document.getElementById('pick-label-'+x.name);
@@ -6334,31 +6377,22 @@ window.addEventListener('keydown',ev=>{
   if(ev.key==='Escape')close()
 });
 
-// KUZGI BARGLAR
-function leaves(){
-  const layer=$('#leaves');
-  if(!layer)return;
-  layer.replaceChildren();
-  const count=window.matchMedia('(max-width:760px)').matches?6:10;
-  const frag=document.createDocumentFragment();
-  const leafSvg='<svg viewBox="0 0 32 32" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">'+
-    '<path fill="currentColor" d="M16 2 20 9l5-2-2 6 6 4-7 3 1 6-7-3-7 3 1-6-7-3 6-4-2-6 5 2Z"/>'+
-    '<path d="M16 12v17" fill="none" stroke="#88521f" stroke-width="1.2"/></svg>';
-  for(let i=0;i<count;i++){
-    const el=document.createElement('span');
-    const size=15+i%4*4;
-    el.className='leaf';
-    el.innerHTML=leafSvg;
-    el.style.left=((i*41+12)%100)+'%';
-    el.style.width=size+'px';
-    el.style.height=size+'px';
-    el.style.setProperty('--leaf-drift',((i%2?1:-1)*(30+i%3*15))+'px');
-    el.style.setProperty('--leaf-spin',(i%2?-1:1)*(190+i%4*70)+'deg');
-    el.style.setProperty('--leaf-duration',(21+i%6*3)+'s');
-    el.style.setProperty('--leaf-delay',(-i*4.7)+'s');
-    frag.appendChild(el);
+function createSnow(){
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const flakes=window.matchMedia('(max-width:560px)').matches?18:34;
+  const fragment=document.createDocumentFragment();
+  for(let i=0;i<flakes;i++){
+    const flake=document.createElement('span');
+    flake.className='winter-flake';
+    flake.style.left=((i*41+12)%100)+'%';
+    flake.style.setProperty('--size',(2+i%4)+'px');
+    flake.style.setProperty('--opacity',String(.3+i%5*.12));
+    flake.style.setProperty('--duration',(8+i%8*1.7)+'s');
+    flake.style.setProperty('--delay',(-i*1.31)+'s');
+    flake.style.setProperty('--drift',(i%2===0?28:-45)+'px');
+    fragment.appendChild(flake);
   }
-  layer.append(frag);
+  $('#winterSnow').replaceChildren(fragment);
 }
 
 // PWA - only public website shell is cached by the service worker.
@@ -6378,7 +6412,7 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js?v=19').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=20').catch(console.warn);
   });
 }
 
@@ -6413,7 +6447,7 @@ setInterval(()=>{mwPingPresence().catch(console.warn);if(S.page==='chat'&&S.chat
 // SAYTNI ISHGA TUSHIRISH
 (async()=>{
   hydrateIcons();
-  leaves();
+  createSnow();
   document.documentElement.lang=S.lang;
   document.querySelectorAll('[data-tr]').forEach(
     x=>x.textContent=t(x.dataset.tr)
