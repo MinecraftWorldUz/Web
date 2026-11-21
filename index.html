@@ -2327,7 +2327,7 @@ body:before,.hero:after{display:none!important}
 }
 
 </style>
-<link rel="stylesheet" href="./winter.css?v=20.1">
+<link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
 try {
   if (localStorage.getItem('mw:winter-background') === 'off') {
@@ -4706,58 +4706,47 @@ async function getMod(id){
   modOpenPending.set(id,load);
   return load;
 }
-function modInstallHelp(m){
-  const ext=(m?.file_path||'').split('.').pop()?.toLowerCase()||'';
-  const lang=['uz','ru','en'].includes(S.lang)?S.lang:'uz';
-  const guides={
-    mcaddon:{
-      uz:['Bedrock — bir bosishda o‘rnatish','Faylni yuklab oling va Minecraft bilan oching. Dunyo sozlamalaridagi Behavior Packs yoki Resource Packs bo‘limida paketni faollashtiring.'],
-      ru:['Bedrock — быстрая установка','Скачайте файл и откройте его в Minecraft. В настройках мира включите набор в Behavior Packs или Resource Packs.'],
-      en:['Bedrock — one-tap import','Download the file and open it with Minecraft. Enable the pack in your world’s Behavior Packs or Resource Packs settings.']},
-    mcpack:{
-      uz:['Bedrock — to‘g‘ridan-to‘g‘ri import','Faylni Minecraft bilan oching. Skin bo‘lsa kiyimlar bo‘limida, resurs paketi bo‘lsa Resource Packs ichida tanlang.'],
-      ru:['Bedrock — прямой импорт','Откройте файл в Minecraft. Выберите скин в редакторе персонажа или активируйте набор в Resource Packs.'],
-      en:['Bedrock — direct import','Open the file with Minecraft. Select skins in the character editor or enable resource packs in Resource Packs.']},
-    zip:{
-      uz:['Java — ZIP ochilmaydi','Bu Java datapack. ZIP faylni ochmasdan dunyo papkasidagi datapacks ichiga joylang, so‘ng dunyoni qayta yuklang. Bedrock uchun emas.'],
-      ru:['Java — ZIP распаковывать не нужно','Это датапак Java Edition. Поместите ZIP без распаковки в папку datapacks нужного мира и перезагрузите мир. Не для Bedrock.'],
-      en:['Java — keep the ZIP intact','This is a Java Edition datapack. Copy the ZIP into your world’s datapacks folder without extracting it, then reload the world. Not for Bedrock.']},
-    jar:{
-      uz:['Java — mod o‘rnatish','JAR faylni mods papkasiga joylang. Mod talab qiladigan Forge yoki Fabric versiyasini oldindan tekshiring.'],
-      ru:['Java — установка мода','Поместите JAR в папку mods. Сверьте требуемую версию Forge или Fabric.'],
-      en:['Java — mod installation','Place the JAR in the mods folder. Match the required Forge or Fabric version first.']}
-  };
-  const item=guides[ext]?.[lang];if(!item)return '';
-  return '<div class="mw-mod-install-guide"><strong>📥 '+e(item[0])+'</strong><p>'+e(item[1])+'</p></div>';
-}
 function renderMod(m){
   const isApproved=m.status==='approved';
-  const actions=isApproved?`
-    ${btn('download',(telegramApp()?'Telegramga yuborish':'Yuklab olish')+' · '+count(m.downloads_count),m.id)}
-    <button class="btn small ghost mod-toggle" data-act="like" data-id="${e(m.id)}"
-      data-mod-toggle="like" aria-pressed="false">
-      ${ico('heart',18)} <span>Like · ${count(m.likes_count)}</span></button>
-    <button class="btn small ghost mod-toggle" data-act="saveMod" data-id="${e(m.id)}"
-      data-mod-toggle="save" aria-pressed="${S.savedIds?.has(m.id)?'true':'false'}">
-      ${ico('bookmark',18)} <span>Saqlash · ${count(m.saves_count)}</span></button>
-    ${btn('reportMod',t('report'),m.id,'ghost')}`:
-    `<div class="note mod-review-message">${ico('clock',19)}
-      Mod tekshiruvda. Tasdiqlangach like, saqlash va yuklab olish mumkin.</div>`;
+  const telegram=Boolean(telegramApp());
+  const downloadLabel=telegram?'Telegramga yuborish':'Yuklab olish';
   dialog(localModTitle(m),`
     <section class="mod-detail" data-mod-id="${e(m.id)}">
       <div class="mod-hero-art">
         ${cover(m.cover_path)?`<img loading="eager" decoding="async" src="${e(cover(m.cover_path))}" alt="">`:ico('package',66)}
       </div>
+      ${isApproved?`<div class="mod-like-row">
+        <button type="button" class="mod-icon-action mod-like" data-act="like" data-id="${e(m.id)}"
+          data-mod-toggle="like" aria-label="Yoqtirish" aria-pressed="false">
+          ${ico('heart',26)}<span data-like-count="${e(m.id)}">${count(m.likes_count)}</span>
+        </button>
+      </div>`:''}
       <div class="mod-headline">
         <h2>${e(localModTitle(m))}</h2>
         <span class="status">${e(m.game_version)} · ${e(categoryName(m.category))}</span>
         <span class="mod-view-stat">${ico('eye',17)} <span data-mod-view-count>${count(m.views_count)}</span></span>
       </div>
       <p class="wrap mod-description">${e(localModDesc(m))}</p>
-      ${modInstallHelp(m)}
-      <div id="modAuthor" class="mod-author"></div>
-      <div class="buttons mod-actions">${actions}</div>
+      <div class="mod-author-row">
+        <div id="modAuthor" class="mod-author"></div>
+        ${isApproved?`<div class="mod-secondary-actions">
+          <button type="button" class="mod-icon-action mod-save" data-act="saveMod" data-id="${e(m.id)}"
+            data-mod-toggle="save" aria-label="Saqlash" title="Saqlash"
+            aria-pressed="${Boolean(S.savedIds?.has(m.id))}">${ico('bookmark',23)}</button>
+          <button type="button" class="mod-icon-action" data-act="reportMod" data-id="${e(m.id)}"
+            aria-label="${e(t('report'))}" title="${e(t('report'))}">${ico('flag',22)}</button>
+        </div>`:''}
+      </div>
       ${isApproved?`
+        <div class="mod-download-panel">
+          <button type="button" class="btn mod-download" data-act="download" data-id="${e(m.id)}">
+            ${ico(telegram?'send':'download',21)} <span>${downloadLabel} · ${count(m.downloads_count)}</span>
+          </button>
+          <div class="mod-download-progress" hidden>
+            <progress max="100" value="0" aria-label="Yuklash jarayoni"></progress>
+            <p role="status"></p>
+          </div>
+        </div>
         <div class="mod-comments-head">
           <h3>${ico('chat',20)} ${t('comments')} (${count(m.comments_count)})</h3>
         </div>
@@ -4768,7 +4757,7 @@ function renderMod(m){
             placeholder="${t('message')}" required>
           <button class="btn">${t('send')}</button>
         </form>`:btn('auth',t('login'))}
-      `:''}
+      `:'<div class="note mod-review-message">Mod tekshiruvda. Tasdiqlangach yuklab olish mumkin.</div>'}
       <p class="mini muted">Fayllarni faqat ishonchli manbadan yuklab oling.</p>
     </section>`);
   activeModId=m.id;
@@ -4947,10 +4936,6 @@ async function toggleTable(table,id,detail=true){
         });
         clearScreenCache();
       }
-      if(btnEl?.isConnected){
-        const label=btnEl.querySelector('span');
-        if(label)label.textContent=(type==='like'?'Like':'Saqlash')+' · '+count(m[field]);
-      }
     }
     if(table==='mod_saves'){
       if(current)S.savedIds?.delete(id);else S.savedIds?.add(id);
@@ -4971,87 +4956,102 @@ async function toggleTable(table,id,detail=true){
     modToggleLocks.delete(key);
   }
 }
-const sendingTelegramMods=new Set();
+const downloadingMods=new Set();
 async function sendModToTelegram(id,tg){
-  if(sendingTelegramMods.has(id))return;
-  sendingTelegramMods.add(id);
-  const button=[...document.querySelectorAll('[data-act="download"]')]
-    .find(el=>el.dataset.id===id);
-  if(button)button.disabled=true;
-  try{
-    toast('Mod Telegramga yuborilmoqda...');
-    const res=await fetch('https://ruovdgyfcucspffrvijh.supabase.co/functions/v1/telegram-mod',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'apikey':'sb_publishable_L3WnUsSn6GBh16nqZTxisQ_eJu8uIrw'
-      },
-      body:JSON.stringify({initData:tg.initData,modId:id}),
-      signal:AbortSignal.timeout(65000),
-    });
-    const result=await res.json().catch(()=>({ok:false,error:'Server javobini o‘qib bo‘lmadi.'}));
-    if(!res.ok||!result.ok)throw Error(result.error||'Telegramga yuborishda xato');
-    const m=getCachedMod(id);
-    if(m)m.downloads_count=(m.downloads_count||0)+1;
-    toast('Mod fayli botdan shaxsiy Telegram chatingizga yuborildi.');
-    tg.HapticFeedback?.notificationOccurred?.('success');
-    if(button?.isConnected){
-      const text=button.querySelector('span');
-      if(text)text.textContent='Telegramga yuborish · '+count(m?.downloads_count||0);
-    }
-  }catch(error){
-    console.warn('Telegram file send:',error);
-    toast(error.name==='TimeoutError'?
-      'Telegramga yuborish vaqti tugadi. Bot chatini tekshiring.':
-      (error.message||'Telegramga yuborishda xato'));
-    tg.HapticFeedback?.notificationOccurred?.('error');
-  }finally{
-    sendingTelegramMods.delete(id);
-    if(button?.isConnected)button.disabled=false;
-  }
+  const res=await fetch('https://ruovdgyfcucspffrvijh.supabase.co/functions/v1/telegram-mod',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'apikey':'sb_publishable_L3WnUsSn6GBh16nqZTxisQ_eJu8uIrw'
+    },
+    body:JSON.stringify({initData:tg.initData,modId:id}),
+    signal:AbortSignal.timeout(65000),
+  });
+  const result=await res.json().catch(()=>({ok:false,error:'Server javobini o‘qib bo‘lmadi.'}));
+  if(!res.ok||!result.ok)throw Error(result.error||'Telegramga yuborishda xato');
+}
+function fetchModFile(url,onProgress){
+  return new Promise((resolve,reject)=>{
+    const request=new XMLHttpRequest();
+    request.open('GET',url,true);
+    request.responseType='blob';
+    request.timeout=65000;
+    request.onprogress=event=>{
+      if(event.lengthComputable&&event.total)onProgress(Math.min(99,Math.floor(event.loaded/event.total*100)));
+    };
+    request.onload=()=>{
+      if(request.status>=200&&request.status<300&&request.response?.size)resolve(request.response);
+      else reject(Error('Faylni yuklab bo‘lmadi.'));
+    };
+    request.onerror=()=>reject(Error('Internet aloqasini tekshirib qayta urining.'));
+    request.ontimeout=()=>reject(Error('Yuklash vaqti tugadi. Qayta urining.'));
+    request.send();
+  });
 }
 async function download(id){
+  if(downloadingMods.has(id))return;
+  downloadingMods.add(id);
+  const button=$('#overlay .mod-download');
+  const panel=button?.closest('.mod-download-panel');
+  const progress=panel?.querySelector('progress');
+  const status=panel?.querySelector('[role="status"]');
   const tg=telegramApp();
-  if(tg){
-    // Telegram Mini App: every approved mod must arrive directly in
-    // the user's private bot chat. Never open Chrome or a download URL.
-    await sendModToTelegram(id,tg);
-    return;
+  function update(percent,message){
+    if(progress)progress.value=percent;
+    if(status){
+      const text=percent+'% · '+message;
+      if(status.textContent!==text)status.textContent=text;
+    }
   }
-  const mod=check(await DB.from('mods').select('status,file_path')
-    .eq('id',id).single());
-  if(mod.status!=='approved'){
-    toast('Mod tekshiruvda. Tasdiqlangach yuklab olish mumkin.');
-    return;
-  }
-  const publicFile=officialModUrl(mod.file_path,'download');
-  if(publicFile){
-    const registered=check(await DB.rpc('register_download',{p_mod:id}));
-    if(registered!==mod.file_path)throw Error('Fayl manzili o‘zgargan');
-    const link=document.createElement('a');
-    link.href=publicFile;
-    link.download=mod.file_path.split('/').pop();
-    link.target='_blank';
-    link.rel='noopener noreferrer';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+  if(button)button.disabled=true;
+  if(panel)panel.querySelector('.mod-download-progress').hidden=false;
+  if(progress)progress.hidden=false;
+  let percent=0;
+  update(0,'Tayyorlanmoqda…');
+  try{
+    if(tg){
+      percent=25;
+      update(percent,'Botdan yuborish tasdig‘i kutilmoqda…');
+      await sendModToTelegram(id,tg);
+      update(100,'Telegramdagi shaxsiy bot chatiga yuborildi.');
+    }else{
+      const mod=check(await DB.from('mods').select('status,file_path').eq('id',id).single());
+      if(mod.status!=='approved')throw Error('Mod hali tekshiruvda.');
+      const path=check(await DB.rpc('register_download',{p_mod:id}));
+      const publicFile=officialModUrl(path,'download');
+      const signed=publicFile?null:check(await DB.storage.from('mod-files').createSignedUrl(path,90));
+      const url=publicFile||signed?.signedUrl;
+      if(!url)throw Error('Yuklab olish manzili topilmadi.');
+      const file=await fetchModFile(url,value=>{
+        percent=value;
+        update(value,'Yuklab olinmoqda…');
+      });
+      const href=URL.createObjectURL(file);
+      const link=document.createElement('a');
+      link.href=href;
+      link.download=path.split('/').pop();
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(()=>URL.revokeObjectURL(href),30000);
+      update(100,'Fayl tayyor.');
+    }
     const cached=getCachedMod(id);
-    if(cached)cached.downloads_count=(cached.downloads_count||0)+1;
-    toast('Fayl yuklab olinmoqda');
-    return;
+    if(cached){
+      cached.downloads_count=(cached.downloads_count||0)+1;
+      const label=button?.querySelector('span');
+      if(label)label.textContent=(tg?'Telegramga yuborish':'Yuklab olish')+' · '+count(cached.downloads_count);
+    }
+  }catch(error){
+    if(progress)progress.hidden=true;
+    const message=tg&&error.name==='TimeoutError'?
+      'Telegram javobi kechikdi. Bot chatini tekshiring.':(error.message||'Yuklashda xato.');
+    if(status?.isConnected)status.textContent=message;
+    else toast(message);
+  }finally{
+    downloadingMods.delete(id);
+    if(button?.isConnected)button.disabled=false;
   }
-  const path=check(await DB.rpc('register_download',{p_mod:id}));
-  const signed=check(await DB.storage.from('mod-files').createSignedUrl(path,90));
-  if(!signed?.signedUrl)throw Error('Yuklab olish manzili topilmadi');
-  const link=document.createElement('a');
-  link.href=signed.signedUrl;
-  link.target='_blank';
-  link.rel='noopener noreferrer';
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  toast('Yuklab olish boshlandi');
 }
 let communityReq=0;
 const COMMUNITY_TTL=60000;
@@ -6502,7 +6502,7 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js?v=20.1').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=20.2').catch(console.warn);
   });
 }
 

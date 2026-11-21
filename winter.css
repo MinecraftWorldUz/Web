@@ -262,3 +262,28 @@ body .status { background: #254662; color: #e3f4ff; border-color: #4f7c9f; }
 .cover-consent p { margin: 0 0 10px; color: #c6ddf1; overflow-wrap: anywhere; }
 .cover-consent .buttons { justify-content: flex-end; margin: 14px 0 0; }
 .cover-consent .btn { min-height: 44px; }
+
+.mod-like-row { display: flex; justify-content: flex-end; margin: 6px 0 0; }
+.mod-icon-action {
+  display: inline-grid;
+  place-items: center;
+  gap: 2px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 5px;
+  border: 0;
+  background: transparent;
+  color: #e0f0ff;
+}
+.mod-icon-action:hover { color: #a9dfff; }
+.mod-icon-action:disabled { opacity: .75; }
+.mod-like span { font-size: 12px; line-height: 1; color: var(--muted); }
+.mod-like[aria-pressed="true"] .svg-icon { color: #ff6386; fill: currentColor; }
+.mod-save[aria-pressed="true"] .svg-icon { color: #b4e5ff; fill: currentColor; }
+.mod-author-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
+.mod-secondary-actions { display: flex; gap: 4px; margin-inline-start: auto; }
+.mod-download-panel { margin: 12px 0 18px; }
+.mod-download-panel .mod-download { display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; min-height: 48px; }
+.mod-download-progress { margin-top: 9px; }
+.mod-download-progress progress { width: 100%; height: 10px; accent-color: #9ddcff; }
+.mod-download-progress p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
