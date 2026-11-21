@@ -2183,6 +2183,105 @@ body:before,.hero:after{display:none!important}
   }
 }
 
+
+/* Two-column compact mod gallery. Card height follows each image rather than stretching it. */
+.grid:has(>.card.clickable-mod){
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:12px!important;
+  align-items:start;
+}
+.grid:has(>.card.clickable-mod)>.card{
+  display:block!important;
+  min-height:0!important;
+  height:auto!important;
+  border-radius:12px!important;
+}
+.grid:has(>.card.clickable-mod)>.card .art{
+  display:grid!important;
+  place-items:center;
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  aspect-ratio:auto!important;
+  background:#292117!important;
+  overflow:hidden;
+}
+.grid:has(>.card.clickable-mod)>.card .art:has(>img){
+  min-height:0!important;
+}
+.grid:has(>.card.clickable-mod)>.card .art img{
+  display:block;
+  width:100%!important;
+  height:auto!important;
+  max-height:220px;
+  object-fit:contain!important;
+  object-position:center;
+}
+.grid:has(>.card.clickable-mod)>.card .cardbody{
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  min-width:0;
+  padding:11px!important;
+  gap:6px!important;
+}
+.grid:has(>.card.clickable-mod)>.card .cardbody h3{
+  font-size:clamp(14px,1.7vw,19px)!important;
+  line-height:1.25!important;
+  margin:0!important;
+}
+.grid:has(>.card.clickable-mod)>.card .cardbody p{
+  min-height:0!important;
+  margin:0!important;
+  font-size:12px!important;
+  line-height:1.4!important;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+}
+.grid:has(>.card.clickable-mod)>.card .cardbody .row.mini{
+  gap:4px!important;
+  flex-wrap:wrap;
+  font-size:11px!important;
+}
+.grid:has(>.card.clickable-mod)>.card .cardbody .divider{display:none}
+.grid:has(>.card.clickable-mod)>.card .cardbody .buttons{
+  margin:5px 0 0;
+  gap:5px;
+}
+.grid:has(>.card.clickable-mod)>.card .cardbody .buttons .btn{
+  min-height:32px!important;
+  padding:6px 8px!important;
+  font-size:11px!important;
+}
+.grid:has(>.card.clickable-mod)>.card .cardbody>.row:last-child{
+  display:flex;
+  min-height:0;
+}
+.grid:has(>.card.clickable-mod)>.card .cardbody>.row:last-child .av{
+  width:25px;height:25px;
+}
+.mod-hero-art{height:auto!important;max-height:300px;min-height:0}
+.mod-hero-art img{width:100%;height:auto;max-height:300px;object-fit:contain!important}
+@media(max-width:650px){
+  .grid:has(>.card.clickable-mod){
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+  .grid:has(>.card.clickable-mod)>.card .art img{max-height:170px}
+  .grid:has(>.card.clickable-mod)>.card .cardbody{padding:8px!important;gap:5px!important}
+  .grid:has(>.card.clickable-mod)>.card .cardbody h3{font-size:13px!important}
+  .grid:has(>.card.clickable-mod)>.card .cardbody p{font-size:11px!important}
+  .grid:has(>.card.clickable-mod)>.card .art .chip{
+    font-size:9px!important;padding:3px 5px!important;max-width:67%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+  }
+  .grid:has(>.card.clickable-mod)>.card .art .quick-save{
+    width:28px!important;height:28px!important
+  }
+  .mod-hero-art,.mod-hero-art img{max-height:230px}
+}
+
 </style>
 </head>
 <body>
