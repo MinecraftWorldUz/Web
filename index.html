@@ -1308,7 +1308,7 @@ body:before,.hero:after{display:none!important}
 .mw-profile-summary{display:flex;align-items:center;gap:clamp(14px,4vw,30px)}
 .mw-profile-avatar{display:flex;flex:none}
 .mw-profile-avatar .av.large{width:88px!important;height:88px!important;min-width:88px!important;object-fit:cover!important;border-radius:50%!important;font-size:34px}
-.mw-profile-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:1;min-width:0;gap:5px}
+.mw-profile-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));flex:1;min-width:0;gap:5px}
 .mw-profile-stats .mw-stat{background:transparent;border:0;color:var(--text);font:inherit;padding:6px 2px;min-width:0;display:grid;justify-items:center;gap:6px;cursor:pointer}
 .mw-profile-stats .mw-stat b{font-size:clamp(17px,4vw,24px)}
 .mw-profile-stats .mw-stat span{font-size:clamp(10px,2.5vw,13px)}
@@ -3102,7 +3102,6 @@ async function go(page='home',id=null){
   if(cached&&(page!=='profile'||freshProfileCache)){
     $('#app').innerHTML=cached.html;
     translateUi($('#app'));
-    if(page==='profile')window.MWSocial?.renderProfile?.(target).catch(console.warn);
     if(freshProfileCache||(fastScreens.get(key)===cached&&Date.now()-cached.at<SCREEN_TTL))return;
   }else if(page==='home'){
     // homeShell() paints immediately without waiting for Supabase.
@@ -3456,7 +3455,6 @@ async function profile(id,nav=navigationSeq){
       <div class="mw-profile-summary">
         <div class="mw-profile-avatar">${avatar(p,true)}</div>
         <div class="mw-profile-stats">
-          <button class="mw-stat" data-act="posts"><b id="mwSocialPostCount">0</b><span>${t('posts')}</span></button>
           <button class="mw-stat" data-act="followers" data-id="${e(id)}"><b>${count(fc.count)}</b><span>${t('followers')}</span></button>
           <button class="mw-stat" data-act="following" data-id="${e(id)}"><b>${count(gc.count)}</b><span>${t('following')}</span></button>
         </div>
@@ -3474,7 +3472,6 @@ async function profile(id,nav=navigationSeq){
           btn('reportUser',t('report'),id,'ghost')}
       </div>
     </section>
-    <section id="mwSocialSection" class="mw-social-section" aria-label="Postlar"></section>
     <div class="bar mw-profile-mods-heading" id="profileMods">
       <h2>Modlar</h2>
       ${mine?'<button class="btn" data-go="create">＋ Mod qo‘shish</button>':''}
@@ -3483,7 +3480,6 @@ async function profile(id,nav=navigationSeq){
       ${mods.data.length?mods.data.map(m=>card(m,p,mine)).join(''):blank()}
     </div>`;
   saveScreen('profile',id);
-  window.MWSocial?.renderProfile?.(id).catch(err=>console.warn('Social posts:',err));
 }
 async function followList(type,id){
   let key=type==='followers'?'following_id':'follower_id';
@@ -6009,8 +6005,6 @@ window.addEventListener('click',async event=>{
       else{S.visibleMods+=12;filterMods()}
     }
     else if(act==='follow')await toggleFollow(id);
-    else if(act==='posts')
-      $('#mwSocialSection')?.scrollIntoView({behavior:'smooth',block:'start'});
     else if(act==='followers'||act==='following')
       await followList(act,id);
     else if(act==='editProfile')editProfile();
@@ -6461,7 +6455,6 @@ setInterval(()=>{mwPingPresence().catch(console.warn);if(S.page==='chat'&&S.chat
 });
 </script>
 <script src="./mw-live-chat.js?v=8"></script>
-<script src="./mw-social.js?v=2"></script>
 <script src="./mw-v11.js?v=9"></script>
 </body>
 </html>
