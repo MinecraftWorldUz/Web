@@ -1973,8 +1973,6 @@ body:before,.hero:after{display:none!important}
  border:1px solid #d5a75a8f;background:#64442d;color:#f4d5a3;border-radius:11px;
  cursor:pointer}
 .mw-mod-picker-x svg{display:block;width:20px;height:20px;flex:none}
-.mw-mod-picker-search-wrap{padding:13px 17px 10px}
-.mw-mod-picker-search{width:100%;min-height:47px;border-radius:13px!important}
 .mw-mod-picker-options{overflow-y:auto;overscroll-behavior:contain;padding:4px 12px 12px;
  display:grid;gap:5px;min-height:0}
 .mw-mod-picker-option{display:flex;align-items:center;justify-content:space-between;
@@ -2341,6 +2339,14 @@ try {
 .mod-secondary-actions .mod-icon-action { position: relative; box-sizing: border-box; width: 44px; height: 48px; padding: 4px 0 20px; }
 .mod-secondary-actions .mod-icon-action svg { width: 24px; height: 24px; }
 .mod-secondary-actions .mod-like span { position: absolute; bottom: 2px; left: 0; right: 0; text-align: center; }
+#gameVersion[data-mod-picker] { display:flex; align-items:center; justify-content:space-between; gap:8px; flex:1 1 120px; min-width:0; text-align:left; }
+@media(max-width:650px){ #gameVersion[data-mod-picker] { max-width:calc(50% - 4px); } }
+#mwModPicker .mw-mod-picker-dialog { background:#12283e; border-color:#5682a6; color:#edf7ff; }
+#mwModPicker .mw-mod-picker-header { border-color:#365571; }
+#mwModPicker .mw-mod-picker-options { padding-top:10px; }
+#mwModPicker :is(.mw-mod-picker-option,.mw-mod-picker-x) { background:#1b3650; color:#e5f4ff; border-color:#385a76; }
+#mwModPicker .mw-mod-picker-option:is(:hover,.selected) { background:#284e69; border-color:#8fd5fa; }
+#mwModPicker .mw-mod-picker-check { color:#b6e7ff; }
 </style>
 </head>
 <body>
@@ -3232,10 +3238,10 @@ function homeShell(){
           <select class="field" id="category" aria-label="Kategoriya">
             <option value="all">${ux('Barcha kategoriyalar')}</option>${categoryOptions(S.category)}
           </select>
-          <select class="field" id="gameVersion" aria-label="Minecraft versiyasi">
-            <option value="all">${ux('Barcha versiyalar')}</option>
-            ${versionOptions(S.gameVersion||'all')}
-          </select>
+          <button type="button" class="field" id="gameVersion" data-mod-picker="homeVersion" aria-haspopup="dialog">
+            <span class="mw-mod-choice-text">${S.gameVersion==='all'?ux('Barcha versiyalar'):e(S.gameVersion)}</span>
+            <span aria-hidden="true">▾</span>
+          </button>
         </div>
         <span id="resultsCount" class="results-label">${ux('Yuklanmoqda...')}</span>
       </div>
@@ -4100,13 +4106,16 @@ function mwCloseModPicker(){
 }
 function mwOpenModPicker(kind){
   const form=document.getElementById('modForm');
-  if(!form||!['category','version'].includes(kind))return;
+  const home=kind==='homeVersion';
+  if(!home&&(!form||!['category','version'].includes(kind)))return;
   mwCloseModPicker();
-  const input=form.querySelector('[name="'+kind+'"]');
-  const selected=input?.value||'';
+  const input=home?$('#gameVersion'):form.querySelector('[name="'+kind+'"]');
+  if(!input)return;
+  const selected=input.value;
   const options=kind==='category'?C.map(x=>({value:x,label:categoryName(x)})):
     BEDROCK_VERSIONS.map(x=>({value:x,label:x}));
-  if(selected&&!options.some(x=>x.value===selected))
+  if(home)options.unshift({value:'all',label:ux('Barcha versiyalar')});
+  if(!home&&selected&&!options.some(x=>x.value===selected))
     options.unshift({value:selected,label:kind==='category'?categoryName(selected):selected});
   const title=kind==='category'?t('category'):t('version');
   const modal=document.createElement('div');
@@ -4115,18 +4124,16 @@ function mwOpenModPicker(kind){
   modal.innerHTML='<div class="mw-mod-picker-dialog" role="dialog" aria-modal="true" aria-label="'+e(title)+'">'+
     '<div class="mw-mod-picker-header"><strong>'+e(title)+'</strong>'+
     '<button type="button" class="mw-mod-picker-x" data-mod-close aria-label="Yopish">'+ico('x',20)+'</button></div>'+
-    '<div class="mw-mod-picker-search-wrap"><input class="field mw-mod-picker-search" type="search" placeholder="Qidirish..." aria-label="Qidirish" autocomplete="off"></div>'+
     '<div class="mw-mod-picker-options" role="listbox">'+
     options.map(x=>'<button type="button" class="mw-mod-picker-option'+
        (x.value===selected?' selected':'')+'" data-mod-value="'+e(x.value)+
        '" role="option" aria-selected="'+(x.value===selected)+'">'+
        '<span>'+e(x.label)+'</span><span class="mw-mod-picker-check">'+
        (x.value===selected?'✓':'')+'</span></button>').join('')+'</div>'+
-    '<div class="mw-mod-picker-footnote">'+(kind==='version'?'Minecraft Bedrock 1.10 — 26.63':'12 ta asosiy kategoriya')+'</div>'+
     '</div>';
   modal.dataset.kind=kind;
   document.body.appendChild(modal);
-  modal.querySelector('.mw-mod-picker-search')?.focus();
+  (modal.querySelector('.selected')||modal.querySelector('.mw-mod-picker-option'))?.focus();
 }
 document.addEventListener('click',event=>{
   const langButton=event.target.closest('[data-mod-lang]');
@@ -4159,10 +4166,22 @@ document.addEventListener('click',event=>{
   if(option){
     const kind=modal.dataset.kind,form=document.getElementById('modForm');
     const value=option.dataset.modValue;
+    if(kind==='homeVersion'){
+      const trigger=$('#gameVersion');
+      mwCloseModPicker();
+      if(trigger){
+        trigger.value=value;
+        trigger.querySelector('.mw-mod-choice-text').textContent=option.querySelector('span').textContent;
+        trigger.dispatchEvent(new Event('change',{bubbles:true}));
+        trigger.focus();
+      }
+      return;
+    }
     const input=form?.querySelector('[name="'+kind+'"]');
     const button=form?.querySelector('[data-mod-picker="'+kind+'"]');
     if(input&&button){
       input.value=value;
+      input.dispatchEvent(new Event('change',{bubbles:true}));
       const label=kind==='category'?categoryName(value):value;
       const text=button.querySelector('.mw-mod-choice-text');
       if(text)text.textContent=label;
@@ -4171,15 +4190,9 @@ document.addEventListener('click',event=>{
     mwCloseModPicker();
   }
 });
-document.addEventListener('input',event=>{
-  if(!event.target.matches('#mwModPicker .mw-mod-picker-search'))return;
-  const word=event.target.value.trim().toLowerCase();
-  for(const option of document.querySelectorAll('#mwModPicker .mw-mod-picker-option'))
-    option.hidden=!option.textContent.toLowerCase().includes(word);
-});
 document.addEventListener('keydown',event=>{
   if(event.key==='Escape'&&document.getElementById('mwModPicker')){
-    event.preventDefault();mwCloseModPicker();
+    event.preventDefault();event.stopPropagation();mwCloseModPicker();
   }
 });
 const MOD_UPLOAD_LIMIT=2097152;
