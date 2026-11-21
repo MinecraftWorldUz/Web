@@ -2385,6 +2385,10 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
 .settings-stack h3 { margin:8px 0 0; color:#a8d9f8; font-size:.85rem; letter-spacing:.035em; }
 .settings-stack .settings-row b { display:inline-flex;align-items:center;gap:8px;color:#deeffa; }
 .settings-stack .settings-row .btn.ghost { border-radius:8px!important;box-shadow:none!important;font-weight:600; }
+.card-metrics { display:flex; flex-wrap:wrap; align-items:center; gap:4px 9px; color:#c3dced; font-size:12px; line-height:1.4; font-variant-numeric:tabular-nums; }
+.card-metrics > span { display:inline-flex; align-items:center; gap:3px; white-space:nowrap; }
+.card-metrics .svg-icon { flex:none; }
+.card-game-version { display:block; color:#a6c1d6; font-size:12px; }
 </style>
 </head>
 <body>
@@ -3078,12 +3082,12 @@ function card(m,p,own=false,priority=false){
       <h3><button class="linkbtn" data-act="mod"
         data-id="${m.id}">${e(localModTitle(m))}</button></h3>
       <p class="muted smalltext">${e(localModDesc(m).slice(0,125))}</p>
-      <div class="row mini muted">
-        ${ico('heart',14)} <span data-like-count="${e(m.id)}">${count(m.likes_count)}</span>
-        · ${ico('eye',14)} <span data-view-count="${e(m.id)}">${count(m.views_count)}</span>
-        · ${ico('download',14)} ${count(m.downloads_count)}
-        · ${e(m.game_version)}
+      <div class="card-metrics">
+        <span>${ico('heart',14)}<span data-like-count="${e(m.id)}">${count(m.likes_count)}</span></span>
+        <span>${ico('eye',14)}<span data-view-count="${e(m.id)}">${count(m.views_count)}</span></span>
+        <span>${ico('download',14)}<span>${count(m.downloads_count)}</span></span>
       </div>
+      <small class="card-game-version">${e(m.game_version)}</small>
       <div class="divider"></div>
       <div class="row">${avatar(p)}${miniUser(p)}</div>
       ${own?`<div class="buttons">
