@@ -2339,14 +2339,20 @@ try {
 .mod-secondary-actions .mod-icon-action { position: relative; box-sizing: border-box; width: 44px; height: 48px; padding: 4px 0 20px; }
 .mod-secondary-actions .mod-icon-action svg { width: 24px; height: 24px; }
 .mod-secondary-actions .mod-like span { position: absolute; bottom: 2px; left: 0; right: 0; text-align: center; }
-#gameVersion[data-mod-picker] { display:flex; align-items:center; justify-content:space-between; gap:8px; flex:1 1 120px; min-width:0; text-align:left; }
-@media(max-width:650px){ #gameVersion[data-mod-picker] { max-width:calc(50% - 4px); } }
+:is(#category,#gameVersion)[data-mod-picker] { display:flex; align-items:center; justify-content:space-between; gap:8px; flex:1 1 120px; min-width:0; text-align:left; }
+@media(max-width:650px){ :is(#category,#gameVersion)[data-mod-picker] { max-width:calc(50% - 4px); } }
 #mwModPicker .mw-mod-picker-dialog { background:#12283e; border-color:#5682a6; color:#edf7ff; }
 #mwModPicker .mw-mod-picker-header { border-color:#365571; }
 #mwModPicker .mw-mod-picker-options { padding-top:10px; }
 #mwModPicker :is(.mw-mod-picker-option,.mw-mod-picker-x) { background:#1b3650; color:#e5f4ff; border-color:#385a76; }
 #mwModPicker .mw-mod-picker-option:is(:hover,.selected) { background:#284e69; border-color:#8fd5fa; }
 #mwModPicker .mw-mod-picker-check { color:#b6e7ff; }
+body .top .brand-word::before { content:none; }
+body .top .version-pill { background:#18354c!important; color:#c9ebff!important; border:1px solid #5d8da9!important; }
+#exploreMods .filters { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+#exploreMods .filters .search-wrap { grid-column:1 / -1; }
+#exploreMods .filters [data-mod-picker] { max-width:100%; width:100%; }
+@media(max-width:380px){body .top .logo{gap:3px!important}body .top .head-actions{gap:3px!important}}
 </style>
 </head>
 <body>
@@ -2355,7 +2361,7 @@ try {
 <div class="shell">
   <header class="top">
     <button class="logo" data-go="home">
-      <span class="brand-icon mw-brand-picture"><img src="./assets/winter-logo-192.png" alt="" width="56" height="56" decoding="async"></span><span class="brand-word">MINECRAFT <b>WORLD</b></span>
+      <span class="brand-icon mw-brand-picture"><img src="./assets/winter-logo-192.png" alt="" width="56" height="56" decoding="async"></span><span class="brand-word">MINECRAFT <b>WORLD</b></span><span class="version-pill">v2.0</span>
     </button>
     <div class="head-actions">
       <button class="iconbtn" data-act="notifications">
@@ -2855,7 +2861,7 @@ const AUTUMN_UI_TEXT={
     'Kamroq ko‘rsatish':'Свернуть','Barchasi':'Все',
     'Modlarni ko‘rish':'Смотреть моды',
     'Hamjamiyatga qo‘shilish':'В сообщество',
-    'Eng ko‘p ko‘rilgan':'Популярные просмотры',
+    'Eng yaxshi':'Лучшие',
     'Modlar':'Моды',
   },
   en:{
@@ -2863,7 +2869,7 @@ const AUTUMN_UI_TEXT={
     'Kamroq ko‘rsatish':'Show fewer','Barchasi':'All',
     'Modlarni ko‘rish':'Explore mods',
     'Hamjamiyatga qo‘shilish':'Join community',
-    'Eng ko‘p ko‘rilgan':'Most viewed',
+    'Eng yaxshi':'Best',
     'Modlar':'Mods',
   }
 };
@@ -3200,50 +3206,35 @@ function homeShell(){
   $('#app').innerHTML=`
     <section class="hero compact-hero autumn-world-hero winter-hero" aria-label="Minecraft World 2.0">
       <div class="hero-copy">
-        <span class="winter-release">MINECRAFT WORLD 2.0</span>
         <h1>${ux('O‘yin dunyongni')}<br><span>${ux('kengaytir.')}</span></h1>
         <p>${ux('Eng qiziqarli Minecraft modlarini kashf et, saqla va do‘stlaring bilan bo‘lish.')}</p>
-        <div class="hero-cta">
-          <button class="btn hero-primary" type="button" data-act="focusMods">
-            ${ico('download',19)} ${ux('Modlarni ko‘rish')}</button>
-          <button class="btn ghost hero-secondary" type="button" data-go="community">
-            ${ico('users',19)} ${ux('Hamjamiyatga qo‘shilish')}</button>
-        </div>
       </div>
-    </section>
-    <section class="autumn-categories">
-      <div class="autumn-heading">
-        <h2>${ico('package',25)} ${ux('Kategoriyalar')}</h2>
-        <button class="autumn-see-all" data-act="allCategories" type="button">
-          ${S.categoriesExpanded?ux('Kamroq ko‘rsatish'):ux('Barchasini ko‘rish')} ${ico('arrow',17)}
-        </button>
-      </div>
-      <div id="quickCategories" class="quick-categories"></div>
     </section>
     <section class="explore" id="exploreMods">
-      <div class="autumn-heading autumn-mod-heading">
-        <h2>${ico('package',25)} ${saved?ux('Saqlangan modlar'):ux('Modlar')}</h2>
-        <div class="tabs sort-tabs">
-          <button data-act="sort" data-sort="new" class="${S.sort==='new'?'on':''}">${ico('clock',17)} ${ux('Yangi')}</button>
-          <button data-act="sort" data-sort="popular" class="${S.sort==='popular'?'on':''}">${ico('heart',17)} ${ux('Mashhur')}</button>
-          <button data-act="sort" data-sort="views" class="${S.sort==='views'?'on':''}">${ico('eye',17)} ${ux('Eng ko‘p ko‘rilgan')}</button>
-        </div>
-      </div>
       <div class="autumn-filter-shell">
         <div class="filters">
           <label class="search-wrap">${ico('package',19)}
             <input class="field" id="search" autocomplete="off"
               placeholder="${ux('Mod nomi yoki tavsifini qidiring...')}" value="${e(S.query)}">
           </label>
-          <select class="field" id="category" aria-label="Kategoriya">
-            <option value="all">${ux('Barcha kategoriyalar')}</option>${categoryOptions(S.category)}
-          </select>
+          <button type="button" class="field" id="category" data-mod-picker="homeCategory" aria-haspopup="dialog">
+            <span class="mw-mod-choice-text">${S.category==='all'?ux('Barcha kategoriyalar'):e(categoryName(S.category))}</span>
+            <span aria-hidden="true">▾</span>
+          </button>
           <button type="button" class="field" id="gameVersion" data-mod-picker="homeVersion" aria-haspopup="dialog">
             <span class="mw-mod-choice-text">${S.gameVersion==='all'?ux('Barcha versiyalar'):e(S.gameVersion)}</span>
             <span aria-hidden="true">▾</span>
           </button>
         </div>
         <span id="resultsCount" class="results-label">${ux('Yuklanmoqda...')}</span>
+      </div>
+      <div class="autumn-heading autumn-mod-heading">
+        <h2>${ico('package',25)} ${saved?ux('Saqlangan modlar'):ux('Modlar')}</h2>
+        <div class="tabs sort-tabs">
+          <button data-act="sort" data-sort="new" class="${S.sort==='new'?'on':''}">${ico('clock',17)} ${ux('Yangi')}</button>
+          <button data-act="sort" data-sort="popular" class="${S.sort==='popular'?'on':''}">${ico('eye',17)} ${ux('Mashhur')}</button>
+          <button data-act="sort" data-sort="best" class="${S.sort==='best'?'on':''}">${ico('heart',17)} ${ux('Eng yaxshi')}</button>
+        </div>
       </div>
       <div id="modGrid" class="grid autumn-mod-list">
         ${Array.from({length:3},()=>'<div class="skeleton-card"><div class="skeleton-art"></div><div class="skeleton-lines"></div></div>').join('')}
@@ -3252,28 +3243,6 @@ function homeShell(){
     </section>`;
   $('#category').value=S.category;
   $('#gameVersion').value=S.gameVersion||'all';
-}
-const FEATURED_CATEGORIES=['all','addon','mod','map','texture','shader'];
-const CATEGORY_ICONS={all:'world',addon:'plus-square',mod:'package',map:'globe',
-  texture:'sparkles',shader:'sparkles',world:'globe',skin:'user',
-  furniture:'package',mobs:'users',survival:'shield',performance:'clock',
-  setting:'settings',ui:'package',tools:'pickaxe',other:'folder'};
-function refreshFeedCounters(){
-  const el=$('#quickCategories');
-  if(!el)return;
-  const key=S.lang+'|'+S.category+'|'+!!S.categoriesExpanded;
-  if(el.dataset.renderKey===key)return;
-  el.classList.toggle('expanded',!!S.categoriesExpanded);
-  const cats=S.categoriesExpanded?['all',...C]:FEATURED_CATEGORIES;
-  el.innerHTML=cats.map(c=>{
-    const title=c==='all'?ux('Barchasi'):categoryName(c);
-    const icon=CATEGORY_ICONS[c]||'package';
-    return `<button class="category-tile ${S.category===c?'selected':''}"
-      data-act="quickCategory" data-category="${e(c)}"
-      title="${e(title)}">
-      ${ico(icon,26)} <span>${e(title)}</span></button>`;
-  }).join('');
-  el.dataset.renderKey=key;
 }
 async function loadSavedIds(){
   if(!S.u){S.savedIds=new Set();return}
@@ -3305,7 +3274,7 @@ async function home(){
   const query=DB.from('mods')
     .select('id,author_id,title,description,category,game_version,cover_path,file_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
     .eq('status','approved')
-    .order(S.sort==='popular'?'likes_count':S.sort==='views'?'views_count':'created_at',{ascending:false}).limit(60);
+    .order(S.sort==='popular'?'views_count':S.sort==='best'?'likes_count':'created_at',{ascending:false}).limit(60);
   const savedPromise=S.homeView==='saved'?loadSavedIds():Promise.resolve();
   const [res,savedResult]=await Promise.allSettled([query,savedPromise]);
   if(S.page!=='home'||request!==homeRequest)return;
@@ -3353,7 +3322,7 @@ async function fetchMoreFeed(){
     const r=await DB.from('mods')
       .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
       .eq('status','approved')
-      .order(S.sort==='popular'?'likes_count':S.sort==='views'?'views_count':'created_at',{ascending:false})
+      .order(S.sort==='popular'?'views_count':S.sort==='best'?'likes_count':'created_at',{ascending:false})
       .range(from,from+59);
     check(r);
     if(S.page!=='home'||request!==homeRequest)return;
@@ -3371,7 +3340,6 @@ async function fetchMoreFeed(){
 }
 function filterMods(){
   if(!$('#modGrid'))return;
-  refreshFeedCounters();
   const q=S.query.toLocaleLowerCase().trim();
   const view=S.homeView||'all';
   let result=S.feed.filter(m=>
@@ -3380,8 +3348,8 @@ function filterMods(){
     (view!=='saved'||S.savedIds?.has(m.id))&&
     (!q||`${localModTitle(m)} ${localModDesc(m)} ${m.category}`.toLocaleLowerCase().includes(q))
   );
-  if(S.sort==='popular')result.sort((a,b)=>(b.likes_count||0)-(a.likes_count||0));
-  else if(S.sort==='views')result.sort((a,b)=>(b.views_count||0)-(a.views_count||0));
+  if(S.sort==='best')result.sort((a,b)=>(b.likes_count||0)-(a.likes_count||0));
+  else if(S.sort==='popular')result.sort((a,b)=>(b.views_count||0)-(a.views_count||0));
   else result.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   const shown=result.slice(0,S.visibleMods||12);
   $('#resultsCount').textContent=result.length+' ta mod topildi';
@@ -4106,18 +4074,19 @@ function mwCloseModPicker(){
 }
 function mwOpenModPicker(kind){
   const form=document.getElementById('modForm');
-  const home=kind==='homeVersion';
+  const category=kind==='category'||kind==='homeCategory';
+  const home=kind==='homeVersion'||kind==='homeCategory';
   if(!home&&(!form||!['category','version'].includes(kind)))return;
   mwCloseModPicker();
-  const input=home?$('#gameVersion'):form.querySelector('[name="'+kind+'"]');
+  const input=home?$(category?'#category':'#gameVersion'):form.querySelector('[name="'+kind+'"]');
   if(!input)return;
   const selected=input.value;
-  const options=kind==='category'?C.map(x=>({value:x,label:categoryName(x)})):
+  const options=category?C.map(x=>({value:x,label:categoryName(x)})):
     BEDROCK_VERSIONS.map(x=>({value:x,label:x}));
-  if(home)options.unshift({value:'all',label:ux('Barcha versiyalar')});
+  if(home)options.unshift({value:'all',label:ux(category?'Barcha kategoriyalar':'Barcha versiyalar')});
   if(!home&&selected&&!options.some(x=>x.value===selected))
     options.unshift({value:selected,label:kind==='category'?categoryName(selected):selected});
-  const title=kind==='category'?t('category'):t('version');
+  const title=category?t('category'):t('version');
   const modal=document.createElement('div');
   modal.id='mwModPicker';
   modal.className='mw-mod-picker-overlay';
@@ -4166,8 +4135,8 @@ document.addEventListener('click',event=>{
   if(option){
     const kind=modal.dataset.kind,form=document.getElementById('modForm');
     const value=option.dataset.modValue;
-    if(kind==='homeVersion'){
-      const trigger=$('#gameVersion');
+    if(kind==='homeVersion'||kind==='homeCategory'){
+      const trigger=$(kind==='homeCategory'?'#category':'#gameVersion');
       mwCloseModPicker();
       if(trigger){
         trigger.value=value;
@@ -6124,22 +6093,6 @@ window.addEventListener('click',async event=>{
         await loadSavedIds();
         await loadExtraSavedMods();
       }
-      filterMods();
-    }
-    else if(act==='focusMods'){
-      document.getElementById('exploreMods')?.scrollIntoView({behavior:'smooth',block:'start'});
-    }
-    else if(act==='allCategories'){
-      S.categoriesExpanded=!S.categoriesExpanded;
-      const action=document.querySelector('[data-act="allCategories"]');
-      if(action)action.innerHTML=(S.categoriesExpanded?ux('Kamroq ko‘rsatish'):ux('Barchasini ko‘rish'))+' '+ico('arrow',17);
-      refreshFeedCounters();
-    }
-    else if(act==='quickCategory'){
-      S.category=a.dataset.category;
-      const category=$('#category');
-      if(category)category.value=S.category;
-      S.visibleMods=12;
       filterMods();
     }
     else if(act==='moreMods'){
