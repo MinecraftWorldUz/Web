@@ -2458,6 +2458,16 @@ body .grid .card .art .quick-save.saved svg{fill:#fff!important;stroke:#fff!impo
 #overlay .mw-marquee-track{display:inline-block!important;width:max-content!important;max-width:none!important;white-space:nowrap!important;overflow:visible!important}
 #overlay .mw-marquee.mw-overflowing>.mw-marquee-track{animation:mwTitleScroll var(--mw-duration,10s) ease-in-out infinite alternate}
 @media(prefers-reduced-motion:reduce){#overlay .mw-marquee.mw-overflowing>.mw-marquee-track{animation:none}}
+
+/* Keep author, follow, like and share together on one row. */
+#overlay .mod-author-row{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:5px!important;width:100%;min-width:0}
+#overlay .mod-author-row>.mod-author{flex:1 1 0%!important;width:0!important;min-width:0!important;gap:5px!important}
+#overlay .mod-author-row>.mod-secondary-actions{flex:0 0 auto!important;width:auto!important;margin:0!important;align-items:center!important;gap:4px!important}
+#overlay .mod-author-row .mod-icon-action{width:34px!important;height:42px!important;padding:3px 0 16px!important}
+#overlay .mod-author-row .mod-icon-action svg{width:21px!important;height:21px!important}
+#overlay .mod-author-row .mw-mod-follow{margin:0!important;padding:6px!important;font-size:10px!important;max-width:none!important}
+#overlay .mod-author-row .mw-marquee-user{flex:1 1 0%!important;min-width:0!important;width:0!important}
+@media(max-width:380px){#overlay .mod-author-row{gap:3px!important}#overlay .mod-author-row .mod-author>.av{width:26px!important;height:26px!important;min-width:26px!important}#overlay .mod-author-row .mod-icon-action{width:28px!important}#overlay .mod-author-row .mw-mod-follow{font-size:9px!important;padding:5px!important}}
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
