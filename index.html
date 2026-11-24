@@ -2534,7 +2534,7 @@ body .clickable-mod:has(button:hover:not([data-act="mod"]),button:active:not([da
 #overlay .mw-share-peer>b.mw-share-name{justify-content:center}
 #overlay .mw-account-name>span:first-child,#overlay .mw-share-name>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #overlay .mw-account-name .tick,#overlay .mw-share-name .tick{flex:0 0 auto!important;width:16px!important;height:16px!important;margin:0!important}
-</style>
+#overlay .mw-review-group-link{display:flex;align-items:center;text-align:left;gap:12px;width:100%;padding:12px;border:1px solid var(--edge);border-radius:12px;background:#172f46;color:inherit;cursor:pointer;font:inherit}#overlay .mw-review-group-link>span:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere}#overlay .mw-review-group-link small{display:block;color:var(--muted)}#overlay .mw-review-group-link .av{flex:none;width:54px;height:54px;border-radius:50%}</style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
 try {
@@ -6525,15 +6525,17 @@ function adminBtn(action,text,id,extra=''){
 }
 async function groupBadgePreview(id){
  if(!S.me?.is_admin||S.me.username!=='admin')return;
- const [gr,req,mem,msg]=await Promise.all([
- DB.from('mw_groups').select('*').eq('id',id).single(),
- DB.from('mw_group_badge_requests').select('id,reason').eq('group_id',id).eq('status','pending').limit(1).maybeSingle(),
- DB.from('mw_group_members').select('user_id').eq('group_id',id),
- DB.from('mw_group_messages').select('sender_id,body,created_at').eq('group_id',id).order('created_at',{ascending:false}).limit(60)]);
- const g=check(gr),request=check(req),members=check(mem),messages=check(msg);
+ const [gr,req]=await Promise.all([DB.from('mw_groups').select('*').eq('id',id).single(),DB.from('mw_group_badge_requests').select('id,reason').eq('group_id',id).eq('status','pending').maybeSingle()]);
+ const g=check(gr),request=check(req);
  if(!request){toast('Ariza tekshiruvda emas');await admin();return}
- const people=await users([g.owner_id,...members.map(x=>x.user_id),...messages.map(x=>x.sender_id)]);
- dialog('Chat arizasini tekshirish',`<div class="mw-group-top">${avatar({avatar_url:g.avatar_url,username:g.name},true)}<div><h3>${e(g.name)}</h3><small>@${e(g.username||'maxfiy')}</small><p>${e(g.bio||'')}</p></div></div><p class="muted">Admin tekshiruvi · a’zo bo‘lmasdan</p><p>Ariza sababi: ${e(request.reason)}</p><h3>Egasi</h3><div class="row">${avatar(people[g.owner_id])}${miniUser(people[g.owner_id])}</div><details><summary>A’zolar (${members.length})</summary><div class="activity-list">${members.map(m=>'<div class="row">'+avatar(people[m.user_id])+miniUser(people[m.user_id])+'</div>').join('')}</div></details><h3>Chat xabarlari</h3><div class="mw-admin-chat-preview">${messages.slice().reverse().map(m=>'<div class="item"><b>'+e(people[m.sender_id]?.display_name||people[m.sender_id]?.username||'Foydalanuvchi')+'</b><p class="wrap">'+e(m.body)+'</p><small>'+when(m.created_at)+'</small></div>').join('')||blank()}</div><div class="row"><input class="field" id="mwAdminChatText" maxlength="1000" placeholder="Admin sifatida xabar yozing..."><button class="btn" data-act="groupBadgeSend" data-id="${e(id)}">Yuborish</button></div><div class="buttons">${adminBtn('approve_group_badge','Tasdiqlash',request.id)}${adminBtn('reject_group_badge','Rad etish',request.id,'danger')}</div>`);
+ const people=await users([g.owner_id],true);
+ dialog('Chat arizasini tekshirish',`<button type="button" class="mw-review-group-link" data-act="groupBadgeOpenChat" data-id="${e(id)}">${avatar({avatar_url:g.avatar_url,username:g.name},true)}<span><strong>${e(g.name)}</strong><small>@${e(g.username||'maxfiy')}</small></span>${ico('arrow',20)}</button><h3>Egasi</h3><div class="row">${avatar(people[g.owner_id])}${miniUser(people[g.owner_id])}</div><h3>Ariza sababi</h3><p class="wrap">${e(request.reason)}</p><div class="buttons">${adminBtn('approve_group_badge','Tasdiqlash',request.id)}${adminBtn('reject_group_badge','Rad etish',request.id,'danger')}</div>`);
+}
+async function groupBadgeOpenChat(id){
+ if(!S.me?.is_admin||S.me.username!=='admin')return;
+ const pending=check(await DB.from('mw_group_badge_requests').select('id').eq('group_id',id).eq('status','pending').maybeSingle());
+ if(!pending){toast('Ariza tekshiruvda emas');return;}
+ close();S.chatId='g:'+id;S.mw11MobileOpen=true;await go('chat');await window.MWChat?.openGroup?.(id);
 }
 const mwBadgeActionsInFlight=new Set();
 async function freshAdminBadges(){mwDialogStack.length=0;mwBackRestoring=true;try{await admin();const section=document.querySelector('[data-admin-section="badges"]');if(section)section.open=true;}finally{mwBackRestoring=false;mwSyncRoute();}}
@@ -6770,6 +6772,7 @@ window.addEventListener('click',async event=>{
     else if(act==='adminAction')
       await adminAction(a.dataset.cmd,id);
     else if(act==='groupBadgePreview')await groupBadgePreview(id);
+    else if(act==='groupBadgeOpenChat')await groupBadgeOpenChat(id);
     else if(act==='groupBadgeSend'){const body=$('#mwAdminChatText').value.trim();if(body){check(await DB.from('mw_group_messages').insert({group_id:id,sender_id:S.u.id,body}));await groupBadgePreview(id)}}
     else if(act==='groupBadgeApproveConfirm'){const raw=$('#mwBadgeDays').value.trim(),days=raw?Number(raw):null;if(days!==null&&(!Number.isInteger(days)||days<1||days>3650))throw Error('1–3650 kun kiriting');await adminAction('approve_group_badge',id,days);}
     else if(act==='badgeApproveConfirm'){const raw=$('#mwBadgeDays').value.trim(),days=raw?Number(raw):null;if(days!==null&&(!Number.isInteger(days)||days<1||days>3650))throw Error('1–3650 kun kiriting');await adminAction('approve_verification',id,days);}
@@ -7254,7 +7257,7 @@ function mwInstallBackGuard(){
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=8"></script>
+<script src="./mw-live-chat.js?v=review24"></script>
 <script src="./mw-v11.js?v=10"></script>
 </body>
 </html>
