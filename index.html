@@ -2419,6 +2419,8 @@ body:before,.hero:after{display:none!important}
 
 
 .mw-user-handle{display:block;font-size:11px;color:var(--muted);font-weight:400}.mw-social-card{align-items:center;gap:8px;padding:10px}.mw-social-avatar,.mw-social-detail,.mw-settings-account,.mw-logout{font:inherit;color:inherit;cursor:pointer}.mw-social-avatar{border:0;background:none;padding:0;flex:none}.mw-social-copy{flex:1;min-width:0}.mw-social-copy .linkbtn{text-align:left;white-space:normal}.mw-social-detail{border:0;background:none;text-align:left;padding:0;display:block;font-size:13px}.mw-follow-back{background:#24764f;color:#fff;border:1px solid #429d70;border-radius:9px;padding:8px;font-size:11px;font-weight:700;max-width:110px;flex:none;cursor:pointer}.mw-follow-back.following{background:#24384b;border-color:#48647b;color:#d4e6f4}.mw-settings-account{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:1px solid #385772;background:#12263b;border-radius:14px;text-align:left}.mw-settings-account>span:nth-child(2){flex:1;min-width:0}.mw-settings-account small{display:block;color:var(--muted)}.mw-logout{border:1px solid #9b4452;color:#ff8999;background:transparent;border-radius:12px;padding:12px;width:100%;font-weight:700}.mw-comment-highlight{outline:2px solid #8dd4ff}.account-avatar .av{width:100%;height:100%}
+
+.mw-notice-toolbar{margin-bottom:16px}.mw-request-card{cursor:pointer}.mw-notice-person{display:block;margin-top:4px}.mw-user-handle,.mw-social-copy .linkbtn small,.mw-profile-display-name{font-size:10px!important;line-height:1.2!important;margin:1px 0!important;opacity:.85}.mod-secondary-actions{margin-inline-start:0!important;justify-content:flex-start;width:100%}.mw-mod-id{font-size:11px;color:var(--muted);border:1px solid #385772;border-radius:7px;padding:3px 7px;justify-self:start}.mw-share-id{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;padding:10px;border:1px solid #385772;border-radius:12px}.mw-share-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0;max-height:45vh;overflow:auto}.mw-share-peer,.mw-share-tools button{border:0;background:none;color:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:6px;font:inherit;cursor:pointer}.mw-share-peer[hidden]{display:none}.mw-share-peer b,.mw-share-peer small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}.mw-share-peer small{color:var(--muted);font-size:10px}.mw-share-peer.selected{background:#244c66;border-radius:12px;outline:1px solid #a8defe}.mw-share-send{width:100%}.mw-share-tools{display:flex;justify-content:space-around;border-top:1px solid #385772;margin-top:16px;padding-top:12px}.mw-share-tools button span{display:grid;place-items:center;border-radius:50%;width:44px;height:44px;background:#233f58}.mw-share-tools button.selected span{background:#3a7999}.mw-share-tools button{font-size:11px}.mw-badge-duration{display:grid;gap:10px}.mw-badge-duration .field{width:100%}
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -2821,7 +2823,7 @@ const EXTRA_WORDS={
     'Yuklanmoqda...':'Загрузка...',
     'Saqlangan modlar yo‘q':'Нет сохранённых модов',
     'KASHF ETISH':'ИССЛЕДОВАТЬ',
-    'Mod nomi yoki tavsifini qidiring...':'Поиск по названию или описанию мода...',
+    'Mod nomi, tavsifi yoki ID...':'Поиск по названию или описанию мода...',
     'Barcha kategoriyalar':'Все категории',
     'Barcha versiyalar':'Все версии',
     'O‘yin dunyongni':'Расширь свой',
@@ -3065,7 +3067,7 @@ function tick(p){
       '<path d="m5.4 10 3.1 3.2 6.2-6.4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'+
       '</svg></span>':''
 }
-function label(p){return '@'+e(nick(p))+tick(p)}
+function label(p){return e(p?.display_name||nick(p))+tick(p)+'<small class="mw-user-handle">@'+e(nick(p))+'</small>'}
 function avatar(p,large=false){
   return `<span class="av ${large?'large':''}">${
     p?.avatar_url&&!banned(p)
@@ -3402,7 +3404,7 @@ async function home(){
     }
   }
   const query=DB.from('mods')
-    .select('id,author_id,title,description,category,game_version,cover_path,file_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
+    .select('id,public_id,author_id,title,description,category,game_version,cover_path,file_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
     .eq('status','approved')
     .order(S.sort==='popular'?'views_count':S.sort==='best'?'likes_count':'created_at',{ascending:false}).limit(60);
   const savedPromise=S.homeView==='saved'?loadSavedIds():Promise.resolve();
@@ -3436,7 +3438,7 @@ async function loadExtraSavedMods(){
   const missing=[...S.savedIds].filter(id=>!existing.has(id)).slice(0,80);
   if(!missing.length)return;
   const r=await DB.from('mods')
-    .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
+    .select('id,public_id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
     .in('id',missing).eq('status','approved').limit(80);
   check(r);
   S.feed.push(...r.data);
@@ -3450,7 +3452,7 @@ async function fetchMoreFeed(){
   const from=S.feedOffset||0;
   try{
     const r=await DB.from('mods')
-      .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
+      .select('id,public_id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
       .eq('status','approved')
       .order(S.sort==='popular'?'views_count':S.sort==='best'?'likes_count':'created_at',{ascending:false})
       .range(from,from+59);
@@ -3476,7 +3478,7 @@ function filterMods(){
     (S.category==='all'||m.category===S.category)&&
     (!S.gameVersion||S.gameVersion==='all'||m.game_version===S.gameVersion)&&
     (view!=='saved'||S.savedIds?.has(m.id))&&
-    (!q||`${localModTitle(m)} ${localModDesc(m)} ${m.category}`.toLocaleLowerCase().includes(q))
+    (!q||(/^#?\d+$/.test(q)?String(m.public_id)===q.replace(/^#/,''):`${localModTitle(m)} ${localModDesc(m)} ${m.category}`.toLocaleLowerCase().includes(q)))
   );
   if(S.sort==='best')result.sort((a,b)=>(b.likes_count||0)-(a.likes_count||0));
   else if(S.sort==='popular')result.sort((a,b)=>(b.views_count||0)-(a.views_count||0));
@@ -3508,7 +3510,7 @@ function getProfileData(id){
   if(recent&&Date.now()-recent.at<45000)return recent.promise;
   const promise=Promise.all([
     DB.from('profiles').select('*').eq('id',id).single(),
-    DB.from('mods').select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
+    DB.from('mods').select('id,public_id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
       .eq('author_id',id).order('created_at',{ascending:false}).limit(36),
     DB.from('mods').select('id',{count:'exact',head:true})
       .eq('author_id',id).eq('status','approved'),
@@ -4845,12 +4847,30 @@ async function getMod(id){
   if(modOpenPending.has(id))return modOpenPending.get(id);
   const load=(async()=>{
     const result=await DB.from('mods')
-      .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
+      .select('id,public_id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
       .eq('id',id).single();
     return cacheMod(check(result));
   })().finally(()=>modOpenPending.delete(id));
   modOpenPending.set(id,load);
   return load;
+}
+let shareModData=null;
+async function modShare(id){
+ const m=await getMod(id);shareModData=m;
+ dialog('Ulashish',`<div class="mw-share-id"><b>ID #${e(m.public_id||'—')}</b><button class="btn ghost" data-act="shareCopy">${ico('copy',17)} Nusxalash</button></div><input id="shareSearch" class="field" placeholder="Chatlarni qidiring..."><div id="sharePeers" class="mw-share-grid"><p class="muted">Yuklanmoqda...</p></div><button class="btn mw-share-send" data-act="shareSend">Yuborish</button><div class="mw-share-tools"><button data-act="shareSave" data-id="${e(id)}" class="${S.savedIds?.has(id)?'selected':''}"><span>${ico('bookmark',23)}</span>Saqlash</button><button data-act="reportMod" data-id="${e(id)}"><span>${ico('flag',23)}</span>Shikoyat</button><button data-act="shareBack" data-id="${e(id)}"><span>${ico('arrow',23)}</span>Modga qaytish</button></div>`);
+ const uid=S.u?.id,box=$('#sharePeers');if(!uid){box.innerHTML=btn('auth',t('login'));return}
+ const r=await DB.from('messages').select('sender_id,recipient_id').or('sender_id.eq.'+uid+',recipient_id.eq.'+uid).order('created_at',{ascending:false}).limit(150);check(r);
+ const ids=[...new Set(r.data.map(x=>x.sender_id===uid?x.recipient_id:x.sender_id))].filter(x=>x!==uid);
+ const people=await users(ids);if(!box.isConnected||S.u?.id!==uid)return;
+ box.innerHTML=ids.map(pid=>{const p=people[pid];return p?`<button class="mw-share-peer" data-act="sharePeer" data-id="${e(pid)}" aria-pressed="false" data-search="${e((p.display_name||'')+' '+p.username)}">${avatar(p,true)}<b>${e(p.display_name||p.username)}</b><small>@${e(p.username)}</small></button>`:''}).join('')||blank();
+ $('#shareSearch').addEventListener('input',ev=>{const q=ev.target.value.toLowerCase();box.querySelectorAll('[data-search]').forEach(el=>el.hidden=!el.dataset.search.toLowerCase().includes(q))});
+}
+async function sendSharedMod(button){
+ if(!requireUser()||button.disabled||!shareModData)return;
+ const ids=[...document.querySelectorAll('#sharePeers .selected')].map(x=>x.dataset.id);
+ if(!ids.length){toast('Chatni tanlang');return}
+ const m=shareModData;button.disabled=true;
+ try{check(await DB.from('messages').insert(ids.map(id=>({sender_id:S.u.id,recipient_id:id,body:'Minecraft World · '+localModTitle(m)+' · Mod ID #'+m.public_id}))));toast('Yuborildi');await openMod(m.id)}finally{button.disabled=false}
 }
 function renderMod(m){
   const isApproved=m.status==='approved';
@@ -4864,7 +4884,7 @@ function renderMod(m){
         </div>
       </div>
       <div class="mod-headline">
-        <h2>${e(localModTitle(m))}</h2>
+        <h2>${e(localModTitle(m))}</h2><span class="mw-mod-id">ID #${e(m.public_id||'—')}</span>
         <span class="status">${e(m.game_version)} · ${e(categoryName(m.category))}</span>
         <span class="mod-view-stat">${ico('eye',17)} <span data-mod-view-count>${count(m.views_count)}</span></span>
       </div>
@@ -4876,11 +4896,7 @@ function renderMod(m){
           data-mod-toggle="like" aria-label="Yoqtirish" aria-pressed="false">
           ${ico('heart',24)}<span data-like-count="${e(m.id)}">${count(m.likes_count)}</span>
         </button>
-          <button type="button" class="mod-icon-action mod-save" data-act="saveMod" data-id="${e(m.id)}"
-            data-mod-toggle="save" aria-label="Saqlash" title="Saqlash"
-            aria-pressed="${Boolean(S.savedIds?.has(m.id))}">${ico('bookmark',24)}</button>
-          <button type="button" class="mod-icon-action" data-act="reportMod" data-id="${e(m.id)}"
-            aria-label="${e(t('report'))}" title="${e(t('report'))}">${ico('flag',24)}</button>
+          <button type="button" class="mod-icon-action" data-act="modShare" data-id="${e(m.id)}" aria-label="Ulashish" title="Ulashish"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg></button>
         </div>`:''}
       </div>
       ${isApproved?`
@@ -5805,19 +5821,12 @@ function listen(){
     .subscribe();
 }
 function activityCard(n,people){
-  const actor=people[n.actor_id];
-  const follower=n.kind==='follow';
-  const isAdmin=S.me?.is_admin&&S.me.username==='admin';
-  const review=n.kind==='review'&&isAdmin;
-  const badge=n.kind==='badge'&&isAdmin&&!!n.actor_id;
-  const mod=n.kind==='mod';
-  const heading=follower?'Yangi obunachi':n.title;
-  const detail=follower&&actor?'@'+actor.username+' sizga obuna bo‘ldi.':n.body;
-  const action=review?btn('admin','Ko‘rish','','ghost'):badge?btn('adminBadges','Ko‘rish','','ghost'):mod?(n.target_id?btn('mod','Ko‘rish',n.target_id,'ghost'):btn('self','Modlarimni ko‘rish','','ghost')):follower&&actor?btn('user','Profilni ko‘rish',actor.id,'ghost'):'';
-  return `<article class="activity-card ${n.is_read?'':'unread'}" data-notice-id="${e(n.id)}" tabindex="0">
-    <span class="activity-icon">${ico(follower?'user':badge?'badge':review||mod?'package':'bell',20)}</span>
-    <div><strong>${e(heading)}</strong><p>${e(detail||'')}</p><small>${when(n.created_at)}</small>${action}</div>
-  </article>`;
+ const actor=people[n.actor_id],adminUser=S.me?.is_admin&&S.me.username==='admin';
+ const action=n.kind==='review'&&adminUser?(n.target_id?'adminModDetail':'admin'):n.kind==='badge'&&adminUser&&n.actor_id?'adminBadges':n.kind==='mod'&&n.target_id?'mod':'';
+ const badge=n.kind==='badge';
+ return `<article class="activity-card mw-request-card ${n.is_read?'':'unread'}" data-notice-id="${e(n.id)}" ${action?'data-act="'+action+'" data-id="'+e(n.target_id||'')+'" role="button"':''} tabindex="0">
+ ${badge&&actor?avatar(actor):'<span class="activity-icon">'+(badge?'<svg width="23" height="23" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#2699ee"/><path d="m5.4 10 3.1 3.2 6.2-6.4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>':ico('package',20))+'</span>'}
+ <div><strong>${e(n.title)}</strong>${badge&&actor?'<b class="mw-notice-person">'+e(actor.display_name||actor.username)+'</b><small class="mw-user-handle">@'+e(actor.username)+'</small>':''}<p>${e(n.body||'')}</p><small>${when(n.created_at)}</small></div></article>`;
 }
 const noticeReadPending=new Set();
 async function readActivity(card){
@@ -5839,12 +5848,12 @@ window.addEventListener('click',event=>{
 window.addEventListener('keydown',event=>{
   if(event.key==='Enter'||event.key===' '){
     const card=event.target.closest?.('[data-notice-id]');
-    if(card&&event.target===card){event.preventDefault();readActivity(card).catch(console.warn)}
+    if(card&&event.target===card){event.preventDefault();card.click()}
   }
 });
 async function showActivityToast(n){
   const uid=S.u?.id;
-  const people=n.kind==='follow'&&n.actor_id?await users([n.actor_id]).catch(()=>({})):{};
+  const people=n.actor_id?await users([n.actor_id]).catch(()=>({})):{};
   if(uid!==S.u?.id)return;
   toast(n.title);
   const box=$('#toast');
@@ -5855,7 +5864,8 @@ async function notifications(){
   const uid=S.u.id;
   const r=await DB.from('notifications').select('*').eq('user_id',uid).in('kind',REQUEST_KINDS).order('created_at',{ascending:false}).limit(50);
   check(r);if(S.u?.id!==uid)return;
-  dialog(t('notifications'),`${btn('markRead',t('mark'))}<div class="activity-list">${r.data.map(n=>activityCard(n,{})).join('')||blank()}</div>`);
+  const people=await users(r.data.map(n=>n.actor_id)).catch(()=>({}));if(S.u?.id!==uid)return;
+  dialog(t('notifications'),`<div class="mw-notice-toolbar">${btn('markRead',t('mark'))}</div><div class="activity-list">${r.data.map(n=>activityCard(n,people)).join('')||blank()}</div>`);
 }
 async function socialActivity(){
   if(!requireUser())return;
@@ -5976,7 +5986,7 @@ async function savedModal(liked=false){
       return;
     }
     const result=await DB.from('mods')
-      .select('id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
+      .select('id,public_id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
       .in('id',ids.slice(0,90)).eq('status','approved').limit(90);
     check(result);
     if(!holder.isConnected)return;
@@ -6119,14 +6129,14 @@ async function admin(){
     });
   });
   const res=await DB.from('mods')
-    .select('id,author_id,title,description,category,game_version,cover_path,file_path,status,created_at')
+    .select('id,public_id,author_id,title,description,category,game_version,cover_path,file_path,status,created_at')
     .eq('status','pending').order('created_at',{ascending:true}).limit(60);
   check(res);
   if(!panel.isConnected)return;
   res.data.forEach(cacheMod);
   panel.innerHTML=res.data.length?res.data.map(m=>
     `<button class="admin-mod-row" data-act="adminModDetail" data-id="${e(m.id)}">
-      <span class="mod-name">${ico('package',18)} ${e(m.title)}</span>
+      <span class="mod-name">${ico('package',18)} #${e(m.public_id)} · ${e(m.title)}</span>
       <span class="mod-open">${ico('arrow',16)}</span>
     </button>`).join(''):'<p class="muted">Hozir tekshiruvdagi mod yo‘q.</p>';
 }
@@ -6141,7 +6151,7 @@ async function loadAdminSection(section,target){
     check(r);
     const people=await users(r.data.map(v=>v.user_id));
     html=r.data.map(v=>`<div class="item">
-      <b>${e(people[v.user_id]?.username||'Foydalanuvchi')}</b>
+      <div class="row">${avatar(people[v.user_id])}${miniUser(people[v.user_id])}</div>
       <p class="wrap">${e(v.reason)}</p>
       <div class="buttons">${adminBtn('approve_verification',t('approve'),v.id)}
        ${adminBtn('reject_verification',t('reject'),v.id,'danger')}</div>
@@ -6171,11 +6181,11 @@ async function loadAdminSection(section,target){
         ${x.target_kind==='profile'?adminBtn('ban',t('ban'),x.target_id,'danger'):''}
       </div></div>`).join('')||blank();
   }else if(section==='all'){
-    const r=await DB.from('mods').select('id,title,status,created_at')
+    const r=await DB.from('mods').select('id,public_id,title,status,created_at')
       .order('created_at',{ascending:false}).limit(50);
     check(r);
     html=r.data.map(m=>`<div class="item admin-simple-mod">
-      <b>${e(m.title)}</b><span class="status">${e(m.status)}</span>
+      <b>#${e(m.public_id)} · ${e(m.title)}</b><span class="status">${e(m.status)}</span>
       <div class="buttons">${btn('mod','Ko‘rish',m.id,'ghost')}
         ${adminBtn('delete_mod',t('delete'),m.id,'danger')}</div>
     </div>`).join('')||blank();
@@ -6205,7 +6215,7 @@ async function adminModDetail(id,preview=true){
       <div class="skeleton-art"></div><p>Mod ma’lumotlari ochilmoqda...</p>
       </div>`);
     try{
-      const result=await DB.from('mods').select('id,author_id,title,description,category,game_version,cover_path,file_path,status,created_at')
+      const result=await DB.from('mods').select('id,public_id,author_id,title,description,category,game_version,cover_path,file_path,status,created_at')
         .eq('id',id).single();
       m=cacheMod(check(result));
     }catch(err){
@@ -6222,7 +6232,7 @@ async function adminModDetail(id,preview=true){
     ${m.status==='pending'?adminBtn('reject_mod','Rad etish',id,'danger'):''}
     ${btn('admin','Ro‘yxatga qaytish', '', 'ghost')}
   </div>`;
-  dialog(m.title,`
+  dialog('#'+(m.public_id||'')+' · '+m.title,`
     <section class="admin-mod-preview">
       ${m.cover_path?`<img class="admin-preview-image" loading="eager"
         decoding="async" src="${e(cover(m.cover_path))}" alt="Mod rasmi">`:''}
@@ -6256,7 +6266,7 @@ function adminBtn(action,text,id,extra=''){
     data-act="adminAction" data-cmd="${action}"
     data-id="${id}">${ico(action.startsWith('approve')?'check':action.startsWith('reject')?'x':action==='delete_mod'?'trash':'shield',17)}<span>${cleanButtonText(text)}</span></button>`
 }
-async function adminAction(cmd,id){
+async function adminAction(cmd,id,chosenDays=undefined){
   if(!S.me?.is_admin||S.me.username!=='admin')return;
   if(cmd==='approve_group_badge'||cmd==='reject_group_badge'){
     const row=check(await DB.from('mw_group_badge_requests').select('id,group_id,status')
@@ -6272,7 +6282,11 @@ async function adminAction(cmd,id){
     await admin();return;
   }
   let days=null,note=null;
-  if(cmd==='ban'||cmd==='approve_verification'){
+  if(cmd==='approve_verification'&&chosenDays===undefined){
+    dialog('Ko‘k belgi muddati',`<div class="mw-badge-duration"><label for="mwBadgeDays">Amal qilish muddati (kun)</label><input class="field" type="number" id="mwBadgeDays" min="1" max="3650" placeholder="Masalan, 30"><p class="muted">Bo‘sh qoldirilsa, muddatsiz beriladi.</p><div class="buttons">${btn('adminBadges','Bekor qilish','','ghost')}${btn('badgeApproveConfirm','Tasdiqlash',id)}</div></div>`);return;
+  }
+  if(cmd==='approve_verification')days=chosenDays;
+  if(cmd==='ban'){
     let raw=prompt(
       'Necha kun? Bo‘sh qoldirsang muddatsiz bo‘ladi:',''
     );
@@ -6333,6 +6347,12 @@ window.addEventListener('click',async event=>{
       await go('profile',id)
     }
     else if(act==='mod')await openMod(id);
+    else if(act==='modShare')await modShare(id);
+    else if(act==='shareCopy'){await navigator.clipboard.writeText(String(shareModData.public_id));toast('ID nusxalandi')}
+    else if(act==='sharePeer'){a.classList.toggle('selected');a.setAttribute('aria-pressed',String(a.classList.contains('selected')))}
+    else if(act==='shareSend')await sendSharedMod(a);
+    else if(act==='shareSave'){await toggleTable('mod_saves',id);a.classList.toggle('selected',S.savedIds?.has(id))}
+    else if(act==='shareBack')await openMod(id);
     else if(act==='pushAllow'||act==='pushLater'){
       localStorage.setItem('mw-push-asked-v1','1');
       document.getElementById('push-offer')?.remove();
@@ -6475,6 +6495,7 @@ window.addEventListener('click',async event=>{
     }
     else if(act==='adminAction')
       await adminAction(a.dataset.cmd,id);
+    else if(act==='badgeApproveConfirm'){const raw=$('#mwBadgeDays').value.trim(),days=raw?Number(raw):null;if(days!==null&&(!Number.isInteger(days)||days<1||days>3650))throw Error('1–3650 kun kiriting');await adminAction('approve_verification',id,days);}
     else if(act==='logout'){
       dialog('Akkauntdan chiqish',`<p>Ushbu akkauntdan chiqmoqchimisiz?</p><div class="buttons">${btn('settings','Bekor qilish','','ghost')}${btn('logoutConfirm','Chiqish','','danger')}</div>`);
     }
@@ -6499,7 +6520,7 @@ window.addEventListener('input',ev=>{
     S.visibleMods=12;
     clearTimeout(searchTimer);
     searchTimer=setTimeout(()=>{
-      if(S.page==='home')filterMods()
+      if(S.page==='home'){filterMods();const q=S.query.trim();if(/^#?\d+$/.test(q))DB.from('mods').select('*').eq('public_id',Number(q.replace(/^#/,''))).eq('status','approved').maybeSingle().then(r=>{if(!r.error&&r.data&&S.page==='home'&&S.query.trim()===q){if(!S.feed.some(m=>m.id===r.data.id))S.feed.push(r.data);filterMods()}}).catch(console.warn)}
     },130);
   }else if(ev.target.id==='accountSearch'){
     filterAccounts()
