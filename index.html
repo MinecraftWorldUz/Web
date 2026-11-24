@@ -2499,6 +2499,13 @@ body .grid .card .art .quick-save.saved svg{fill:#fff!important;stroke:#fff!impo
 #overlay .mod-headline.mw-mod-meta-only{display:flex!important;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:12px 0 8px;min-width:0}
 #overlay .mod-headline.mw-mod-meta-only .mod-view-stat{margin-left:auto;flex-shrink:0}
 #overlay .mod-headline.mw-mod-meta-only .status{max-width:100%;overflow-wrap:anywhere}
+
+/* Compact mod cards: titles take at most two lines, with no description. */
+body .clickable-mod .cardbody>h3{min-width:0;max-width:100%;margin-bottom:8px;overflow:hidden}
+body .clickable-mod .cardbody>h3>.linkbtn{display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:ellipsis;white-space:normal!important;overflow-wrap:anywhere;word-break:break-word;max-width:100%;width:100%;text-align:left;line-height:1.35}
+body .clickable-mod .cardbody>.smalltext{display:none!important}
+body .clickable-mod .card-game-version{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+body .clickable-mod .cardbody{min-width:0}
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -3321,7 +3328,7 @@ function card(m,p,own=false,priority=false){
     <div class="cardbody">
       <h3><button class="linkbtn" data-act="mod"
         data-id="${m.id}">${e(localModTitle(m))}</button></h3>
-      <p class="muted smalltext">${e(localModDesc(m).slice(0,125))}</p>
+      
       <div class="card-metrics">
         <span>${ico('heart',14)}<span data-like-count="${e(m.id)}">${count(m.likes_count)}</span></span>
         <span>${ico('eye',14)}<span data-view-count="${e(m.id)}">${count(m.views_count)}</span></span>
