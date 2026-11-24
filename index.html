@@ -2470,6 +2470,22 @@ body .grid .card .art .quick-save.saved svg{fill:#fff!important;stroke:#fff!impo
 @media(max-width:380px){#overlay .mod-author-row{gap:3px!important}#overlay .mod-author-row .mod-author>.av{width:26px!important;height:26px!important;min-width:26px!important}#overlay .mod-author-row .mod-icon-action{width:28px!important}#overlay .mod-author-row .mw-mod-follow{font-size:9px!important;padding:5px!important}}
 
 .mw-admin-chat-preview{max-height:38vh;overflow:auto;display:grid;gap:8px;margin:10px 0}.mw-admin-chat-preview p{margin:5px 0}.mw-admin-chat-preview+.row .field{flex:1;min-width:0}
+
+/* Dialog title must never enlarge the modal beyond the phone viewport. */
+#overlay{overflow-x:hidden}
+#overlay .dialog{min-width:0!important;max-width:100%!important;box-sizing:border-box;overflow-x:hidden!important}
+#overlay .dialoghead{width:100%;min-width:0;box-sizing:border-box;gap:12px;align-items:flex-start}
+#overlay .dialoghead>.iconbtn{flex:0 0 auto!important}
+#overlay .mw-dialog-title{flex:1 1 0%;min-width:0;max-width:100%;overflow:hidden}
+#overlay .mw-dialog-title>strong{display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:anywhere;word-break:break-word;white-space:normal!important;line-height:1.35;min-width:0;max-width:100%}
+#overlay .mw-dialog-title.expanded>strong{display:block!important;-webkit-line-clamp:unset}
+#overlay .mw-dialog-title-more{display:inline-block;border:0;background:transparent;color:#96c7e5;padding:5px 0 0;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+#overlay .mw-dialog-title-more[hidden]{display:none!important}
+#overlay .dialogbody,#overlay .admin-mod-preview{min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere}
+#overlay .admin-preview-image{display:block;max-width:100%;height:auto;object-fit:contain}
+#overlay .admin-review-actions{min-width:0;max-width:100%;flex-wrap:wrap}
+#overlay .admin-review-actions .btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.admin-mod-row .mod-name{min-width:0;overflow-wrap:anywhere;word-break:break-word}
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -3161,7 +3177,7 @@ function dialog(title,html){
   mwExitAt=0;
   $('#overlay').innerHTML=`<div class="dialog">
     <div class="dialoghead">
-      <strong>${e(title)}</strong>
+      <div class="mw-dialog-title"><strong>${e(title)}</strong><button type="button" class="mw-dialog-title-more" aria-expanded="false" hidden>Yana</button></div>
       <button class="iconbtn" data-act="close" aria-label="Yopish">${ico('x',20)}</button>
     </div>
     <div class="dialogbody">${html}</div>
@@ -3169,8 +3185,21 @@ function dialog(title,html){
   $('#overlay').classList.add('open');
   mwSyncRoute();
   translateUi($('#overlay'));
-  requestAnimationFrame(()=>mountMarquees());
+  requestAnimationFrame(()=>{mountMarquees();mwMeasureDialogTitle();});
 }
+function mwMeasureDialogTitle(){
+ const box=$('#overlay .mw-dialog-title');if(!box)return;
+ const title=box.querySelector('strong'),more=box.querySelector('button');
+ if(!title||!more||box.classList.contains('expanded'))return;
+ more.hidden=title.scrollHeight<=title.clientHeight+1;
+}
+window.addEventListener('resize',mwMeasureDialogTitle);
+window.addEventListener('click',event=>{
+ const more=event.target.closest('.mw-dialog-title-more');if(!more)return;
+ const box=more.closest('.mw-dialog-title');const expanded=box.classList.toggle('expanded');
+ more.textContent=expanded?'Kamroq':'Yana';more.setAttribute('aria-expanded',String(expanded));
+ if(!expanded)mwMeasureDialogTitle();
+});
 function close(){
   mwDialogStack.length=0;mwDialogTitle='';
   modalGeneration++;
