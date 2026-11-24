@@ -13,7 +13,7 @@ window.MWChat=(()=>{
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'mw_group_messages'},payload=>{
      if(S.u?.id!==uid)return;
      const g=payload.new.group_id;
-     if(!C.groups.some(x=>x.id===g))return;
+     if(!C.groups.some(x=>x.id===g)&&S.chatId!=='g:'+g)return;
      C.last[g]=new Date(payload.new.created_at).getTime();
      C.preview[g]=String(payload.new.body||'').slice(0,65);
      renderGroups();
@@ -263,7 +263,11 @@ window.MWChat=(()=>{
   if(!S.u||S.page!=='chat')return;
   const g=check(await DB.from('mw_groups').select('*').eq('id',id).single());
   const member=check(await DB.from('mw_group_members').select('user_id').eq('group_id',id).eq('user_id',S.u.id).maybeSingle());
-  if(!member)throw Error('Bu guruhga a’zo emassiz');
+  if(!member){
+   if(!(S.me?.is_admin===true&&S.me.username==='admin'))throw Error('Bu guruhga a’zo emassiz');
+   const request=check(await DB.from('mw_group_badge_requests').select('id').eq('group_id',id).eq('status','pending').maybeSingle());
+   if(!request)throw Error('Chat arizasi tekshiruvda emas');
+  }
   S.chatId='g:'+id;C.activeId=id;
   const area=$('#conversation');if(!area)return;
   area.innerHTML='<header class="chat-toolbar">'+
@@ -284,12 +288,13 @@ window.MWChat=(()=>{
   $('#msgs').scrollTop=$('#msgs').scrollHeight;
   window.MWV11?.afterRender?.(ordered,'group');
   window.MWV11?.addThreadSearch?.();
-  window.MWV11?.markRead?.('g:'+id).catch(console.warn);
+  if(member)window.MWV11?.markRead?.('g:'+id).catch(console.warn);
  }
  async function info(id){
   const group=check(await DB.from('mw_groups').select('*').eq('id',id).single());
   const members=check(await DB.from('mw_group_members').select('user_id').eq('group_id',id));
   const own=group.owner_id===S.u.id;
+  const membership=members.some(m=>m.user_id===S.u.id);
   const badge=check(await DB.from('mw_group_badges').select('group_id,verified_until').eq('group_id',id).maybeSingle());
   const certified=!!badge&&(!badge.verified_until||new Date(badge.verified_until)>new Date());
   const application=own&&!certified?check(await DB.from('mw_group_badge_requests').select('id,status')
@@ -334,7 +339,7 @@ window.MWChat=(()=>{
     <div class="buttons">${own?
       '<button class="btn" data-mw="edit-group" data-id="'+escape(id)+'">Tahrirlash / a’zo qo‘shish</button>'+
       '<button class="btn danger" data-mw="delete-group" data-id="'+escape(id)+'">Guruhni o‘chirish</button>':
-      '<button class="btn danger" data-mw="leave-group" data-id="'+escape(id)+'">Guruhdan chiqish</button>'}
+      (membership?'<button class="btn danger" data-mw="leave-group" data-id="'+escape(id)+'">Guruhdan chiqish</button>':'')}
     </div>`);
  }
 
