@@ -4311,7 +4311,7 @@ function modCustomSelect(kind,value){
 }
 function modFields(m,adminEdit=false){
   return `<form id="modForm" class="mw-new-mod-form" data-id="${m?.id||''}" data-admin="${adminEdit}">
-    ${adminEdit?`<div class="buttons">${btn('adminModDetail','← Tekshiruvga qaytish',m.id,'ghost')}</div>`:''}
+    ${adminEdit?`<div class="buttons">${btn('mod','← Modga qaytish',m.id,'ghost')}</div>`:''}
     ${modLanguageBlock(m)}
     <div class="two mw-mod-choice-row">
       ${modCustomSelect('category',m?.category||'addon')}
@@ -4330,8 +4330,8 @@ function modFields(m,adminEdit=false){
     </div>
     <div class="note">
       ${adminEdit?
-        'O‘zgartirishlar saqlanadi. Modni tasdiqlash yoki rad etish alohida bajariladi.':
-        'Mod admin tasdig‘idan keyin ko‘rinadi. Tahrirlangan mod qayta tekshiriladi.'}
+        'O‘zgartirishlar darhol saqlanadi va mod e’lon qilinadi.':
+        (S.me?.is_admin===true&&S.me.username==='admin'?'Mod darhol e’lon qilinadi.':'Mod admin tasdig‘idan keyin ko‘rinadi. Tahrirlangan mod qayta tekshiriladi.')}
     </div>
     <button class="btn mw-mod-submit" type="submit">${adminEdit?'O‘zgarishlarni saqlash':t('send')}</button>
     <div class="mw-mod-upload-progress" hidden role="status" aria-live="polite">
@@ -4838,6 +4838,7 @@ async function saveMod(f){
   modUploadProgress(f,0,'Yuborilmoqda...','Ma’lumotlar tekshirilmoqda.');
   if(!requireUser())return;
   const adminEdit=f.dataset.admin==='true';
+  const adminDirect=S.me?.is_admin===true&&S.me.username==='admin';
   if(adminEdit && (!S.me?.is_admin||S.me.username!=='admin'))
     throw Error('Faqat admin tahrirlay oladi');
   let x=new FormData(f),id=f.dataset.id,m=null;
@@ -4845,8 +4846,7 @@ async function saveMod(f){
     let query=DB.from('mods').select('*').eq('id',id);
     if(!adminEdit)query=query.eq('author_id',S.u.id);
     m=check(await query.single());
-    if(adminEdit&&m.status!=='pending')
-      throw Error('Bu mod endi tekshiruvda emas');
+
   }
   let image=x.get('image'),file=x.get('file');
   const maxModBytes=2097152;
@@ -4865,7 +4865,7 @@ async function saveMod(f){
   }
   const primary=['uz','ru','en'].find(lang=>titles[lang]);
   if(!primary)throw Error('Kamida bitta tilni tanlang va to‘ldiring');
-  let cover_path=f.dataset.coverPath||(!image?.size?m?.cover_path:'')||'',file_path=m?.file_path||f.dataset.filePath||'';
+  let cover_path=f.dataset.coverPath||(!image?.size?m?.cover_path:'')||'',file_path=f.dataset.filePath||(!file?.size?m?.file_path:'')||'';
   const bytesTotal=(image?.size||0)+(file?.size||0);
   let bytesDone=0;
   const showTransfer=(loaded,total,label)=>{
@@ -4887,7 +4887,7 @@ async function saveMod(f){
     if(mwDraftActive(f))await mwDraftSave(f);
   }else if(file?.size){bytesDone+=file.size}
   if(!cover_path||!file_path)throw Error('Rasm va fayl kerak');
-  modUploadProgress(f,99,'Adminga yuborilmoqda...','Fayllar yuklandi. Server tasdig‘i kutilmoqda.');
+  modUploadProgress(f,99,adminDirect?'Saqlanmoqda...':'Adminga yuborilmoqda...','Fayllar yuklandi. Server javobi kutilmoqda.');
   let data={
     title:titles[primary],description:descs[primary],
     title_uz:titles.uz||null,description_uz:descs.uz||null,
@@ -4897,9 +4897,9 @@ async function saveMod(f){
     cover_path,file_path
   };
   if(m){
+    if(adminDirect)data.status='approved';
     let query=DB.from('mods').update(data).eq('id',id);
-    if(adminEdit)query=query.eq('status','pending');
-    else query=query.eq('author_id',S.u.id);
+    if(!adminEdit)query=query.eq('author_id',S.u.id);
     const updated=check(await modDbWithTimeout(query.select('id')));
     if(!updated?.length)throw Error('Mod yangilanmadi. Sahifani qayta oching');
   }else{
@@ -4908,18 +4908,18 @@ async function saveMod(f){
     const previous=check(await modDbWithTimeout(DB.from('mods')
       .select('id').eq('author_id',S.u.id).eq('file_path',file_path).limit(1)));
     if(!previous?.length){
-      check(await modDbWithTimeout(DB.from('mods').insert({...data,author_id:S.u.id})));
+      check(await modDbWithTimeout(DB.from('mods').insert({...data,author_id:S.u.id,status:adminDirect?'approved':'pending'})));
     }
   }
-  modUploadProgress(f,100,adminEdit?'Saqlandi!':'Adminga yuborildi!','Yuklash yakunlandi.');
+  modUploadProgress(f,100,adminDirect?'Saqlandi!':'Adminga yuborildi!','Yuklash yakunlandi.');
   if(mwDraftActive(f)){
     clearTimeout(mwDraftTimer);
     await mwDraftDelete(f.dataset.draftId);
   }
-  toast(adminEdit?'Mod tahrirlandi':'Mod adminga tekshirish uchun yuborildi!');
+  toast(adminDirect?'Mod saqlandi va e’lon qilindi!':'Mod adminga tekshirish uchun yuborildi!');
   close();
   invalidateProfileData();feedLoadedAt=0;feedLoaded=false;
-  if(adminEdit)await adminModDetail(id);
+  if(adminEdit){await openMod(id);}
   else await go('profile',S.u.id)
 }
 async function editMod(id){
@@ -5073,6 +5073,7 @@ function renderMod(m){
           <button class="btn">${t('send')}</button>
         </form>`:btn('auth',t('login'))}
       `:'<div class="note mod-review-message">Mod tekshiruvda. Tasdiqlangach yuklab olish mumkin.</div>'}
+      ${S.me?.is_admin===true&&S.me.username==='admin'?`<div class="buttons">${btn('adminEditMod','Tahrirlash',m.id,'ghost')}</div>`:''}
       <p class="mini muted">Fayllarni faqat ishonchli manbadan yuklab oling.</p>
     </section>`);
   activeModId=m.id;
@@ -6388,7 +6389,7 @@ async function adminModDetail(id,preview=true){
     if(generation!==modalGeneration||!$('#overlay').classList.contains('open'))return;
   }
   const actions=`<div class="admin-review-actions">
-    ${m.status==='pending'?btn('adminEditMod','Tahrirlash',id,'ghost'):''}
+    ${btn('adminEditMod','Tahrirlash',id,'ghost')}
     ${m.status==='pending'?adminBtn('approve_mod','Tasdiqlash',id):''}
     ${m.status==='pending'?adminBtn('reject_mod','Rad etish',id,'danger'):''}
     ${btn('admin','Ro‘yxatga qaytish', '', 'ghost')}
@@ -6419,7 +6420,6 @@ async function adminEditMod(id){
   if(!S.me?.is_admin||S.me.username!=='admin')
     throw Error('Faqat @admin');
   const m=check(await DB.from('mods').select('*').eq('id',id).single());
-  if(m.status!=='pending')throw Error('Mod tekshiruvda emas');
   dialog(m.title,modFields(m,true));
 }
 function adminBtn(action,text,id,extra=''){
