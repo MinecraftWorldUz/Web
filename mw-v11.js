@@ -15,9 +15,33 @@ window.MWV11=(()=>{
   const author=(m,scope)=>scope==='world'?m.author_id:m.sender_id;
   const isMine=(m,scope)=>!!authUser()&&author(m,scope)===authUser();
   function sharedBody(body){
-    const match=String(body).match(/^Minecraft World · ([\s\S]+) · \[mod:([0-9a-f-]{36})\]$/i);
-    if(!match)return esc(body);
-    return '<button class="linkbtn" data-act="mod" data-id="'+esc(match[2])+'" style="white-space:normal;text-align:left">Minecraft World · '+esc(match[1])+'<br>Modni ochish</button>';
+    const match=String(body).match(/^Minecraft World · ([^\n]+?) · \[mod:([0-9a-f-]{36})\](?:\n([\s\S]*))?$/i);
+    const legacy=!match&&String(body).match(/^Minecraft World · (.+) · Mod ID #(\d+)$/);
+    if(!match&&!legacy)return esc(body);
+    const key=match?match[2]:'legacy:'+legacy[2],name=match?match[1]:legacy[1];
+    return '<div class="mw-chat-mod-slot" data-shared-mod="'+esc(key)+'"><button class="mw-chat-mod-card" disabled><span class="mw-chat-mod-copy"><strong>'+esc(name)+'</strong><span class="muted">Yuklanmoqda...</span></span></button></div>'+(match?.[3]?'<div class="mw-chat-share-note">'+esc(match[3])+'</div>':'');
+  }
+  async function hydrateSharedMods(){
+    const slots=[...document.querySelectorAll('#msgs [data-shared-mod]:not([data-loaded])')];
+    for(const slot of slots)slot.dataset.loaded='1';
+    const keys=[...new Set(slots.map(s=>s.dataset.sharedMod))];
+    const mods=new Map();
+    await Promise.all(keys.map(async key=>{
+      try{
+        const q=DB.from('mods').select('id,title,description,cover_path,title_uz,title_ru,title_en,description_uz,description_ru,description_en').eq('status','approved');
+        const r=await (key.startsWith('legacy:')?q.eq('public_id',Number(key.slice(7))):q.eq('id',key)).maybeSingle();
+        if(!r.error&&r.data)mods.set(key,r.data);
+      }catch(err){console.warn(err)}
+    }));
+    for(const slot of slots){
+      if(!slot.isConnected)continue;
+      const m=mods.get(slot.dataset.sharedMod);
+      if(!m){slot.innerHTML='<span class="muted">Mod mavjud emas</span>';continue}
+      const desc=localModDesc(m),short=desc.length>150?desc.slice(0,150)+'…':desc,img=cover(m.cover_path);
+      slot.innerHTML='<button class="mw-chat-mod-card" data-act="mod" data-id="'+esc(m.id)+'">'+(img?'<img src="'+esc(img)+'" loading="lazy" alt="">':'')+'<span class="mw-chat-mod-copy"><strong>'+esc(localModTitle(m))+'</strong><span class="mw-chat-mod-desc">'+esc(short)+'</span></span></button>'+(desc.length>150?'<button class="mw-chat-mod-more" type="button" aria-expanded="false">Yana</button>':'');
+      const more=slot.querySelector('.mw-chat-mod-more');
+      if(more)more.addEventListener('click',ev=>{ev.stopPropagation();const expanded=more.getAttribute('aria-expanded')==='true';more.setAttribute('aria-expanded',String(!expanded));slot.querySelector('.mw-chat-mod-desc').textContent=expanded?short:desc;more.textContent=expanded?'Yana':'Yig‘ish'});
+    }
   }
   function bubble(m,scope,rows=[]){
     const mine=isMine(m,scope),id=m.id;
@@ -111,6 +135,7 @@ window.MWV11=(()=>{
   function afterRender(rows,scope){
     if(!rows?.length)return;
     syncLastDate(rows);
+    hydrateSharedMods().catch(console.warn);
     applyTheme(scope==='world'?'world':scope==='group'?S.chatId:'u:'+S.chatId).catch(console.warn);
     for(const m of rows)if(m.id)V.rows.set(rxKey(scope,m.id),m);
     loadMedia(rows).catch(err=>console.warn('Chat media:',err));
@@ -575,6 +600,7 @@ window.MWV11=(()=>{
   }
   function handle(e){
     if(V.longPressTriggered){V.longPressTriggered=false;e.preventDefault();e.stopImmediatePropagation();return}
+    if(e.target.closest('.mw-chat-mod-card,.mw-chat-mod-more'))return;
     const a=e.target.closest('[data-v11]');
     if(!a){
       const bubble=e.target.closest('.mw11-bubble[data-v11-msg]');
