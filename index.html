@@ -6382,6 +6382,8 @@ async function groupBadgePreview(id){
  const people=await users([g.owner_id,...members.map(x=>x.user_id),...messages.map(x=>x.sender_id)]);
  dialog('Chat arizasini tekshirish',`<div class="mw-group-top">${avatar({avatar_url:g.avatar_url,username:g.name},true)}<div><h3>${e(g.name)}</h3><small>@${e(g.username||'maxfiy')}</small><p>${e(g.bio||'')}</p></div></div><p class="muted">Admin tekshiruvi · a’zo bo‘lmasdan</p><p>Ariza sababi: ${e(request.reason)}</p><h3>Egasi</h3><div class="row">${avatar(people[g.owner_id])}${miniUser(people[g.owner_id])}</div><details><summary>A’zolar (${members.length})</summary><div class="activity-list">${members.map(m=>'<div class="row">'+avatar(people[m.user_id])+miniUser(people[m.user_id])+'</div>').join('')}</div></details><h3>Chat xabarlari</h3><div class="mw-admin-chat-preview">${messages.slice().reverse().map(m=>'<div class="item"><b>'+e(people[m.sender_id]?.display_name||people[m.sender_id]?.username||'Foydalanuvchi')+'</b><p class="wrap">'+e(m.body)+'</p><small>'+when(m.created_at)+'</small></div>').join('')||blank()}</div><div class="row"><input class="field" id="mwAdminChatText" maxlength="1000" placeholder="Admin sifatida xabar yozing..."><button class="btn" data-act="groupBadgeSend" data-id="${e(id)}">Yuborish</button></div><div class="buttons">${adminBtn('approve_group_badge','Tasdiqlash',request.id)}${adminBtn('reject_group_badge','Rad etish',request.id,'danger')}</div>`);
 }
+const mwBadgeActionsInFlight=new Set();
+async function freshAdminBadges(){mwDialogStack.length=0;mwBackRestoring=true;try{await admin();const section=document.querySelector('[data-admin-section="badges"]');if(section)section.open=true;}finally{mwBackRestoring=false;mwSyncRoute();}}
 async function adminAction(cmd,id,chosenDays=undefined){
   if(!S.me?.is_admin||S.me.username!=='admin')return;
   if(cmd==='approve_group_badge'||cmd==='reject_group_badge'){
@@ -6392,6 +6394,11 @@ async function adminAction(cmd,id,chosenDays=undefined){
     toast(cmd==='approve_group_badge'?'Guruh tasdiqlandi':'Ariza rad etildi');await admin();return;
   }
   let days=null,note=null;
+  if(cmd==='approve_verification'||cmd==='reject_verification'){
+    if(mwBadgeActionsInFlight.has(id))return;
+    const current=check(await DB.from('verification_requests').select('id,status').eq('id',id).maybeSingle());
+    if(!current||current.status!=='pending'){toast(current?.status==='approved'?'Bu ariza avval tasdiqlangan':current?.status==='rejected'?'Bu ariza avval rad etilgan':'Ariza topilmadi');await freshAdminBadges();return;}
+  }
   if(cmd==='approve_verification'&&chosenDays===undefined){
     dialog('Ko‘k belgi muddati',`<div class="mw-badge-duration"><label for="mwBadgeDays">Amal qilish muddati (kun)</label><input class="field" type="number" id="mwBadgeDays" min="1" max="3650" placeholder="Masalan, 30"><p class="muted">Bo‘sh qoldirilsa, muddatsiz beriladi.</p><div class="buttons">${btn('adminBadges','Bekor qilish','','ghost')}${btn('badgeApproveConfirm','Tasdiqlash',id)}</div></div>`);return;
   }
@@ -6413,6 +6420,16 @@ async function adminAction(cmd,id,chosenDays=undefined){
   }
   if(['delete_mod','ban'].includes(cmd)&&
     !confirm('Tasdiqlaysizmi?'))return;
+  if(cmd==='approve_verification'||cmd==='reject_verification'){
+    if(mwBadgeActionsInFlight.has(id))return;
+    mwBadgeActionsInFlight.add(id);
+    const controls=[...document.querySelectorAll('#overlay [data-act="badgeApproveConfirm"],#overlay [data-act="adminAction"]')];controls.forEach(b=>b.disabled=true);
+    try{
+      const result=await DB.rpc('admin_action',{p_action:cmd,p_id:id,p_days:days,p_note:note});
+      if(result.error?.message?.includes('Request not found')){toast('Ariza avval ko‘rib chiqilgan');await freshAdminBadges();return;}
+      check(result);toast(cmd==='approve_verification'?'Ko‘k belgi tasdiqlandi':'Ariza rad etildi');await freshAdminBadges();return;
+    }finally{mwBadgeActionsInFlight.delete(id);controls.forEach(b=>b.disabled=false);}
+  }
   check(await DB.rpc('admin_action',{
     p_action:cmd,p_id:id,p_days:days,p_note:note
   }));
