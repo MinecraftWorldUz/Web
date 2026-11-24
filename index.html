@@ -2447,6 +2447,17 @@ body .mw-share-tools button[data-act="shareSave"] span,body .mw-share-tools butt
 body .mw-share-tools button[data-act="shareSave"].selected svg{fill:#fff!important;stroke:#fff!important}
 body .grid .card .art .quick-save.saved{background:#172f46eb!important;color:#fff!important}
 body .grid .card .art .quick-save.saved svg{fill:#fff!important;stroke:#fff!important}
+
+/* Give modal ticker text a definite viewport even inside intrinsic flex layouts. */
+#overlay .mod-author-row>.mod-author{width:100%!important;max-width:100%!important;box-sizing:border-box}
+#overlay .mod-author .mw-marquee-user{flex:1 1 0%!important;width:0!important;min-width:0!important}
+#overlay .mw-marquee-user>.mw-marquee{flex:1 1 0%!important;width:0!important;min-width:0!important}
+#overlay .mw-share-id{width:100%;min-width:0;box-sizing:border-box}
+#overlay .mw-share-id>b{flex:1 1 0%;width:0;min-width:0}
+#overlay .mw-share-id .mw-marquee{flex:1 1 0%;width:0;min-width:0}
+#overlay .mw-marquee-track{display:inline-block!important;width:max-content!important;max-width:none!important;white-space:nowrap!important;overflow:visible!important}
+#overlay .mw-marquee.mw-overflowing>.mw-marquee-track{animation:mwTitleScroll var(--mw-duration,10s) ease-in-out infinite alternate}
+@media(prefers-reduced-motion:reduce){#overlay .mw-marquee.mw-overflowing>.mw-marquee-track{animation:none}}
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -3142,7 +3153,8 @@ function dialog(title,html){
     <div class="dialogbody">${html}</div>
   </div>`;
   $('#overlay').classList.add('open');
-  translateUi($('#overlay'))
+  translateUi($('#overlay'));
+  requestAnimationFrame(()=>mountMarquees());
 }
 function close(){
   modalGeneration++;
@@ -3187,7 +3199,7 @@ function modAuthorLink(p){
 const mwMarqueeObserver=new ResizeObserver(entries=>{
  for(const entry of entries){
   const el=entry.target,track=el.firstElementChild;if(!track)continue;
-  const distance=Math.ceil(track.scrollWidth-el.clientWidth);
+  const distance=Math.ceil(Math.max(track.scrollWidth,track.getBoundingClientRect().width)-el.clientWidth);
   el.classList.toggle('mw-overflowing',distance>2);
   el.style.setProperty('--mw-distance',Math.max(0,distance)+'px');
   el.style.setProperty('--mw-duration',Math.max(7,distance/15+4)+'s');
@@ -4930,6 +4942,7 @@ async function sendSharedMod(button){
 function renderModAuthor(p){
  const box=$('#modAuthor');if(!box||!p)return;
  box.innerHTML=avatar(p)+modAuthorLink(p)+(S.u?.id===p.id?'':`<button class="mw-follow-back mw-mod-follow" data-act="socialFollow" data-id="${e(p.id)}" aria-pressed="false">Obuna bo‘lish</button>`);
+ requestAnimationFrame(()=>mountMarquees());
  const uid=S.u?.id;if(!uid||uid===p.id)return;
  const b=box.querySelector('.mw-mod-follow');b.disabled=true;
  DB.from('follows').select('following_id').eq('follower_id',uid).eq('following_id',p.id).maybeSingle().then(r=>{
