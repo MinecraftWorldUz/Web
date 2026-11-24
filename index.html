@@ -5999,9 +5999,8 @@ async function onIncomingWorld(msg){
     S.worldUnread=Math.min(99,(S.worldUnread||0)+1);
     updateChatBadge();
   }
-  if(!S.worldPref?.muted&&!window.MWV11?.isMuted?.('world')&&notificationEnabled()&&document.visibilityState==='hidden'&&
-     'Notification'in window&&Notification.permission==='granted')
-    navigator.serviceWorker?.ready.then(reg=>reg.showNotification('Umumiy chat',{body:String(msg.body||'').slice(0,120)})).catch(console.warn);
+  // Phone notifications are delivered by the server push pipeline.
+
 }
 function listen(){
   if(S.channel){DB.removeChannel(S.channel);S.channel=null}
@@ -6139,12 +6138,12 @@ async function syncPushDevice(){
   if(!pushSupported()||!('caches' in window))return;
   const uid=S.u?.id;
   const cache=await caches.open('mw-device-notification-settings');
-  const record=new URL('push-device',location.href).href;
+  const record=new URL('push-device',new URL('./',location.href)).href;
   if(!uid||!notificationEnabled()||Notification.permission!=='granted'){
     await cache.delete(record);
     return;
   }
-  const reg=await navigator.serviceWorker.ready;
+  const reg=await Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>setTimeout(()=>reject(Error('Bildirishnoma xizmati hali tayyor emas')),7000))]);
   let sub=await reg.pushManager.getSubscription();
   if(!sub){
     const bytes=Uint8Array.from(atob(pushPublicKey.replace(/-/g,'+').replace(/_/g,'/')),ch=>ch.charCodeAt(0));
@@ -6171,18 +6170,37 @@ async function enablePhonePush(){
   await syncPushDevice();
   toast(S.u?'Telefon bildirishnomalari yoqildi.':'Ruxsat berildi. Akkauntga kirganda bildirishnomalar ulanadi.');
 }
+let mwNotificationBusy=false;
+function mwUpdateNotificationControls(busy=false){
+ const on=notificationEnabled()&&pushSupported()&&Notification.permission==='granted';
+ document.querySelectorAll('[data-act="notificationToggle"]').forEach(b=>{
+  b.disabled=busy;b.textContent=ux(on?'O‘chirish':'Yoqish');
+  const row=b.closest('.settings-row');const state=row?.querySelector('[data-mw-notification-state]');if(state)state.textContent=ux(on?'Yoqilgan':'O‘chirilgan');
+ });
+}
 async function toggleNotifications(){
-  if(notificationEnabled()&&pushSupported()&&Notification.permission==='granted'){
-    localStorage.setItem('mw_notifs_ui','off');
-    await syncPushDevice();
-    const reg=await navigator.serviceWorker.ready;
-    const sub=await reg.pushManager.getSubscription();
-    if(sub){
-      await sub.unsubscribe();
-      if(S.u)await DB.from('mw_push_devices').delete().eq('user_id',S.u.id).eq('endpoint',sub.endpoint);
-    }
-  }else await enablePhonePush();
-  settings();
+ if(mwNotificationBusy)return;
+ if(!pushSupported()){toast('Bu brauzer telefon bildirishnomalarini qo‘llamaydi.');return;}
+ mwNotificationBusy=true;
+ const wasOn=notificationEnabled()&&Notification.permission==='granted';
+ try{
+  if(wasOn){
+   localStorage.setItem('mw_notifs_ui','off');mwUpdateNotificationControls(true);
+   await syncPushDevice();
+   toast('Bildirishnomalar o‘chirildi');
+   // Keep the browser subscription for quick re-enabling; the local
+   // service worker blocks delivery while this device is disabled.
+  }else{
+   const permission=Notification.permission==='default'?await Notification.requestPermission():Notification.permission;
+   if(permission!=='granted'){toast('Brauzer sozlamalaridan bildirishnomalarga ruxsat bering');return;}
+   localStorage.setItem('mw_notifs_ui','on');mwUpdateNotificationControls(true);
+   await syncPushDevice();toast(S.u?'Bildirishnomalar yoqildi':'Ruxsat berildi. Akkauntga kiring.');
+  }
+ }catch(err){
+  console.warn(err);
+  if(!wasOn)localStorage.setItem('mw_notifs_ui','off');
+  toast('Bildirishnoma ulanishida xato. Qayta urinib ko‘ring.');
+ }finally{mwNotificationBusy=false;mwUpdateNotificationControls();}
 }
 async function savedModal(liked=false){
   if(!requireUser())return;
@@ -6261,7 +6279,7 @@ async function settings(){
       <div class="settings-row">
         <b>${ico('bell',19)} Bildirishnomalar</b>
         <div class="row">
-          <span class="muted">${on?'Yoqilgan':'O‘chirilgan'}</span>
+          <span class="muted" data-mw-notification-state>${on?'Yoqilgan':'O‘chirilgan'}</span>
           ${btn('notificationToggle',on?'O‘chirish':'Yoqish','','ghost')}
         </div>
         <p class="mini muted">Yangi xabar, obunachi va mod tekshiruvi haqida telefoningizda xabar oling.</p>
@@ -6606,7 +6624,7 @@ window.addEventListener('click',async event=>{
       if(act==='pushAllow')await enablePhonePush();
     }
     else if(act==='settings')await settings();
-    else if(act==='notificationToggle')toggleNotifications();
+    else if(act==='notificationToggle')await toggleNotifications();
     else if(act==='savedFromProfile'||act==='savedFromSettings')await savedModal();
     else if(act==='likedFromProfile')await savedModal(true);
     else if(act==='notifications')await notifications();
@@ -7194,6 +7212,10 @@ function mwInstallBackGuard(){
     if(kind==='review'&&S.me?.is_admin)await admin();
     if(kind==='follow'&&actor)await go('profile',actor);
     if(kind==='message'&&actor){S.chatId=actor;S.mw11MobileOpen=true;await go('chat')}
+    if(kind==='world_message'){S.chatId='world';S.mw11MobileOpen=true;await go('chat')}
+    if(kind==='group_message'&&noticeLink.get('target')){S.chatId='g:'+noticeLink.get('target');S.mw11MobileOpen=true;await go('chat')}
+    if(['like','comment','follow'].includes(kind))await socialActivity();
+    if(['badge','group_badge','mod'].includes(kind))await notifications();
   }
   // Supabase may emit SIGNED_IN again when the browser tab regains focus.
   // Update account data without forcing the user back to the home screen.
