@@ -44,8 +44,8 @@ window.MWChat=(()=>{
   check(groups);check(recent);
   if(S.u?.id!==uid||S.page!=='chat')return;
   C.groups=groups.data;
-  const badgeRows=ids.length?await DB.from('mw_group_badges').select('group_id').in('group_id',ids):{data:[],error:null};
-  if(!badgeRows.error)C.badges=new Set((badgeRows.data||[]).map(row=>row.group_id));
+  const badgeRows=ids.length?await DB.from('mw_group_badges').select('group_id,verified_until').in('group_id',ids):{data:[],error:null};
+  if(!badgeRows.error)C.badges=new Set((badgeRows.data||[]).filter(row=>!row.verified_until||new Date(row.verified_until)>new Date()).map(row=>row.group_id));
   S.mwWorldTime=worldRecent.data?.[0]?new Date(worldRecent.data[0].created_at).getTime():0;
   C.last={};C.preview={};
   for(const m of recent.data)if(!C.last[m.group_id]){C.last[m.group_id]=new Date(m.created_at).getTime();C.preview[m.group_id]=String(m.body||'').slice(0,65)}
@@ -290,7 +290,8 @@ window.MWChat=(()=>{
   const group=check(await DB.from('mw_groups').select('*').eq('id',id).single());
   const members=check(await DB.from('mw_group_members').select('user_id').eq('group_id',id));
   const own=group.owner_id===S.u.id;
-  const certified=!!check(await DB.from('mw_group_badges').select('group_id').eq('group_id',id).maybeSingle());
+  const badge=check(await DB.from('mw_group_badges').select('group_id,verified_until').eq('group_id',id).maybeSingle());
+  const certified=!!badge&&(!badge.verified_until||new Date(badge.verified_until)>new Date());
   const application=own&&!certified?check(await DB.from('mw_group_badge_requests').select('id,status')
     .eq('group_id',id).eq('status','pending').maybeSingle()):null;
   const pending=own?check(await DB.from('mw_group_join_requests')
@@ -328,6 +329,7 @@ window.MWChat=(()=>{
       '<div class="buttons"><button class="btn" data-mw="review-join" data-id="'+escape(req.id)+'" data-status="accepted">Qabul qilish</button>'+
       '<button class="btn ghost" data-mw="review-join" data-id="'+escape(req.id)+'" data-status="declined">Rad etish</button></div></div>').join('')+'</div>':''}
     ${own||S.me?.is_admin?'<div class="buttons"><button class="btn ghost" data-v11="theme-open" data-thread="g:'+escape(id)+'">Chat fonini tanlash</button></div>':''}
+    ${own&&certified?'<div class="settings-row"><b>Ko‘k belgi tasdiqlangan</b><small class="muted">'+(badge.verified_until?'Amal qilish muddati: '+escape(new Date(badge.verified_until).toLocaleDateString('uz-UZ')):'Muddatsiz')+'</small></div>':''}
     ${own&&!certified?'<div class="buttons">'+(application?'<span class="status">Ko‘k belgi arizasi tekshiruvda</span>':'<button class="btn ghost" data-mw="group-badge-apply" data-id="'+escape(id)+'">Guruh uchun ko‘k belgi arizasi</button>')+'</div>':''}
     <div class="buttons">${own?
       '<button class="btn" data-mw="edit-group" data-id="'+escape(id)+'">Tahrirlash / a’zo qo‘shish</button>'+
