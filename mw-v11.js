@@ -14,6 +14,11 @@ window.MWV11=(()=>{
   const authUser=()=>S.u?.id;
   const author=(m,scope)=>scope==='world'?m.author_id:m.sender_id;
   const isMine=(m,scope)=>!!authUser()&&author(m,scope)===authUser();
+  function sharedBody(body){
+    const match=String(body).match(/^Minecraft World · ([\s\S]+) · \[mod:([0-9a-f-]{36})\]$/i);
+    if(!match)return esc(body);
+    return '<button class="linkbtn" data-act="mod" data-id="'+esc(match[2])+'" style="white-space:normal;text-align:left">Minecraft World · '+esc(match[1])+'<br>Modni ochish</button>';
+  }
   function bubble(m,scope,rows=[]){
     const mine=isMine(m,scope),id=m.id;
     if(!id)return chatBubble(m.body,mine,chatTime(m.created_at));
@@ -21,7 +26,7 @@ window.MWV11=(()=>{
     const reply=rows.find(row=>row.id===m.reply_to);
     const quote=m.reply_to?'<div class="mw11-quote">'+esc((reply?.body||T('noReply')).slice(0,130))+'</div>':'';
     return '<div class="bubble '+(mine?'mine':'')+' mw11-bubble" tabindex="0" role="button" aria-label="Xabar amallari" data-v11-msg="'+esc(id)+'" data-v11-scope="'+scope+'">'+
-      quote+'<div class="bubble-body">'+esc(m.body||'')+'</div>'+
+      quote+'<div class="bubble-body">'+sharedBody(m.body||'')+'</div>'+
       (m.attachment_path?'<div class="mw11-attachment" data-mw11-media="'+esc(m.attachment_path)+'"><span>📎 '+esc(m.attachment_name||'Fayl')+'</span></div>':'')+
       '<div class="mw11-footer"><small>'+esc(chatTime(m.created_at))+(m.edited_at?' · ✎':'')+(mine?'<span class="mw11-delivery" data-created="'+esc(m.created_at)+'">'+(scope==='dm'&&V.readTimes.get(S.chatId)>=new Date(m.created_at).getTime()?' ✓✓':' ✓')+'</span>':'')+'</small></div>'+
       '<div class="mw11-reaction-list" data-v11-reactions="'+esc(id)+'"></div></div>';
