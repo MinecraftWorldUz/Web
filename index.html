@@ -2517,6 +2517,14 @@ body .clickable-mod:has(button:hover:not([data-act="mod"]),button:active:not([da
 .mw-press-target.mw-tap-down{filter:brightness(1.24)!important;box-shadow:inset 0 0 0 999px #ffffff12!important}
 .mw-press-target.mw-tap-down:disabled{filter:none!important}
 @media(prefers-reduced-motion:reduce){.mw-press-target{transition:none}}
+
+/* Identical avatar and label geometry for both image and initial avatars. */
+#overlay .mw-share-grid{align-items:start;grid-auto-rows:max-content}
+#overlay .mw-share-peer{display:grid!important;grid-template-rows:clamp(54px,17vw,82px) 18px;justify-items:center;align-content:start;align-items:center;row-gap:8px!important;width:100%;min-width:0;box-sizing:border-box}
+#overlay .mw-share-peer[hidden]{display:none!important}
+#overlay .mw-share-avatar{display:grid!important;place-items:center;width:clamp(54px,17vw,82px);height:clamp(54px,17vw,82px);min-width:0;line-height:0;margin:0!important}
+#overlay .mw-share-avatar .av.large{display:flex!important;align-items:center;justify-content:center;width:100%!important;height:100%!important;min-width:0!important;max-width:100%;margin:0!important;vertical-align:middle;object-fit:cover;box-sizing:border-box;line-height:1}
+#overlay .mw-share-peer>b{display:block!important;width:100%;height:18px;line-height:18px!important;min-width:0;max-width:100%;margin:0!important;padding:0!important;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px;font-weight:500}
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
