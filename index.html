@@ -3158,6 +3158,7 @@ function requireUser(){
 }
 function dialog(title,html){
   mwRememberDialog(title);
+  mwExitAt=0;
   $('#overlay').innerHTML=`<div class="dialog">
     <div class="dialoghead">
       <strong>${e(title)}</strong>
@@ -3328,10 +3329,7 @@ async function go(page='home',id=null){
   const nav=++navigationSeq;
   S.page=page;
   S.profileId=target;
-  // Remember only the last non-chat page for this signed-in browser account.
-  if(!mwInitialNavigation&&S.u?.id&&['home','create','profile'].includes(page)){
-    try{localStorage.setItem('mw_last_page:'+S.u.id,JSON.stringify({page,id:target}))}catch(error){}
-  }
+  // Keep navigation history in this session only.
   if(page==='chat')window.scrollTo(0,0);
   if(page!=='chat')window.MWV11?.resetMobileThread?.();
   document.querySelectorAll('[data-go]').forEach(x=>
@@ -6937,20 +6935,32 @@ async function mwBackDialog(){
   modalGeneration++;activeModId=prev.mod;
   dialog(prev.title,'');
   const body=$('#overlay .dialogbody');body.replaceChildren(...prev.nodes);body.scrollTop=prev.scroll;
-  if(prev.nodes.some(n=>n.nodeType===1&&n.classList.contains('settings-stack'))){mwBackRestoring=false;await settings();}
+  mountMarquees();
  }finally{mwBackRestoring=false}
 }
 function mwInstallBackGuard(){
  if(mwGuardReady)return;mwGuardReady=true;
- history.replaceState({...history.state,mwGuard:'base'},'');
- history.pushState({mwGuard:'active'},'');
+ // Create the guard after a trusted gesture so Chrome does not skip it.
+ const arm=()=>{
+  if(!mwGuardReady)return;
+  try{
+   if(!history.state?.mwBackGuard){
+    history.replaceState({...history.state,mwBackBase:true},'');
+    history.pushState({mwBackGuard:true,mwBackTrusted:true},'');
+   }
+  }catch(err){console.warn(err)}
+ };
+ const onGesture=ev=>{if(ev.isTrusted){arm();mwExitAt=0}};
+ window.addEventListener('click',onGesture,true);
+ window.addEventListener('touchend',onGesture,{capture:true,passive:true});
+ window.addEventListener('keydown',onGesture,true);
  window.addEventListener('popstate',async()=>{
   if(!mwGuardReady)return;
-  if(mwBackBusy){history.pushState({mwGuard:'active'},'');return}
-  if(mwExitAt&&Date.now()-mwExitAt<2000&&!$('#overlay').classList.contains('open')&&!mwPageStack.length&&!S.mw11MobileOpen){
-   mwGuardReady=false;history.back();return;
-  }
-  history.pushState({mwGuard:'active'},'');mwBackBusy=true;
+  const canReturn=$('#overlay').classList.contains('open')||(S.page==='chat'&&S.mw11MobileOpen)||mwPageStack.length>0;
+  if(!canReturn&&mwExitAt&&Date.now()-mwExitAt<2000){mwGuardReady=false;history.back();return}
+  history.pushState({mwBackGuard:true,mwBackTrusted:true},'');
+  if(mwBackBusy)return;
+  mwBackBusy=true;
   try{
    if($('#overlay').classList.contains('open')){mwExitAt=0;await mwBackDialog();return}
    if(S.page==='chat'&&S.mw11MobileOpen){mwExitAt=0;S.mw11MobileOpen=false;window.MWV11?.resetMobileThread?.();return}
@@ -6975,13 +6985,6 @@ function mwInstallBackGuard(){
   mwInitialNavigation=false;
   mwInstallBackGuard();
   offerPush();
-  if(S.u?.id){
-    try{
-      const last=JSON.parse(localStorage.getItem('mw_last_page:'+S.u.id)||'null');
-      if(last?.page==='create')await go('create');
-      else if(last?.page==='profile'&&last.id)await go('profile',last.id);
-    }catch(error){console.warn('Last open page restore:',error)}
-  }
   mwPageStack.length=0;
   mwPingPresence().catch(console.warn);
   scheduleFastPrefetch();
