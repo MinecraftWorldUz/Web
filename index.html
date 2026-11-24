@@ -2486,6 +2486,15 @@ body .grid .card .art .quick-save.saved svg{fill:#fff!important;stroke:#fff!impo
 #overlay .admin-review-actions{min-width:0;max-width:100%;flex-wrap:wrap}
 #overlay .admin-review-actions .btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 .admin-mod-row .mod-name{min-width:0;overflow-wrap:anywhere;word-break:break-word}
+
+#modForm .mw-auto-title{display:block;width:100%;box-sizing:border-box;min-height:44px!important;max-height:none!important;resize:none;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.45}
+#modForm .mw-char-count{display:block;text-align:right;font-size:11px;color:var(--muted);margin:3px 0 8px}
+#modForm .mw-char-count.over{color:#ef7777}
+#overlay .mw-mod-desc-box{min-width:0;max-width:100%;overflow-wrap:anywhere}
+#overlay .mw-clamped-desc{display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:6;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere}
+#overlay .mw-mod-desc-box.expanded .mw-clamped-desc{display:block!important;-webkit-line-clamp:unset}
+#overlay .mw-desc-more{display:inline-block;background:none;border:0;color:#96c7e5;font:inherit;font-size:13px;font-weight:700;padding:5px 0;cursor:pointer}
+#overlay .mw-desc-more[hidden]{display:none!important}
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -3187,6 +3196,23 @@ function dialog(title,html){
   translateUi($('#overlay'));
   requestAnimationFrame(()=>{mountMarquees();mwMeasureDialogTitle();});
 }
+function mwRefreshModFields(){
+ document.querySelectorAll('#modForm textarea[name^="title_"],#modForm textarea[name^="description_"]').forEach(el=>{
+  const max=Number(el.maxLength),counter=el.parentElement.querySelector('[data-count-for="'+el.id+'"]');
+  if(counter){const label=el.value.length+' / '+max;if(counter.textContent!==label)counter.textContent=label;counter.classList.toggle('over',el.value.length>max);}
+  el.setCustomValidity(el.value.length>max?'Belgilar soni '+max+' dan oshmasligi kerak':'');
+  if(el.classList.contains('mw-auto-title')&&el.getClientRects().length){el.style.height='auto';el.style.height=(el.scrollHeight+el.offsetHeight-el.clientHeight)+'px';}
+ });
+ const box=$('#overlay .mw-mod-desc-box');
+ if(box&&!box.classList.contains('expanded')){const p=box.querySelector('p');box.querySelector('button').hidden=p.scrollHeight<=p.clientHeight+1;}
+}
+document.addEventListener('input',ev=>{if(ev.target.matches('#modForm textarea'))mwRefreshModFields()});
+window.addEventListener('resize',mwRefreshModFields);
+new MutationObserver(()=>requestAnimationFrame(mwRefreshModFields)).observe(document.body,{childList:true,subtree:true});
+window.addEventListener('click',ev=>{
+ const b=ev.target.closest('.mw-desc-more');if(!b)return;
+ const expanded=b.parentElement.classList.toggle('expanded');b.textContent=expanded?'Kamroq':'Yana';b.setAttribute('aria-expanded',String(expanded));
+});
 function mwMeasureDialogTitle(){
  const box=$('#overlay .mw-dialog-title');if(!box)return;
  const title=box.querySelector('strong'),more=box.querySelector('button');
@@ -4262,11 +4288,11 @@ function modLanguageBlock(m){
     return '<section class="mw-mod-language-card" data-mod-lang-section="'+lang+'"'+(active[lang]?'':' hidden')+'>'+
       '<div class="mw-mod-language-header"><strong>'+title+'</strong><span>'+short+'</span></div>'+
       '<label for="mw-mod-title-'+lang+'">'+n+'</label>'+
-      '<input id="mw-mod-title-'+lang+'" class="field" name="title_'+lang+'" type="text" maxlength="160"'+
-      (active[lang]?' required':' disabled')+' value="'+e(oldTitle)+'" placeholder="'+e(n)+'">'+
+      '<textarea id="mw-mod-title-'+lang+'" class="field mw-auto-title" name="title_'+lang+'" maxlength="80" rows="1"'+
+      (active[lang]?' required':' disabled')+' placeholder="'+e(n)+'">'+e(oldTitle)+'</textarea><small class="mw-char-count" data-count-for="mw-mod-title-'+lang+'"></small>'+
       '<label for="mw-mod-desc-'+lang+'">'+d+'</label>'+
-      '<textarea id="mw-mod-desc-'+lang+'" class="field" name="description_'+lang+'" maxlength="6000"'+
-      (active[lang]?' required':' disabled')+' rows="5" placeholder="'+e(d)+'">'+e(oldDesc)+'</textarea></section>';
+      '<textarea id="mw-mod-desc-'+lang+'" class="field" name="description_'+lang+'" maxlength="380"'+
+      (active[lang]?' required':' disabled')+' rows="5" placeholder="'+e(d)+'">'+e(oldDesc)+'</textarea><small class="mw-char-count" data-count-for="mw-mod-desc-'+lang+'"></small></section>';
   }).join('');
   return '<div class="mw-mod-language-picker">'+
     '<div class="mw-mod-language-title">Mod nomi va tavsifi qaysi tilda?</div>'+
@@ -4369,7 +4395,7 @@ document.addEventListener('click',event=>{
       for(const input of area.querySelectorAll('input,textarea')){
         input.disabled=selected;input.required=!selected;
       }
-      if(!selected)area.querySelector('input')?.focus();
+      if(!selected){mwRefreshModFields();area.querySelector('textarea')?.focus();}
     }
     return;
   }
@@ -4830,7 +4856,9 @@ async function saveMod(f){
   for(const lang of ['uz','ru','en']){
     const section=f.querySelector('[data-mod-lang-section="'+lang+'"]');
     if(!section||section.hidden)continue;
-    titles[lang]=String(x.get('title_'+lang)||'').trim();
+    const rawTitle=String(x.get('title_'+lang)||''),rawDesc=String(x.get('description_'+lang)||'');
+    if(rawTitle.length>80||rawDesc.length>380)throw Error(lang.toUpperCase()+': nom 80, tavsif 380 belgidan oshmasligi kerak (bo‘sh joylar ham hisoblanadi)');
+    titles[lang]=rawTitle.trim();
     descs[lang]=String(x.get('description_'+lang)||'').trim();
     if(titles[lang].length<3||descs[lang].length<10)
       throw Error(lang.toUpperCase()+': mod nomi yoki tavsifi juda qisqa');
@@ -5013,7 +5041,7 @@ function renderMod(m){
         <span class="status">${e(m.game_version)} · ${e(categoryName(m.category))}</span>
         <span class="mod-view-stat">${ico('eye',17)} <span data-mod-view-count>${count(m.views_count)}</span></span>
       </div>
-      <p class="wrap mod-description">${e(localModDesc(m))}</p>
+      <div class="mw-mod-desc-box"><p class="wrap mod-description mw-clamped-desc">${e(localModDesc(m))}</p><button type="button" class="mw-desc-more" aria-expanded="false" hidden>Yana</button></div>
       <div class="mod-author-row">
         <div id="modAuthor" class="mod-author"></div>
         ${isApproved?`<div class="mod-secondary-actions">
