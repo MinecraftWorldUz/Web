@@ -6174,7 +6174,7 @@ let mwNotificationBusy=false;
 function mwUpdateNotificationControls(busy=false){
  const on=notificationEnabled()&&pushSupported()&&Notification.permission==='granted';
  document.querySelectorAll('[data-act="notificationToggle"]').forEach(b=>{
-  b.disabled=busy;b.textContent=ux(on?'O‘chirish':'Yoqish');
+  b.disabled=busy;b.textContent=ux(on?'O‘chirish':'Yoqish');b.setAttribute('aria-busy',String(busy));
   const row=b.closest('.settings-row');const state=row?.querySelector('[data-mw-notification-state]');if(state)state.textContent=ux(on?'Yoqilgan':'O‘chirilgan');
  });
 }
@@ -6188,6 +6188,9 @@ async function toggleNotifications(){
    localStorage.setItem('mw_notifs_ui','off');mwUpdateNotificationControls(true);
    await syncPushDevice();
    toast('Bildirishnomalar o‘chirildi');
+   const reg=await navigator.serviceWorker.getRegistration();
+   const sub=await reg?.pushManager.getSubscription();
+   if(sub&&S.u)DB.from('mw_push_devices').delete().eq('user_id',S.u.id).eq('endpoint',sub.endpoint).then(r=>{if(r.error)console.warn(r.error)});
    // Keep the browser subscription for quick re-enabling; the local
    // service worker blocks delivery while this device is disabled.
   }else{
@@ -6282,7 +6285,7 @@ async function settings(){
           <span class="muted" data-mw-notification-state>${on?'Yoqilgan':'O‘chirilgan'}</span>
           ${btn('notificationToggle',on?'O‘chirish':'Yoqish','','ghost')}
         </div>
-        <p class="mini muted">Yangi xabar, obunachi va mod tekshiruvi haqida telefoningizda xabar oling.</p>
+        <p class="mini muted">Chat xabarlari, layklar, izohlar, obunachilar va arizalar haqida sayt ochiq yoki yopiq bo‘lganda telefoningizda xabar oling.</p>
       </div>
       <div class="settings-row">
         <b>${ico('badge',18)} ${t('request')}</b>
@@ -7035,7 +7038,7 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js?v=23').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=24').catch(console.warn);
   });
 }
 
@@ -7211,6 +7214,8 @@ function mwInstallBackGuard(){
     const kind=noticeLink.get('notice'),actor=noticeLink.get('actor');
     if(kind==='review'&&S.me?.is_admin)await admin();
     if(kind==='follow'&&actor)await go('profile',actor);
+    if(['like','comment'].includes(kind))await socialActivity();
+    if(['badge','group_badge','mod'].includes(kind))await notifications();
     if(kind==='message'&&actor){S.chatId=actor;S.mw11MobileOpen=true;await go('chat')}
     if(kind==='world_message'){S.chatId='world';S.mw11MobileOpen=true;await go('chat')}
     if(kind==='group_message'&&noticeLink.get('target')){S.chatId='g:'+noticeLink.get('target');S.mw11MobileOpen=true;await go('chat')}
