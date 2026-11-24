@@ -2468,6 +2468,8 @@ body .grid .card .art .quick-save.saved svg{fill:#fff!important;stroke:#fff!impo
 #overlay .mod-author-row .mw-mod-follow{margin:0!important;padding:6px!important;font-size:10px!important;max-width:none!important}
 #overlay .mod-author-row .mw-marquee-user{flex:1 1 0%!important;min-width:0!important;width:0!important}
 @media(max-width:380px){#overlay .mod-author-row{gap:3px!important}#overlay .mod-author-row .mod-author>.av{width:26px!important;height:26px!important;min-width:26px!important}#overlay .mod-author-row .mod-icon-action{width:28px!important}#overlay .mod-author-row .mw-mod-follow{font-size:9px!important;padding:5px!important}}
+
+.mw-admin-chat-preview{max-height:38vh;overflow:auto;display:grid;gap:8px;margin:10px 0}.mw-admin-chat-preview p{margin:5px 0}.mw-admin-chat-preview+.row .field{flex:1;min-width:0}
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -5802,7 +5804,7 @@ async function pendingOwnerJoinCount(uid){
   if(result.error)throw result.error;
   return result.count||0;
 }
-const REQUEST_KINDS=['review','badge','mod'];
+const REQUEST_KINDS=['review','badge','mod','group_badge'];
 const SOCIAL_KINDS=['follow','like','comment'];
 async function notificationCount(){
   const uid=S.u?.id;
@@ -5907,10 +5909,12 @@ function listen(){
       p=>{onIncomingWorld(p.new).catch(console.warn)})
     .subscribe();
 }
-function activityCard(n,people){
+function activityCard(n,people,groups={}){
+ const group=groups[n.target_id];
  const actor=people[n.actor_id],adminUser=S.me?.is_admin&&S.me.username==='admin';
  const action=n.kind==='review'&&adminUser?(n.target_id?'adminModDetail':'admin'):n.kind==='badge'&&adminUser&&n.actor_id?'adminBadges':n.kind==='mod'&&n.target_id?'mod':'';
  const badge=n.kind==='badge';
+ if(n.kind==='group_badge')return `<article class="activity-card mw-request-card ${n.is_read?'':'unread'}" data-notice-id="${e(n.id)}" ${adminUser&&n.actor_id?'data-act="groupBadgePreview" data-id="'+e(n.target_id)+'" role="button"':''} tabindex="0">${group?avatar({avatar_url:group.avatar_url,username:group.name}):'<span class="activity-icon">'+ico('users',23)+'</span>'}<div><strong>${e(n.title)}</strong><b class="mw-notice-person">${e(group?.name||n.body.split(' · ')[0])}</b>${group?.username?'<small>@'+e(group.username)+'</small>':''}<p>${e(n.actor_id?'Yangi chat arizasi':n.body)}</p><small>${when(n.created_at)}</small></div></article>`;
  return `<article class="activity-card mw-request-card ${n.is_read?'':'unread'}" data-notice-id="${e(n.id)}" ${action?'data-act="'+action+'" data-id="'+e(n.target_id||'')+'" role="button"':''} tabindex="0">
  ${badge&&actor?avatar(actor):'<span class="activity-icon">'+(badge?'<svg width="23" height="23" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#2699ee"/><path d="m5.4 10 3.1 3.2 6.2-6.4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>':ico('package',20))+'</span>'}
  <div><strong>${e(n.title)}</strong>${badge&&actor?'<b class="mw-notice-person">'+e('@'+actor.username)+'</b>':''}<p>${e(n.body||'')}</p><small>${when(n.created_at)}</small></div></article>`;
@@ -5938,13 +5942,14 @@ window.addEventListener('keydown',event=>{
     if(card&&event.target===card){event.preventDefault();card.click()}
   }
 });
+async function noticeGroups(rows){const ids=[...new Set(rows.filter(n=>n.kind==='group_badge'&&n.target_id).map(n=>n.target_id))];if(!ids.length)return {};const r=await DB.from('mw_groups').select('id,name,username,avatar_url').in('id',ids);return Object.fromEntries((r.data||[]).map(g=>[g.id,g]));}
 async function showActivityToast(n){
   const uid=S.u?.id;
   const people=n.actor_id?await users([n.actor_id]).catch(()=>({})):{};
   if(uid!==S.u?.id)return;
   toast(n.title);
   const box=$('#toast');
-  box.innerHTML=activityCard(n,people);
+  box.innerHTML=activityCard(n,people,await noticeGroups([n]));
 }
 async function notifications(){
   if(!requireUser())return;
@@ -5952,7 +5957,8 @@ async function notifications(){
   const r=await DB.from('notifications').select('*').eq('user_id',uid).in('kind',REQUEST_KINDS).order('created_at',{ascending:false}).limit(50);
   check(r);if(S.u?.id!==uid)return;
   const people=await users(r.data.map(n=>n.actor_id)).catch(()=>({}));if(S.u?.id!==uid)return;
-  dialog(t('notifications'),`<div class="mw-notice-toolbar">${btn('markRead',t('mark'))}</div><div class="activity-list">${r.data.map(n=>activityCard(n,people)).join('')||blank()}</div>`);
+  const groups=await noticeGroups(r.data);if(S.u?.id!==uid)return;
+  dialog(t('notifications'),`<div class="mw-notice-toolbar">${btn('markRead',t('mark'))}</div><div class="activity-list">${r.data.map(n=>activityCard(n,people,groups)).join('')||blank()}</div>`);
 }
 async function socialActivity(){
   if(!requireUser())return;
@@ -6129,7 +6135,7 @@ function settings(){
       </div>
       <div class="settings-row">
         <b>${ico('badge',18)} ${t('request')}</b>
-        ${S.me?.verified?'<span class="status">Tasdiqlangan</span>':
+        ${S.me?.verified&&(!S.me.verified_until||new Date(S.me.verified_until)>new Date())?'<span class="status">Tasdiqlangan</span><small class="muted">'+(S.me.verified_until?'Amal qilish muddati: '+e(new Date(S.me.verified_until).toLocaleDateString('uz-UZ')):'Muddatsiz')+'</small>':
           btn('badgeRequest','Ko‘k belgi so‘rovi','','ghost')}
       </div>
       <div class="settings-row">
@@ -6255,7 +6261,7 @@ async function loadAdminSection(section,target){
       <strong>${e(gm.get(req.group_id)?.name||'Guruh')}</strong>
       <small class="muted">@${e(gm.get(req.group_id)?.username||'maxfiy')} · Egasi: @${e(owners[req.requester_id]?.username||'...')}</small>
       <p class="wrap">${e(req.reason)}</p>
-      <div class="buttons">${adminBtn('approve_group_badge','Tasdiqlash',req.id)}
+      <div class="buttons">${btn('groupBadgePreview','Chatni tekshirish',req.group_id,'ghost')}${adminBtn('approve_group_badge','Tasdiqlash',req.id)}
       ${adminBtn('reject_group_badge','Rad etish',req.id,'danger')}</div></div>`).join('')||blank();
   }else if(section==='reports'){
     const r=await DB.from('reports')
@@ -6353,20 +6359,26 @@ function adminBtn(action,text,id,extra=''){
     data-act="adminAction" data-cmd="${action}"
     data-id="${id}">${ico(action.startsWith('approve')?'check':action.startsWith('reject')?'x':action==='delete_mod'?'trash':'shield',17)}<span>${cleanButtonText(text)}</span></button>`
 }
+async function groupBadgePreview(id){
+ if(!S.me?.is_admin||S.me.username!=='admin')return;
+ const [gr,req,mem,msg]=await Promise.all([
+ DB.from('mw_groups').select('*').eq('id',id).single(),
+ DB.from('mw_group_badge_requests').select('id,reason').eq('group_id',id).eq('status','pending').limit(1).maybeSingle(),
+ DB.from('mw_group_members').select('user_id').eq('group_id',id),
+ DB.from('mw_group_messages').select('sender_id,body,created_at').eq('group_id',id).order('created_at',{ascending:false}).limit(60)]);
+ const g=check(gr),request=check(req),members=check(mem),messages=check(msg);
+ if(!request){toast('Ariza tekshiruvda emas');await admin();return}
+ const people=await users([g.owner_id,...members.map(x=>x.user_id),...messages.map(x=>x.sender_id)]);
+ dialog('Chat arizasini tekshirish',`<div class="mw-group-top">${avatar({avatar_url:g.avatar_url,username:g.name},true)}<div><h3>${e(g.name)}</h3><small>@${e(g.username||'maxfiy')}</small><p>${e(g.bio||'')}</p></div></div><p class="muted">Admin tekshiruvi · a’zo bo‘lmasdan</p><p>Ariza sababi: ${e(request.reason)}</p><h3>Egasi</h3><div class="row">${avatar(people[g.owner_id])}${miniUser(people[g.owner_id])}</div><details><summary>A’zolar (${members.length})</summary><div class="activity-list">${members.map(m=>'<div class="row">'+avatar(people[m.user_id])+miniUser(people[m.user_id])+'</div>').join('')}</div></details><h3>Chat xabarlari</h3><div class="mw-admin-chat-preview">${messages.slice().reverse().map(m=>'<div class="item"><b>'+e(people[m.sender_id]?.display_name||people[m.sender_id]?.username||'Foydalanuvchi')+'</b><p class="wrap">'+e(m.body)+'</p><small>'+when(m.created_at)+'</small></div>').join('')||blank()}</div><div class="row"><input class="field" id="mwAdminChatText" maxlength="1000" placeholder="Admin sifatida xabar yozing..."><button class="btn" data-act="groupBadgeSend" data-id="${e(id)}">Yuborish</button></div><div class="buttons">${adminBtn('approve_group_badge','Tasdiqlash',request.id)}${adminBtn('reject_group_badge','Rad etish',request.id,'danger')}</div>`);
+}
 async function adminAction(cmd,id,chosenDays=undefined){
   if(!S.me?.is_admin||S.me.username!=='admin')return;
   if(cmd==='approve_group_badge'||cmd==='reject_group_badge'){
-    const row=check(await DB.from('mw_group_badge_requests').select('id,group_id,status')
-      .eq('id',id).eq('status','pending').single());
-    if(cmd==='approve_group_badge'){
-      check(await DB.from('mw_group_badges').upsert({group_id:row.group_id},{onConflict:'group_id'}));
+    if(cmd==='approve_group_badge'&&chosenDays===undefined){
+      dialog('Chat uchun ko‘k belgi muddati',`<div class="mw-badge-duration"><label for="mwBadgeDays">Amal qilish muddati (kun)</label><input class="field" type="number" id="mwBadgeDays" min="1" max="3650" placeholder="Masalan, 30"><p class="muted">Bo‘sh qoldirilsa, muddatsiz beriladi.</p><div class="buttons">${btn('admin','Bekor qilish','','ghost')}${btn('groupBadgeApproveConfirm','Tasdiqlash',id)}</div></div>`);return;
     }
-    check(await DB.from('mw_group_badge_requests').update({
-      status:cmd==='approve_group_badge'?'approved':'rejected',
-      reviewed_at:new Date().toISOString()
-    }).eq('id',id).eq('status','pending'));
-    toast(cmd==='approve_group_badge'?'Guruh tasdiqlandi':'Ariza rad etildi');
-    await admin();return;
+    check(await DB.rpc('mw_review_group_badge',{p_id:id,p_approve:cmd==='approve_group_badge',p_days:chosenDays??null}));
+    toast(cmd==='approve_group_badge'?'Guruh tasdiqlandi':'Ariza rad etildi');await admin();return;
   }
   let days=null,note=null;
   if(cmd==='approve_verification'&&chosenDays===undefined){
@@ -6580,6 +6592,9 @@ window.addEventListener('click',async event=>{
     }
     else if(act==='adminAction')
       await adminAction(a.dataset.cmd,id);
+    else if(act==='groupBadgePreview')await groupBadgePreview(id);
+    else if(act==='groupBadgeSend'){const body=$('#mwAdminChatText').value.trim();if(body){check(await DB.from('mw_group_messages').insert({group_id:id,sender_id:S.u.id,body}));await groupBadgePreview(id)}}
+    else if(act==='groupBadgeApproveConfirm'){const raw=$('#mwBadgeDays').value.trim(),days=raw?Number(raw):null;if(days!==null&&(!Number.isInteger(days)||days<1||days>3650))throw Error('1–3650 kun kiriting');await adminAction('approve_group_badge',id,days);}
     else if(act==='badgeApproveConfirm'){const raw=$('#mwBadgeDays').value.trim(),days=raw?Number(raw):null;if(days!==null&&(!Number.isInteger(days)||days<1||days>3650))throw Error('1–3650 kun kiriting');await adminAction('approve_verification',id,days);}
     else if(act==='logout'){
       dialog('Akkauntdan chiqish',`<p>Ushbu akkauntdan chiqmoqchimisiz?</p><div class="buttons">${btn('settings','Bekor qilish','','ghost')}${btn('logoutConfirm','Chiqish','','danger')}</div>`);
