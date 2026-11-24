@@ -3167,6 +3167,7 @@ function dialog(title,html){
     <div class="dialogbody">${html}</div>
   </div>`;
   $('#overlay').classList.add('open');
+  mwSyncRoute();
   translateUi($('#overlay'));
   requestAnimationFrame(()=>mountMarquees());
 }
@@ -3175,7 +3176,8 @@ function close(){
   modalGeneration++;
   activeModId=null;
   $('#overlay').classList.remove('open');
-  $('#overlay').innerHTML=''
+  $('#overlay').innerHTML='';
+  mwSyncRoute();
 }
 function filePicker(name,accept,required=false){
   const picture=name==='image',attachment=name==='file';
@@ -3329,6 +3331,7 @@ async function go(page='home',id=null){
   const nav=++navigationSeq;
   S.page=page;
   S.profileId=target;
+  mwSyncRoute();
   // Keep navigation history in this session only.
   if(page==='chat')window.scrollTo(0,0);
   if(page!=='chat')window.MWV11?.resetMobileThread?.();
@@ -6838,10 +6841,10 @@ window.addEventListener('submit',async ev=>{
 });
 
 $('#overlay').addEventListener('click',ev=>{
-  if(ev.target.id==='overlay')close()
+  if(ev.target.id==='overlay')mwBackDialog().catch(console.warn)
 });
 window.addEventListener('keydown',ev=>{
-  if(ev.key==='Escape')close()
+  if(ev.key==='Escape'&&$('#overlay').classList.contains('open')){ev.preventDefault();mwBackDialog().catch(console.warn)}
 });
 
 function createSnow(){
@@ -6938,36 +6941,72 @@ async function mwBackDialog(){
   mountMarquees();
  }finally{mwBackRestoring=false}
 }
+let mwRouteSerial=0,mwRouteSession=Date.now().toString(36),mwLastRoute='',mwHistoryReady=false;
+function mwRouteKey(){
+ const open=$('#overlay')?.classList.contains('open');
+ return [S.page,S.profileId||'',S.page==='chat'&&S.mw11MobileOpen?S.chatId||'thread':'',open?mwDialogTitle:'',open?mwDialogStack.length:0].join('|');
+}
+function mwRouteUrl(serial){
+ const url=new URL(location.href);url.hash='mw-view-'+serial;return url.href;
+}
+function mwSyncRoute(){
+ if(!mwHistoryReady||mwBackRestoring||mwBackBusy)return;
+ const key=mwRouteKey();
+ if(key===mwLastRoute)return;
+ mwLastRoute=key;mwExitAt=0;
+ try{history.pushState({mwRouteSession,serial:++mwRouteSerial,key},'',mwRouteUrl(mwRouteSerial));}catch(err){console.warn(err)}
+}
 function mwInstallBackGuard(){
  if(mwGuardReady)return;mwGuardReady=true;
- // Create the guard after a trusted gesture so Chrome does not skip it.
- const arm=()=>{
-  if(!mwGuardReady)return;
+ // Each visible transition gets a real same-document navigation entry.
+ // Use a user gesture to create the first guard, avoiding Chromium's
+ // history-manipulation intervention on automatic startup entries.
+ const arm=ev=>{
+  if(!ev.isTrusted||mwHistoryReady)return;
+  mwHistoryReady=true;mwLastRoute=mwRouteKey();
   try{
-   if(!history.state?.mwBackGuard){
-    history.replaceState({...history.state,mwBackBase:true},'');
-    history.pushState({mwBackGuard:true,mwBackTrusted:true},'');
-   }
+   history.replaceState({mwRouteSession,serial:0,key:mwLastRoute},'',mwRouteUrl(0));
+   history.pushState({mwRouteSession,serial:++mwRouteSerial,key:mwLastRoute},'',mwRouteUrl(mwRouteSerial));
   }catch(err){console.warn(err)}
  };
- const onGesture=ev=>{if(ev.isTrusted){arm();mwExitAt=0}};
- window.addEventListener('click',onGesture,true);
- window.addEventListener('touchend',onGesture,{capture:true,passive:true});
- window.addEventListener('keydown',onGesture,true);
+ window.addEventListener('pointerdown',arm,true);
+ window.addEventListener('touchstart',arm,{capture:true,passive:true});
+ window.addEventListener('click',arm,true);
+ window.addEventListener('keydown',arm,true);
+ // Track mobile chat view changes made by the existing messenger extension.
+ const app=$('#app');
+ new MutationObserver(()=>mwSyncRoute()).observe(app,{attributes:true,attributeFilter:['class'],childList:true});
  window.addEventListener('popstate',async()=>{
-  if(!mwGuardReady)return;
-  const canReturn=$('#overlay').classList.contains('open')||(S.page==='chat'&&S.mw11MobileOpen)||mwPageStack.length>0;
-  if(!canReturn&&mwExitAt&&Date.now()-mwExitAt<2000){mwGuardReady=false;history.back();return}
-  history.pushState({mwBackGuard:true,mwBackTrusted:true},'');
+  if(!mwHistoryReady||!mwGuardReady)return;
   if(mwBackBusy)return;
-  mwBackBusy=true;
+  const canReturn=$('#overlay').classList.contains('open')||(S.page==='chat'&&S.mw11MobileOpen)||mwPageStack.length>0;
+  if(!canReturn&&mwExitAt&&Date.now()-mwExitAt<2000){
+   mwGuardReady=false;
+   // Exit past the entries created by this visit, without restarting the app.
+   const n=Number(history.state?.serial||0);
+   if(history.state?.mwRouteSession===mwRouteSession)history.go(-(n+1));
+   else history.back();
+   return;
+  }
+  mwBackBusy=true;mwBackRestoring=true;
   try{
-   if($('#overlay').classList.contains('open')){mwExitAt=0;await mwBackDialog();return}
-   if(S.page==='chat'&&S.mw11MobileOpen){mwExitAt=0;S.mw11MobileOpen=false;window.MWV11?.resetMobileThread?.();return}
-   const prev=mwPageStack.pop();
-   if(prev){mwExitAt=0;mwBackRestoring=true;S.chatId=prev.chatId;await go(prev.page,prev.id);return}
-   mwExitAt=Date.now();toast('Chiqish uchun yana bir marta orqaga bosing');
-  }catch(err){console.warn(err)}finally{mwBackRestoring=false;mwBackBusy=false}
+   if($('#overlay').classList.contains('open')){mwExitAt=0;await mwBackDialog();}
+   else if(S.page==='chat'&&S.mw11MobileOpen){mwExitAt=0;S.mw11MobileOpen=false;window.MWV11?.resetMobileThread?.();}
+   else{
+    const prev=mwPageStack.pop();
+    if(prev){mwExitAt=0;S.chatId=prev.chatId;await go(prev.page,prev.id);}
+    else{mwExitAt=Date.now();toast('Chiqish uchun yana bir marta orqaga bosing');}
+   }
+  }catch(err){console.warn(err)}
+  finally{
+   mwBackRestoring=false;mwBackBusy=false;mwLastRoute=mwRouteKey();
+   // Preserve an actual back entry even after the last modal closes.
+   try{
+    const base=history.state?.mwRouteSession===mwRouteSession?Number(history.state.serial)||0:0;
+    mwRouteSerial=base+1;
+    history.pushState({mwRouteSession,serial:mwRouteSerial,key:mwLastRoute},'',mwRouteUrl(mwRouteSerial));
+   }catch(err){console.warn(err)}
+  }
  });
 }
 
