@@ -3157,6 +3157,7 @@ function requireUser(){
   return true
 }
 function dialog(title,html){
+  mwRememberDialog(title);
   $('#overlay').innerHTML=`<div class="dialog">
     <div class="dialoghead">
       <strong>${e(title)}</strong>
@@ -3169,6 +3170,7 @@ function dialog(title,html){
   requestAnimationFrame(()=>mountMarquees());
 }
 function close(){
+  mwDialogStack.length=0;mwDialogTitle='';
   modalGeneration++;
   activeModId=null;
   $('#overlay').classList.remove('open');
@@ -3319,6 +3321,10 @@ function fastLoadingShell(page,id){
 }
 async function go(page='home',id=null){
   const target=page==='profile'?(id||S.u?.id||null):id;
+  if(!mwInitialNavigation&&!mwBackRestoring&&(S.page!==page||S.profileId!==target)){
+    mwPageStack.push({page:S.page,id:S.profileId,chatId:S.chatId});if(mwPageStack.length>40)mwPageStack.shift();
+  }
+  mwExitAt=0;
   const nav=++navigationSeq;
   S.page=page;
   S.profileId=target;
@@ -6103,12 +6109,15 @@ function winterSetting(){
     <p class="mini muted">${t('winterBackgroundHelp')}</p>
   </div>`;
 }
-function settings(){
+async function settings(){
   if(!S.u){
     dialog(t('settings'),`<div class="settings-stack">${winterSetting()}<div class="settings-row"><b>${ico('bell',19)} Telefon bildirishnomalari</b>${btn('notificationToggle',notificationEnabled()&&pushSupported()&&Notification.permission==='granted'?'O‘chirish':'Yoqish','','ghost')}</div></div>`);
     return;
   }
   if(!requireUser())return;
+  const uid=S.u.id;
+  const [fresh,badge]=await Promise.all([DB.from('profiles').select('verified,verified_until').eq('id',uid).maybeSingle(),DB.from('verification_requests').select('id').eq('user_id',uid).eq('status','pending').maybeSingle()]);
+  check(fresh);check(badge);if(S.u?.id!==uid)return;if(fresh.data&&S.me)Object.assign(S.me,fresh.data);
   const on=notificationEnabled()&&pushSupported()&&Notification.permission==='granted';
   dialog(t('settings'),`
     <div class="settings-stack">
@@ -6136,7 +6145,7 @@ function settings(){
       <div class="settings-row">
         <b>${ico('badge',18)} ${t('request')}</b>
         ${S.me?.verified&&(!S.me.verified_until||new Date(S.me.verified_until)>new Date())?'<span class="status">Tasdiqlangan</span><small class="muted">'+(S.me.verified_until?'Amal qilish muddati: '+e(new Date(S.me.verified_until).toLocaleDateString('uz-UZ')):'Muddatsiz')+'</small>':
-          btn('badgeRequest','Ko‘k belgi so‘rovi','','ghost')}
+          badge.data?'<span class="status">Ariza tekshiruvda</span>':btn('badgeRequest','Ko‘k belgi so‘rovi','','ghost')}
       </div>
       <div class="settings-row">
         <b>${ico('download',18)} Ilova sifatida</b>
@@ -6151,7 +6160,8 @@ function settings(){
       <button class="mw-logout" data-act="logout">Chiqish</button>
     </div>`);
 }
-function badgeRequest(){
+async function badgeRequest(){
+  if(!requireUser())return;const uid=S.u.id;const pending=await DB.from('verification_requests').select('id').eq('user_id',uid).eq('status','pending').maybeSingle();check(pending);if(S.u?.id!==uid)return;if(pending.data){toast('Arizangiz tekshiruvda');await settings();return}
   dialog(t('request'),`
     <form id="badgeForm">
       <div class="formgroup">
@@ -6422,7 +6432,7 @@ window.addEventListener('click',async event=>{
       return
     }
     let act=a.dataset.act,id=a.dataset.id;
-    if(act==='close'){if($('#sharePeers')&&shareModData?.id)await openMod(shareModData.id);else close();}
+    if(act==='close'){await mwBackDialog();}
     else if(act==='self')
       S.u?await go('profile',S.u.id):authBox();
     else if(act==='auth')authBox();
@@ -6455,7 +6465,7 @@ window.addEventListener('click',async event=>{
       document.getElementById('push-offer')?.remove();
       if(act==='pushAllow')await enablePhonePush();
     }
-    else if(act==='settings')settings();
+    else if(act==='settings')await settings();
     else if(act==='notificationToggle')toggleNotifications();
     else if(act==='savedFromProfile'||act==='savedFromSettings')await savedModal();
     else if(act==='likedFromProfile')await savedModal(true);
@@ -6571,7 +6581,7 @@ window.addEventListener('click',async event=>{
       S.mw11MobileOpen=true;
       await go('chat')
     }
-    else if(act==='badgeRequest')badgeRequest();
+    else if(act==='badgeRequest')await badgeRequest();
     else if(act==='permit'){
       if(!('Notification'in window))
         throw Error('Brauzeringiz qo‘llamaydi');
@@ -6781,12 +6791,12 @@ window.addEventListener('submit',async ev=>{
     }
     else if(f.id==='badgeForm'){
       if(!requireUser())return;
-      check(await DB.from('verification_requests').insert({
+      const result=await DB.from('verification_requests').insert({
         user_id:S.u.id,
         reason:new FormData(f).get('reason')
-      }));
-      close();
-      toast(t('applied'))
+      });
+      if(result.error?.code==='23505'){toast('Arizangiz allaqachon tekshiruvda');await settings();}
+      else{check(result);toast('Ariza yuborildi');await settings();}
     }
     else if(f.id==='reportForm'){
       if(!requireUser())return;
@@ -6816,7 +6826,7 @@ window.addEventListener('submit',async ev=>{
         Number(f.querySelector('.mw-mod-upload-progress progress')?.value||0),
         'Yuborishda xatolik',err.message||'Internet yoki serverda muammo.');
     }
-    toast(err.code==='23505'?'Bu username band':err.message)
+    toast(err.code==='23505'?(f.id==='authForm'?'Bu username band':'Bu ma’lumot avval saqlangan'):err.message)
   }finally{
     if(f.id==='modForm'&&f.isConnected){
       f.dataset.draftState='draft';
@@ -6903,6 +6913,54 @@ async function mwFriendPresence(peer,thread){
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')mwPingPresence().catch(console.warn)});
 setInterval(()=>{mwPingPresence().catch(console.warn);if(S.page==='chat'&&S.chatId&&S.chatId!=='world'&&!S.chatId.startsWith('g:'))mwFriendPresence(S.chatId,S.chatId).catch(console.warn)},60000);
 
+
+const mwPageStack=[],mwDialogStack=[];
+let mwDialogTitle='',mwBackRestoring=false,mwExitAt=0,mwBackBusy=false,mwGuardReady=false;
+function mwRememberDialog(title){
+ const overlay=$('#overlay');
+ if(!mwBackRestoring&&overlay?.classList.contains('open')&&mwDialogTitle!==title){
+  const body=overlay.querySelector('.dialogbody');
+  if(body){
+   // Store live nodes, not HTML, preserving form values and existing listeners.
+   const nodes=[...body.childNodes];
+   mwDialogStack.push({title:mwDialogTitle,nodes,scroll:body.scrollTop,mod:activeModId});
+   if(mwDialogStack.length>12)mwDialogStack.shift();
+  }
+ }
+ mwDialogTitle=title;
+}
+async function mwBackDialog(){
+ const prev=mwDialogStack.pop();
+ if(!prev){close();return}
+ mwBackRestoring=true;
+ try{
+  modalGeneration++;activeModId=prev.mod;
+  dialog(prev.title,'');
+  const body=$('#overlay .dialogbody');body.replaceChildren(...prev.nodes);body.scrollTop=prev.scroll;
+  if(prev.nodes.some(n=>n.nodeType===1&&n.classList.contains('settings-stack'))){mwBackRestoring=false;await settings();}
+ }finally{mwBackRestoring=false}
+}
+function mwInstallBackGuard(){
+ if(mwGuardReady)return;mwGuardReady=true;
+ history.replaceState({...history.state,mwGuard:'base'},'');
+ history.pushState({mwGuard:'active'},'');
+ window.addEventListener('popstate',async()=>{
+  if(!mwGuardReady)return;
+  if(mwBackBusy){history.pushState({mwGuard:'active'},'');return}
+  if(mwExitAt&&Date.now()-mwExitAt<2000&&!$('#overlay').classList.contains('open')&&!mwPageStack.length&&!S.mw11MobileOpen){
+   mwGuardReady=false;history.back();return;
+  }
+  history.pushState({mwGuard:'active'},'');mwBackBusy=true;
+  try{
+   if($('#overlay').classList.contains('open')){mwExitAt=0;await mwBackDialog();return}
+   if(S.page==='chat'&&S.mw11MobileOpen){mwExitAt=0;S.mw11MobileOpen=false;window.MWV11?.resetMobileThread?.();return}
+   const prev=mwPageStack.pop();
+   if(prev){mwExitAt=0;mwBackRestoring=true;S.chatId=prev.chatId;await go(prev.page,prev.id);return}
+   mwExitAt=Date.now();toast('Chiqish uchun yana bir marta orqaga bosing');
+  }catch(err){console.warn(err)}finally{mwBackRestoring=false;mwBackBusy=false}
+ });
+}
+
 // SAYTNI ISHGA TUSHIRISH
 (async()=>{
   hydrateIcons();
@@ -6915,6 +6973,7 @@ setInterval(()=>{mwPingPresence().catch(console.warn);if(S.page==='chat'&&S.chat
   uiObserver.observe($('#overlay'),{childList:true,subtree:true});
   await Promise.allSettled([go('home'),refreshUser()]);
   mwInitialNavigation=false;
+  mwInstallBackGuard();
   offerPush();
   if(S.u?.id){
     try{
@@ -6923,6 +6982,7 @@ setInterval(()=>{mwPingPresence().catch(console.warn);if(S.page==='chat'&&S.chat
       else if(last?.page==='profile'&&last.id)await go('profile',last.id);
     }catch(error){console.warn('Last open page restore:',error)}
   }
+  mwPageStack.length=0;
   mwPingPresence().catch(console.warn);
   scheduleFastPrefetch();
   const deepId=new URLSearchParams(location.search).get('mod');
