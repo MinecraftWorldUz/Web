@@ -1,4 +1,4 @@
-const CACHE='mw-public-shell-winter-v21';
+const CACHE='mw-public-shell-winter-v23';
 const SCOPE=self.registration.scope;
 const PUBLIC_ASSETS=['./assets/winter-logo-192.png?v=21','./favicon.ico?v=21','./manifest.webmanifest','./winter.css?v=20.2','./assets/winter-mountains.webp']
   .map(path=>new URL(path,SCOPE).href);
@@ -72,6 +72,7 @@ self.addEventListener('push',event=>{
     link.searchParams.set('notice',n.kind);
     link.searchParams.set('recipient',n.user);
     if(n.actor)link.searchParams.set('actor',n.actor);
+    if(n.target)link.searchParams.set('target',n.target);
     await self.registration.showNotification(n.title,{
       body:n.body,icon:new URL('assets/winter-logo-192.png?v=21',SCOPE).href,
       tag:'mw-'+n.id,data:{link:link.href}
