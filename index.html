@@ -3460,7 +3460,8 @@ async function go(page='home',id=null){
     toast(err.message);
   }
 }
-const FEED_CACHE_KEY='mw_public_feed_v4';
+const FEED_CACHE_KEY='mw_public_feed_v5';
+let mwSearchRows=null,mwSearchKey='',mwSearchSeq=0,mwSearchLoading=false;
 const FEED_TTL=5*60*1000;
 let searchTimer=null, homeRequest=0;
 let feedLoadedAt=0,feedLoadedOrder='',feedLoaded=false;
@@ -3557,6 +3558,7 @@ async function loadSavedIds(){
 async function home(){
   const request=++homeRequest;
   homeShell();
+  if(S.query.trim())mwRefreshSearch();
   // Switching tabs should not trigger a full network refresh every time.
   const hasMemory=feedLoaded&&feedLoadedOrder===S.sort;
   let cached=null;
@@ -3641,16 +3643,37 @@ async function fetchMoreFeed(){
     saveFeedCache();
   }finally{S.loadingMore=false}
 }
+function mwSearchMatch(m,q){
+ const hay=[m.title,m.title_uz,m.title_ru,m.title_en,m.description,m.description_uz,m.description_ru,m.description_en,m.game_version,m.category,categoryName(m.category)].filter(Boolean).join(' ').toLocaleLowerCase();
+ return q.split(/\s+/).filter(Boolean).every(term=>/^\d+(\.\d+)+$/.test(term)?new RegExp('(^|[^0-9])'+term.replace(/\./g,'[.]')+'([^0-9]|$)').test(hay):hay.includes(term));
+}
+function mwFilteredRows(){
+ const q=S.query.toLocaleLowerCase().trim();
+ const rows=q&&mwSearchKey===q&&mwSearchRows!==null?mwSearchRows:S.feed;
+ return rows.filter(m=>(S.category==='all'||m.category===S.category)&&(!S.gameVersion||S.gameVersion==='all'||m.game_version===S.gameVersion)&&(S.homeView!=='saved'||S.savedIds?.has(m.id))&&(!q||mwSearchMatch(m,q)));
+}
+async function mwRefreshSearch(){
+ const q=S.query.toLocaleLowerCase().trim(),seq=++mwSearchSeq;
+ mwSearchRows=null;mwSearchKey=q;mwSearchLoading=!!q;
+ if(!q){filterMods();return;}
+ if(S.page==='home'&&$('#resultsCount'))$('#resultsCount').textContent='Qidirilmoqda...';
+ try{
+  const result=await DB.rpc('mw_search_mods',{p_query:q}).order('created_at',{ascending:false}).limit(1000);
+  check(result);if(seq!==mwSearchSeq||S.page!=='home'||S.query.toLocaleLowerCase().trim()!==q)return;
+  mwSearchRows=result.data||[];
+  mwSearchRows.forEach(cacheMod);
+  const people=await users(mwSearchRows.map(m=>m.author_id)).catch(()=>({}));
+  if(seq!==mwSearchSeq)return;
+  Object.assign(S.cache,people);
+ }catch(err){if(seq===mwSearchSeq)toast('Qidiruvni yangilab bo‘lmadi');}
+ finally{if(seq===mwSearchSeq){mwSearchLoading=false;if(S.page==='home')filterMods();}}
+}
 function filterMods(){
   if(!$('#modGrid'))return;
   const q=S.query.toLocaleLowerCase().trim();
   const view=S.homeView||'all';
-  let result=S.feed.filter(m=>
-    (S.category==='all'||m.category===S.category)&&
-    (!S.gameVersion||S.gameVersion==='all'||m.game_version===S.gameVersion)&&
-    (view!=='saved'||S.savedIds?.has(m.id))&&
-    (!q||`${localModTitle(m)} ${localModDesc(m)} ${m.category}`.toLocaleLowerCase().includes(q))
-  );
+  if(q&&mwSearchLoading){$('#resultsCount').textContent='Qidirilmoqda...';$('#modGrid').innerHTML='';$('#moreModsWrap').hidden=true;return;}
+  let result=mwFilteredRows();
   if(S.sort==='best')result.sort((a,b)=>(b.likes_count||0)-(a.likes_count||0));
   else if(S.sort==='popular')result.sort((a,b)=>(b.views_count||0)-(a.views_count||0));
   else result.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
@@ -3662,7 +3685,7 @@ function filterMods(){
     <b>${view==='saved'?'Hozircha saqlangan mod yo‘q':'Hech narsa topilmadi'}</b>
     <span>${view==='saved'?'Mod sahifasida Saqlash tugmasini bosing.':'Boshqa so‘z yoki kategoriya bilan qidiring.'}</span></div>`;
   const more=$('#moreModsWrap');
-  const canFetchMore=S.homeView!=='saved'&&S.hasMore;
+  const canFetchMore=!q&&S.homeView!=='saved'&&S.hasMore;
   more.hidden=result.length<=shown.length&&!canFetchMore;
   const label=result.length>shown.length?
     'Yana modlar ('+(result.length-shown.length)+')':
@@ -4949,6 +4972,11 @@ async function saveMod(f){
   toast(adminDirect?'Mod saqlandi va e’lon qilindi!':'Mod adminga tekshirish uchun yuborildi!');
   close();
   invalidateProfileData();feedLoadedAt=0;feedLoaded=false;
+  mwSearchSeq++;mwSearchRows=null;mwSearchKey='';mwSearchLoading=false;
+  try{localStorage.removeItem(FEED_CACHE_KEY);localStorage.removeItem('mw_public_feed_v4');}catch{}
+  if(id){modCache.delete(id);S.feed=S.feed.filter(row=>row.id!==id);}
+  if(id&&adminDirect){const fresh=check(await DB.from('mods').select('*').eq('id',id).single());cacheMod(fresh);S.feed.unshift(fresh);}
+  if(S.page==='home'){if(S.query.trim())await mwRefreshSearch();else await home();}
   if(adminEdit){await openMod(id);}
   else await go('profile',S.u.id)
 }
@@ -5016,7 +5044,7 @@ function modSkeleton(id){
 }
 async function getMod(id){
   const cached=getCachedMod(id);
-  if(cached?.title&&cached?.description&&cached?.status&&cached?.file_path)return cached;
+  // Refresh current metadata from the database rather than trusting an old title.
   if(modOpenPending.has(id))return modOpenPending.get(id);
   const load=(async()=>{
     const result=await DB.from('mods')
@@ -5161,7 +5189,7 @@ async function openMod(id){
     return;
   }
   if(generation!==modalGeneration||activeModId!==id||!$('#overlay').classList.contains('open'))return;
-  if(!cached||!cached.description||m.file_path==='2ea37f4b-aa38-4328-a07f-ea1b31879996/site-mods/mw-explorer-recipes.mcaddon')renderMod(m);
+  if(!cached||!cached.description||['title','title_uz','title_ru','title_en','description','description_uz','description_ru','description_en','game_version','category','cover_path','status'].some(k=>cached[k]!==m[k]))renderMod(m);
   const author=$('#modAuthor');
   if(author&&!author.hasChildNodes()){
     users([m.author_id]).then(mp=>{
@@ -6595,12 +6623,8 @@ window.addEventListener('click',async event=>{
       filterMods();
     }
     else if(act==='moreMods'){
-      const total=S.feed.filter(m=>
-        (S.category==='all'||m.category===S.category)&&
-        (!S.gameVersion||S.gameVersion==='all'||m.game_version===S.gameVersion)&&
-        (!S.query||`${m.title} ${m.description}`.toLowerCase().includes(S.query.toLowerCase()))
-      ).length;
-      if(S.visibleMods>=total&&S.hasMore)await fetchMoreFeed();
+      const total=mwFilteredRows().length;
+      if(!S.query.trim()&&S.visibleMods>=total&&S.hasMore)await fetchMoreFeed();
       else{S.visibleMods+=12;filterMods()}
     }
     else if(act==='follow')await toggleFollow(id);
@@ -6734,8 +6758,8 @@ window.addEventListener('input',ev=>{
     S.visibleMods=12;
     clearTimeout(searchTimer);
     searchTimer=setTimeout(()=>{
-      if(S.page==='home')filterMods()
-    },130);
+      if(S.page==='home')mwRefreshSearch()
+    },180);
   }else if(ev.target.id==='accountSearch'){
     filterAccounts()
   }else if(ev.target.id==='newChatSearch'){
