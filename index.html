@@ -2417,6 +2417,8 @@ body:before,.hero:after{display:none!important}
   #profileMods+.mw-profile-mods>.card .mw-mod-owner-actions>.btn{font-size:9px!important}
 }
 
+
+.mw-user-handle{display:block;font-size:11px;color:var(--muted);font-weight:400}.mw-social-card{align-items:center;gap:8px;padding:10px}.mw-social-avatar,.mw-social-detail,.mw-settings-account,.mw-logout{font:inherit;color:inherit;cursor:pointer}.mw-social-avatar{border:0;background:none;padding:0;flex:none}.mw-social-copy{flex:1;min-width:0}.mw-social-copy .linkbtn{text-align:left;white-space:normal}.mw-social-detail{border:0;background:none;text-align:left;padding:0;display:block;font-size:13px}.mw-follow-back{background:#24764f;color:#fff;border:1px solid #429d70;border-radius:9px;padding:8px;font-size:11px;font-weight:700;max-width:110px;flex:none;cursor:pointer}.mw-follow-back.following{background:#24384b;border-color:#48647b;color:#d4e6f4}.mw-settings-account{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:1px solid #385772;background:#12263b;border-radius:14px;text-align:left}.mw-settings-account>span:nth-child(2){flex:1;min-width:0}.mw-settings-account small{display:block;color:var(--muted)}.mw-logout{border:1px solid #9b4452;color:#ff8999;background:transparent;border-radius:12px;padding:12px;width:100%;font-weight:700}.mw-comment-highlight{outline:2px solid #8dd4ff}.account-avatar .av{width:100%;height:100%}
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -2496,8 +2498,8 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
       <button class="iconbtn" data-act="notifications">
         <span data-icon="bell" data-size="21"></span><span id="alertCount" class="dot" hidden></span>
       </button>
-      <button class="iconbtn" data-act="settings" aria-label="Sozlamalar"><span data-icon="settings" data-size="21"></span></button>
-      <button class="iconbtn account-trigger" data-act="accounts" id="accountTop" aria-label="Profil va akkauntlar" title="Profil va akkauntlar"><svg class="mw-account-icon" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
+      <button class="iconbtn" data-act="socialActivity" aria-label="Faollik"><span data-icon="heart" data-size="21"></span><span id="socialCount" class="dot" hidden></span></button>
+      <button class="iconbtn account-trigger" data-act="settings" id="accountTop" aria-label="Sozlamalar" title="Sozlamalar"><svg class="mw-account-icon" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
     </div>
   </header>
   <main id="app"></main>
@@ -3150,7 +3152,7 @@ function optionList(arr,sel){
 }
 function miniUser(p){
   return `<button class="linkbtn" data-act="user"
-    data-id="${e(p?.id)}">${label(p)}</button>`
+    data-id="${e(p?.id)}">${e(p?.display_name||nick(p))}${tick(p)}<small class="mw-user-handle">@${e(nick(p))}</small></button>`
 }
 function localModTitle(m){
   return m['title_'+S.lang]||m.title||'';
@@ -3570,7 +3572,7 @@ async function profile(id,nav=navigationSeq){
   $('#app').innerHTML=`
     <section class="banner mw-instagram-profile">
       <div class="mw-profile-heading">
-        <strong>@${e(p.username)}</strong>
+        <strong>${e(p.display_name||p.username)}</strong>
         ${p.is_admin?'<span class="status">ADMIN</span>':''}
         ${tick(p)}
       </div>
@@ -3583,7 +3585,7 @@ async function profile(id,nav=navigationSeq){
         </div>
       </div>
       <div class="mw-profile-details">
-        <strong class="mw-profile-display-name">${e(p.display_name||p.username)}</strong>
+        <small class="muted mw-profile-display-name">@${e(p.username)}</small>
         <small class="muted">ID #${e(p.public_id)}</small>
         ${banned(p)?'<p class="wrap">Akkaunt cheklangan</p>':p.bio?'<p class="wrap profile-bio">'+e(p.bio)+'</p>':''}
       </div>
@@ -3680,30 +3682,31 @@ function rememberAccount(session,username=''){
 function forgetAccount(id){
   writeAccounts(savedAccounts().filter(a=>a.id!==id));
 }
-function accountMenu(){
+async function accountMenu(){
   const items=savedAccounts(),active=S.u?.id;
   const currentSaved=active&&items.some(a=>a.id===active);
   if(active&&!currentSaved&&S.me){
     items.push({id:active,username:S.me.username||'user',
       access_token:'',refresh_token:'',notSaved:true});
   }
+  const people=await users(items.map(a=>a.id)).catch(()=>({}));
+  if(active!==S.u?.id)return;
   const rows=items.map(a=>{
+    const person=people[a.id]||{username:a.username};
     const name=e(a.username);
     const row='<button class="account-switch" type="button" data-act="accountSwitch" data-id="'+e(a.id)+'">'+
-      '<span class="account-avatar">'+ico('user',22)+'</span>'+
-      '<span class="account-label"><b>@'+name+'</b><small>'+
+      '<span class="account-avatar">'+avatar(person)+'</span>'+
+      '<span class="account-label"><b>'+e(person.display_name||a.username)+'</b><small>@'+name+' · '+
       (a.notSaved?'Saqlanmagan — qayta kirish kerak':
         a.id===active?'Hozirgi akkaunt':'Bosib almashtiring')+
       '</small></span>'+(a.id===active?ico('check',20):ico('arrow',18))+'</button>';
-    const remove=a.id!==active?
-      '<button class="account-remove" data-act="accountRemove" data-id="'+e(a.id)+
-      '" title="Bu brauzerdan olib tashlash" aria-label="'+name+' akkauntini olib tashlash">'+ico('x',18)+'</button>':'';
+    const remove="";
     return '<div class="account-entry '+(a.id===active?'active':'')+'">'+row+remove+'</div>';
   }).join('');
   const add=items.length<ACCOUNT_MAX?
     '<button class="btn" data-act="accountAdd">'+ico('plus',20)+' Akkaunt qo‘shish</button>':
     '<p class="account-full">'+ico('shield',19)+
-    ' 5 ta akkaunt limiti tugadi. Yangi qo‘shish uchun bittasini ro‘yxatdan olib tashlang.</p>';
+    ' 5 ta akkaunt limiti tugadi. Yangi qo‘shish uchun bir akkauntga o‘tib, sozlamalardan chiqing.</p>';
   const profile=active?
     '<button class="btn ghost" data-act="accountProfile">'+ico('user',18)+' Profilim</button>':'';
   dialog('Akkauntlar',
@@ -5004,7 +5007,7 @@ async function comments(id){
     if(l.user_id===S.u?.id)own.add(l.comment_id);
   }
   $('#commentList').innerHTML=rows.length?rows.map(c=>
-    `<article class="item comment-card">
+    `<article class="item comment-card" data-comment-id="${e(c.id)}">
       <div class="row">${avatar(names[c.author_id])}
         ${miniUser(names[c.author_id])}
         <small class="muted">${when(c.created_at)}</small>
@@ -5021,6 +5024,7 @@ async function comments(id){
           btn('removeComment','O‘chirish',c.id,'danger'):''}
       </div>
     </article>`).join(''):blank();
+  if(socialCommentTarget){const target=[...document.querySelectorAll('[data-comment-id]')].find(x=>x.dataset.commentId===socialCommentTarget);if(target){target.scrollIntoView({block:'center'});target.classList.add('mw-comment-highlight')}socialCommentTarget=null}
 }
 async function toggleCommentLike(id){
   if(!requireUser()||commentBusy.has(id))return;
@@ -5695,20 +5699,14 @@ async function pendingOwnerJoinCount(uid){
   if(result.error)throw result.error;
   return result.count||0;
 }
+const REQUEST_KINDS=['review','badge','mod'];
+const SOCIAL_KINDS=['follow','like','comment'];
 async function notificationCount(){
-  if(!S.u){$('#alertCount').hidden=true;return}
-  const uid=S.u.id;
-  const [base,invites,owners]=await Promise.all([
-    DB.from('notifications').select('id',{count:'exact',head:true})
-      .eq('user_id',uid).neq('kind','message').eq('is_read',false),
-    DB.from('mw_group_invitations').select('id',{count:'exact',head:true})
-      .eq('recipient_id',uid).eq('status','pending'),
-    pendingOwnerJoinCount(uid)
-  ]);
+  const uid=S.u?.id;
+  if(!uid){$('#alertCount').hidden=true;$('#socialCount').hidden=true;return}
+  const counts=await Promise.all([REQUEST_KINDS,SOCIAL_KINDS].map(k=>DB.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',uid).in('kind',k).eq('is_read',false)));
   if(S.u?.id!==uid)return;
-  const count=(base.count||0)+(invites.count||0)+owners;
-  $('#alertCount').hidden=!count;
-  $('#alertCount').textContent=count>99?'99+':String(count);
+  ['alertCount','socialCount'].forEach((id,i)=>{const n=counts[i].count||0;$('#'+id).hidden=!n;$('#'+id).textContent=n>99?'99+':String(n)});
 }
 async function onIncomingDirect(msg){
   if(!S.u||msg.sender_id===S.u.id)return;
@@ -5776,9 +5774,9 @@ function listen(){
   S.channel=DB.channel('world-'+S.u.id)
     .on('postgres_changes',{event:'INSERT',schema:'public',
       table:'notifications',filter:`user_id=eq.${S.u.id}`},p=>{
-      if(p.new.kind==='message')return;
+      if(!REQUEST_KINDS.includes(p.new.kind)&&!SOCIAL_KINDS.includes(p.new.kind))return;
       notificationCount().catch(console.warn);
-      if(notificationEnabled()&&document.visibilityState==='visible'){
+      if(REQUEST_KINDS.includes(p.new.kind)&&notificationEnabled()&&document.visibilityState==='visible'){
         showActivityToast(p.new).catch(console.warn);
       }
     })
@@ -5855,23 +5853,47 @@ async function showActivityToast(n){
 async function notifications(){
   if(!requireUser())return;
   const uid=S.u.id;
-  const [r,invites,owners]=await Promise.all([
-    DB.from('notifications').select('*').eq('user_id',uid).neq('kind','message')
-      .order('created_at',{ascending:false}).limit(35),
-    DB.from('mw_group_invitations').select('id',{count:'exact',head:true})
-      .eq('recipient_id',uid).eq('status','pending'),
-    pendingOwnerJoinCount(uid)
-  ]);
+  const r=await DB.from('notifications').select('*').eq('user_id',uid).in('kind',REQUEST_KINDS).order('created_at',{ascending:false}).limit(50);
   check(r);if(S.u?.id!==uid)return;
-  const people=await users(r.data.filter(n=>n.kind==='follow').map(n=>n.actor_id)).catch(()=>({}));
-  if(S.u?.id!==uid)return;
-  const pending=(invites.count||0)+owners;
-  dialog(t('notifications'),`
-    ${pending?'<button class="btn" data-mw="invites">'+ico('users',17)+' Guruh taklif va so‘rovlari ('+pending+')</button>':''}
-    ${btn('markRead',t('mark'))}
-    <div class="divider"></div>
-    <div class="activity-list">${r.data.map(n=>activityCard(n,people)).join('')||(!pending?blank():'')}</div>
-  `);
+  dialog(t('notifications'),`${btn('markRead',t('mark'))}<div class="activity-list">${r.data.map(n=>activityCard(n,{})).join('')||blank()}</div>`);
+}
+async function socialActivity(){
+  if(!requireUser())return;
+  const uid=S.u.id;
+  const r=await DB.from('notifications').select('*').eq('user_id',uid).in('kind',SOCIAL_KINDS).order('created_at',{ascending:false}).limit(60);
+  check(r);
+  const ids=[...new Set(r.data.map(n=>n.actor_id).filter(Boolean))];
+  const [people,follows]=await Promise.all([users(ids),ids.length?DB.from('follows').select('following_id').eq('follower_id',uid).in('following_id',ids):Promise.resolve({data:[]})]);
+  check(follows);if(S.u?.id!==uid)return;
+  const own=new Set(follows.data.map(x=>x.following_id));
+  dialog('Faollik',`<div class="activity-list">${r.data.map(n=>{
+    const p=people[n.actor_id],follow=n.kind==='follow';
+    if(!p)return '';
+    const action=follow?'user':n.kind==='comment'?'socialComment':'mod';
+    const target=follow?p.id:n.target_id;
+    const detail=follow?'Sizga obuna bo‘ldi':n.kind==='like'?'Modingizga layk bosdi':'Modingizga izoh yozdi';
+    return `<article class="activity-card mw-social-card ${n.is_read?'':'unread'}" data-notice-id="${e(n.id)}">
+      <button class="mw-social-avatar" data-act="user" data-id="${e(p.id)}">${avatar(p)}</button>
+      <div class="mw-social-copy"><button class="linkbtn" data-act="user" data-id="${e(p.id)}"><strong>${e(p.display_name||p.username)}${tick(p)}</strong><small>@${e(p.username)}</small></button>
+      <button class="mw-social-detail" data-act="${action}" data-id="${e(target||p.id)}">${e(detail)}${n.body&&!follow?'<small>'+e(n.body)+'</small>':''}</button><small>${when(n.created_at)}</small></div>
+      ${follow?'<button class="mw-follow-back '+(own.has(p.id)?'following':'')+'" data-act="socialFollow" data-id="'+e(p.id)+'" aria-pressed="'+own.has(p.id)+'">'+(own.has(p.id)?'Obunani olish':'Obunani qaytarish')+'</button>':''}</article>`;
+  }).join('')||blank()}</div>`);
+}
+async function socialFollow(id,button){
+  if(!requireUser()||button.disabled)return;
+  const uid=S.u.id;button.disabled=true;
+  try{
+    const r=await DB.from('follows').select('following_id').eq('follower_id',uid).eq('following_id',id).maybeSingle();check(r);
+    check(r.data?await DB.from('follows').delete().eq('follower_id',uid).eq('following_id',id):await DB.from('follows').insert({follower_id:uid,following_id:id}));
+    invalidateProfileData();
+    document.querySelectorAll('[data-act="socialFollow"]').forEach(b=>{if(b.dataset.id===id){b.classList.toggle('following',!r.data);b.setAttribute('aria-pressed',String(!r.data));b.textContent=r.data?'Obunani qaytarish':'Obunani olish'}});
+  }finally{button.disabled=false}
+}
+let socialCommentTarget=null;
+async function socialComment(id){
+  const r=await DB.from('comments').select('mod_id').eq('id',id).maybeSingle();check(r);
+  if(!r.data){toast('Izoh o‘chirilgan');return}
+  socialCommentTarget=id;await openMod(r.data.mod_id);
 }
 function notificationEnabled(){
   return localStorage.getItem('mw_notifs_ui')!=='off';
@@ -5987,6 +6009,7 @@ function settings(){
   const on=notificationEnabled()&&pushSupported()&&Notification.permission==='granted';
   dialog(t('settings'),`
     <div class="settings-stack">
+      <button class="mw-settings-account" data-act="accounts">${avatar(S.me)}<span><strong>${e(S.me?.display_name||S.me?.username||"Profil")}</strong><small>@${e(S.me?.username||"")}</small></span><span>${ico("arrow",18)}</span></button>
       <h3>Ko‘rinish</h3>
       ${winterSetting()}
       <h3>Akkaunt</h3>
@@ -6016,14 +6039,13 @@ function settings(){
         <b>${ico('download',18)} Ilova sifatida</b>
         ${btn('installApp','O‘rnatish','','ghost')}
       </div>
-      <div class="settings-row">
-        ${btn('logout','Chiqish','','danger')}
-      </div>
+
       ${S.me?.is_admin&&S.me.username==='admin'?
         `<div class="settings-row settings-admin">
            <b>${ico('shield',21)} Admin boshqaruvi</b>
            ${btn('admin','Admin panelini ochish')}
          </div>`:''}
+      <button class="mw-logout" data-act="logout">Chiqish</button>
     </div>`);
 }
 function badgeRequest(){
@@ -6300,10 +6322,7 @@ window.addEventListener('click',async event=>{
       authBox(false,true);
     }
     else if(act==='accountSwitch')await switchAccount(id);
-    else if(act==='accountRemove'){
-      forgetAccount(id);
-      accountMenu();
-    }
+
     else if(act==='accountProfile'){
       close();
       if(S.u)await go('profile',S.u.id);
@@ -6324,6 +6343,9 @@ window.addEventListener('click',async event=>{
     else if(act==='savedFromProfile'||act==='savedFromSettings')await savedModal();
     else if(act==='likedFromProfile')await savedModal(true);
     else if(act==='notifications')await notifications();
+    else if(act==='socialActivity')await socialActivity();
+    else if(act==='socialFollow')await socialFollow(id,a);
+    else if(act==='socialComment')await socialComment(id);
     else if(act==='sort'){
       S.sort=a.dataset.sort;
       S.visibleMods=12;
@@ -6440,7 +6462,7 @@ window.addEventListener('click',async event=>{
     }
     else if(act==='markRead'){
       check(await DB.from('notifications')
-        .update({is_read:true}).eq('user_id',S.u.id));
+        .update({is_read:true}).eq('user_id',S.u.id).in('kind',REQUEST_KINDS));
       await notificationCount();
       await notifications()
     }
@@ -6454,7 +6476,9 @@ window.addEventListener('click',async event=>{
     else if(act==='adminAction')
       await adminAction(a.dataset.cmd,id);
     else if(act==='logout'){
-      if(!confirm('Akkauntdan chiqmoqchimisiz?'))return;
+      dialog('Akkauntdan chiqish',`<p>Ushbu akkauntdan chiqmoqchimisiz?</p><div class="buttons">${btn('settings','Bekor qilish','','ghost')}${btn('logoutConfirm','Chiqish','','danger')}</div>`);
+    }
+    else if(act==='logoutConfirm'){
       const leaving=S.u?.id;
       check(await DB.auth.signOut({scope:'local'}));
       if(leaving)forgetAccount(leaving);
