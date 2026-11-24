@@ -6433,7 +6433,7 @@ window.addEventListener('click',async event=>{
       return
     }
     let act=a.dataset.act,id=a.dataset.id;
-    if(act==='close'){await mwBackDialog();}
+    if(act==='close'){await mwRequestDialogBack();}
     else if(act==='self')
       S.u?await go('profile',S.u.id):authBox();
     else if(act==='auth')authBox();
@@ -6841,10 +6841,10 @@ window.addEventListener('submit',async ev=>{
 });
 
 $('#overlay').addEventListener('click',ev=>{
-  if(ev.target.id==='overlay')mwBackDialog().catch(console.warn)
+  if(ev.target.id==='overlay')mwRequestDialogBack().catch(console.warn)
 });
 window.addEventListener('keydown',ev=>{
-  if(ev.key==='Escape'&&$('#overlay').classList.contains('open')){ev.preventDefault();mwBackDialog().catch(console.warn)}
+  if(ev.key==='Escape'&&$('#overlay').classList.contains('open')){ev.preventDefault();mwRequestDialogBack().catch(console.warn)}
 });
 
 function createSnow(){
@@ -6941,41 +6941,46 @@ async function mwBackDialog(){
   mountMarquees();
  }finally{mwBackRestoring=false}
 }
-let mwRouteSession=Date.now().toString(36),mwHistoryReady=false,mwLastRoute='',mwRouteSerial=0;
+let mwRouteSession=Date.now().toString(36),mwHistoryReady=false,mwLastRoute='',mwLastDepth=0;
 function mwRouteKey(){
  const open=$('#overlay')?.classList.contains('open');
  return [S.page,S.profileId||'',S.page==='chat'&&S.mw11MobileOpen?S.chatId||'thread':'',open?mwDialogTitle:'',open?mwDialogStack.length:0].join('|');
 }
 function mwRouteDepth(){
- return (S.page==='home'?0:1)+($('#overlay').classList.contains('open')?1+mwDialogStack.length:0)+(S.page==='chat'&&S.mw11MobileOpen?1:0);
+ return (S.page==='home'?0:Math.max(1,mwPageStack.length))+($('#overlay').classList.contains('open')?1+mwDialogStack.length:0)+(S.page==='chat'&&S.mw11MobileOpen?1:0);
 }
 function mwSyncRoute(){
  if(!mwHistoryReady||mwBackRestoring||mwBackBusy)return;
- const key=mwRouteKey();if(key===mwLastRoute)return;
- mwLastRoute=key;
+ const key=mwRouteKey(),depth=mwRouteDepth();
+ if(key===mwLastRoute)return;
+ const previousDepth=mwLastDepth;
+ mwLastRoute=key;mwLastDepth=depth;
  try{
-  const depth=mwRouteDepth();
-  if(depth===0){mwPageStack.length=0;history.replaceState({mwRouteSession,depth:0},'');return}
-  history.pushState({mwRouteSession,depth,serial:++mwRouteSerial},'');
+  const index=history.state?.mwRouteSession===mwRouteSession?Number(history.state.index)||0:0;
+  if(depth>previousDepth){
+   history.pushState({mwRouteSession,index:index+1,depth,key},'');
+  }else{
+   history.replaceState({mwRouteSession,index,depth,key},'');
+  }
  }catch(err){console.warn(err)}
+}
+async function mwRequestDialogBack(){
+ if(mwBackBusy||!$('#overlay').classList.contains('open'))return;
+ // Use the same existing browser entry for X and Android Back.
+ if(mwHistoryReady&&history.state?.mwRouteSession===mwRouteSession&&history.state.index>0){
+  history.back();return;
+ }
+ await mwBackDialog();mwSyncRoute();
 }
 function mwInstallBackGuard(){
  if(mwGuardReady)return;mwGuardReady=true;
- mwHistoryReady=true;mwLastRoute=mwRouteKey();
- history.replaceState({mwRouteSession,depth:mwRouteDepth()},'');
- // A real click renews the current history entry before asynchronous navigation.
- window.addEventListener('click',ev=>{
-  if(!ev.isTrusted||mwBackBusy)return;
-  if(mwRouteDepth()>0&&history.state?.mwRouteSession!==mwRouteSession){
-   history.pushState({mwRouteSession,depth:mwRouteDepth()},'');
-  }
- },true);
+ mwHistoryReady=true;mwLastRoute=mwRouteKey();mwLastDepth=mwRouteDepth();
+ history.replaceState({mwRouteSession,index:0,depth:mwLastDepth,key:mwLastRoute},'');
  new MutationObserver(()=>mwSyncRoute()).observe($('#app'),{attributes:true,attributeFilter:['class'],childList:true});
- window.addEventListener('popstate',async()=>{
+ window.addEventListener('popstate',async event=>{
   if(mwBackBusy)return;
   if(mwRouteDepth()===0){
-   // No double-back prompt on the home screen.
-   if(history.state?.mwRouteSession===mwRouteSession)history.back();
+   if(event.state?.mwRouteSession===mwRouteSession)history.go(-(Number(event.state.index||0)+1));
    return;
   }
   mwBackBusy=true;mwBackRestoring=true;
@@ -6989,9 +6994,10 @@ function mwInstallBackGuard(){
    }
   }catch(err){console.warn(err)}
   finally{
-   mwBackRestoring=false;mwBackBusy=false;mwLastRoute=mwRouteKey();
-   if(mwRouteDepth()>0&&history.state?.mwRouteSession!==mwRouteSession)history.pushState({mwRouteSession,depth:mwRouteDepth()},'');
-   else history.replaceState({mwRouteSession,depth:mwRouteDepth()},'');
+   mwBackRestoring=false;mwBackBusy=false;
+   mwLastRoute=mwRouteKey();mwLastDepth=mwRouteDepth();
+   // Never push or recreate a history entry after Back. Chromium can
+   // otherwise mark the whole document skippable on the next Back gesture.
   }
  });
 }
