@@ -2423,6 +2423,8 @@ body:before,.hero:after{display:none!important}
 .mw-notice-toolbar{margin-bottom:16px}.mw-request-card{cursor:pointer}.mw-notice-person{display:block;margin-top:4px}.mw-user-handle,.mw-social-copy .linkbtn small,.mw-profile-display-name{font-size:10px!important;line-height:1.2!important;margin:1px 0!important;opacity:.85}.mod-secondary-actions{margin-inline-start:0!important;justify-content:flex-start;width:100%}.mw-mod-id{font-size:11px;color:var(--muted);border:1px solid #385772;border-radius:7px;padding:3px 7px;justify-self:start}.mw-share-id{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;padding:10px;border:1px solid #385772;border-radius:12px}.mw-share-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0;max-height:45vh;overflow:auto}.mw-share-peer,.mw-share-tools button{border:0;background:none;color:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:6px;font:inherit;cursor:pointer}.mw-share-peer[hidden]{display:none}.mw-share-peer b,.mw-share-peer small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}.mw-share-peer small{color:var(--muted);font-size:10px}.mw-share-peer.selected{background:#244c66;border-radius:12px;outline:1px solid #a8defe}.mw-share-send{width:100%}.mw-share-tools{display:flex;justify-content:space-around;border-top:1px solid #385772;margin-top:16px;padding-top:12px}.mw-share-tools button span{display:grid;place-items:center;border-radius:50%;width:44px;height:44px;background:#233f58}.mw-share-tools button.selected span{background:#3a7999}.mw-share-tools button{font-size:11px}.mw-badge-duration{display:grid;gap:10px}.mw-badge-duration .field{width:100%}
 
 .mod-secondary-actions{margin-inline-start:auto!important;justify-content:flex-end!important;width:auto!important;align-items:flex-start!important;gap:6px!important}.mod-secondary-actions .mod-icon-action{display:flex!important;align-items:center!important;justify-content:flex-start!important;flex-direction:column!important;position:relative!important;width:44px!important;height:48px!important;padding:4px 0 20px!important;box-sizing:border-box!important}.mod-secondary-actions .mod-icon-action svg{width:24px!important;height:24px!important;flex:none!important}.mod-secondary-actions .mw-share-count{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:12px;color:var(--muted);line-height:1}.mw-share-id b{overflow-wrap:anywhere}
+
+.mod-author{flex:1;min-width:0;flex-wrap:nowrap}.mod-author .linkbtn{min-width:0;overflow-wrap:anywhere;text-align:left}.mw-mod-follow{margin-left:auto;flex:none;white-space:nowrap}.mw-share-grid{gap:22px 8px;padding:8px 0}.mw-share-peer{background:transparent!important;outline:0!important;gap:8px!important}.mw-share-avatar{position:relative;display:block}.mw-share-avatar .av.large{width:clamp(54px,17vw,82px);height:clamp(54px,17vw,82px);min-width:0;font-size:28px}.mw-share-check{display:none;position:absolute;bottom:0;right:0;border:2px solid #12263b;border-radius:50%;background:#8bd4ff;color:#102338;width:23px;height:23px;place-items:center}.mw-share-peer.selected .mw-share-check{display:grid}.mw-share-peer b{font-size:12px;font-weight:500}.mw-share-compose{display:grid;gap:10px;border-top:1px solid #385772;padding-top:12px}.mw-share-compose textarea{width:100%;resize:vertical}.mw-share-send:disabled{opacity:.45}.mw-chat-mod-card{display:block;width:min(240px,62vw);max-width:100%;border:1px solid #56748c;border-radius:12px;overflow:hidden;background:#142c42;color:#edf7ff;text-align:left;padding:0;font:inherit;cursor:pointer}.mw-chat-mod-card img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover}.mw-chat-mod-copy{display:grid;gap:5px;padding:10px}.mw-chat-mod-copy strong{font-size:14px;line-height:1.3}.mw-chat-mod-desc{font-size:12px;line-height:1.4;color:#c2d8e9;overflow-wrap:anywhere}.mw-chat-mod-more{border:0;background:none;color:#bce9ff;padding:5px 0;font-size:12px;text-align:left;cursor:pointer}.mw-chat-share-note{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0}.mw11-bubble:has(.mw-chat-mod-card) .mw11-reaction-list{display:none}
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -4859,12 +4861,12 @@ async function getMod(id){
 let shareModData=null;
 async function modShare(id){
  const m=await getMod(id);shareModData=m;
- dialog('Ulashish',`<div class="mw-share-id"><b>${e(localModTitle(m))}</b></div><input id="shareSearch" class="field" placeholder="Chatlarni qidiring..."><div id="sharePeers" class="mw-share-grid"><p class="muted">Yuklanmoqda...</p></div><button class="btn mw-share-send" data-act="shareSend">Yuborish</button><div class="mw-share-tools"><button data-act="shareSave" data-id="${e(id)}" class="${S.savedIds?.has(id)?'selected':''}"><span>${ico('bookmark',23)}</span>Saqlash</button><button data-act="reportMod" data-id="${e(id)}"><span>${ico('flag',23)}</span>Shikoyat</button><button data-act="shareBack" data-id="${e(id)}"><span>${ico('arrow',23)}</span>Modga qaytish</button></div>`);
+ dialog('Ulashish',`<div class="mw-share-id"><b>${e(localModTitle(m))}</b></div><input id="shareSearch" class="field" placeholder="Chatlarni qidiring..."><div id="sharePeers" class="mw-share-grid"><p class="muted">Yuklanmoqda...</p></div><div class="mw-share-compose"><textarea id="shareNote" class="field" rows="2" maxlength="1000" placeholder="Xabar yozing... (ixtiyoriy)"></textarea><button class="btn mw-share-send" data-act="shareSend" disabled>Yuborish</button></div><div class="mw-share-tools"><button data-act="shareSave" data-id="${e(id)}" class="${S.savedIds?.has(id)?'selected':''}"><span>${ico('bookmark',23)}</span>Saqlash</button><button data-act="reportMod" data-id="${e(id)}"><span>${ico('flag',23)}</span>Shikoyat</button><button data-act="shareBack" data-id="${e(id)}"><span>${ico('arrow',23)}</span>Modga qaytish</button></div>`);
  const uid=S.u?.id,box=$('#sharePeers');if(!uid){box.innerHTML=btn('auth',t('login'));return}
  const r=await DB.from('messages').select('sender_id,recipient_id').or('sender_id.eq.'+uid+',recipient_id.eq.'+uid).order('created_at',{ascending:false}).limit(150);check(r);
  const ids=[...new Set(r.data.map(x=>x.sender_id===uid?x.recipient_id:x.sender_id))].filter(x=>x!==uid);
  const people=await users(ids);if(!box.isConnected||S.u?.id!==uid)return;
- box.innerHTML=ids.map(pid=>{const p=people[pid];return p?`<button class="mw-share-peer" data-act="sharePeer" data-id="${e(pid)}" aria-pressed="false" data-search="${e((p.display_name||'')+' '+p.username)}">${avatar(p,true)}<b>${e(p.display_name||p.username)}</b></button>`:''}).join('')||blank();
+ box.innerHTML=ids.map(pid=>{const p=people[pid];return p?`<button class="mw-share-peer" data-act="sharePeer" data-id="${e(pid)}" aria-pressed="false" data-search="${e((p.display_name||'')+' '+p.username)}"><span class="mw-share-avatar">${avatar(p,true)}<span class="mw-share-check">${ico("check",15)}</span></span><b>${e(p.display_name||p.username)}</b></button>`:''}).join('')||blank();
  $('#shareSearch').addEventListener('input',ev=>{const q=ev.target.value.toLowerCase();box.querySelectorAll('[data-search]').forEach(el=>el.hidden=!el.dataset.search.toLowerCase().includes(q))});
 }
 async function sendSharedMod(button){
@@ -4872,7 +4874,16 @@ async function sendSharedMod(button){
  const ids=[...document.querySelectorAll('#sharePeers .selected')].map(x=>x.dataset.id);
  if(!ids.length){toast('Chatni tanlang');return}
  const m=shareModData;button.disabled=true;
- try{const total=check(await DB.rpc('mw_share_mod',{p_mod:m.id,p_recipients:ids}));m.shares_count=total;cacheMod(m);toast('Yuborildi');await openMod(m.id)}finally{button.disabled=false}
+ try{const total=check(await DB.rpc('mw_share_mod',{p_mod:m.id,p_recipients:ids,p_note:$('#shareNote')?.value.trim()||''}));m.shares_count=total;cacheMod(m);toast('Yuborildi');await openMod(m.id)}finally{button.disabled=false}
+}
+function renderModAuthor(p){
+ const box=$('#modAuthor');if(!box||!p)return;
+ box.innerHTML=avatar(p)+miniUser(p)+(S.u?.id===p.id?'':`<button class="mw-follow-back mw-mod-follow" data-act="socialFollow" data-id="${e(p.id)}" aria-pressed="false">Obuna bo‘lish</button>`);
+ const uid=S.u?.id;if(!uid||uid===p.id)return;
+ const b=box.querySelector('.mw-mod-follow');b.disabled=true;
+ DB.from('follows').select('following_id').eq('follower_id',uid).eq('following_id',p.id).maybeSingle().then(r=>{
+ if(!b.isConnected||S.u?.id!==uid)return;if(!r.error){b.classList.toggle('following',!!r.data);b.setAttribute('aria-pressed',String(!!r.data));b.textContent=r.data?'Obunani olish':'Obuna bo‘lish'}b.disabled=false;
+ }).catch(()=>{b.disabled=false});
 }
 function renderMod(m){
   const isApproved=m.status==='approved';
@@ -4928,7 +4939,7 @@ function renderMod(m){
   const known=knownProfiles.get(m.author_id)?.p||S.cache?.[m.author_id];
   if(known){
     const author=$('#modAuthor');
-    if(author)author.innerHTML=avatar(known)+miniUser(known);
+    if(author)renderModAuthor(known);
   }
 }
 async function updateModToggleStates(id){
@@ -4986,7 +4997,7 @@ async function openMod(id){
     users([m.author_id]).then(mp=>{
       if(activeModId===id&&$('#modAuthor')){
         const p=mp[m.author_id];
-        if(p)$('#modAuthor').innerHTML=avatar(p)+miniUser(p);
+        if(p)renderModAuthor(p);
       }
     }).catch(console.warn);
   }
@@ -5898,7 +5909,7 @@ async function socialFollow(id,button){
     const r=await DB.from('follows').select('following_id').eq('follower_id',uid).eq('following_id',id).maybeSingle();check(r);
     check(r.data?await DB.from('follows').delete().eq('follower_id',uid).eq('following_id',id):await DB.from('follows').insert({follower_id:uid,following_id:id}));
     invalidateProfileData();
-    document.querySelectorAll('[data-act="socialFollow"]').forEach(b=>{if(b.dataset.id===id){b.classList.toggle('following',!r.data);b.setAttribute('aria-pressed',String(!r.data));b.textContent=r.data?'Obunani qaytarish':'Obunani olish'}});
+    document.querySelectorAll('[data-act="socialFollow"]').forEach(b=>{if(b.dataset.id===id){b.classList.toggle('following',!r.data);b.setAttribute('aria-pressed',String(!r.data));b.textContent=r.data?(b.classList.contains('mw-mod-follow')?'Obuna bo‘lish':'Obunani qaytarish'):'Obunani olish'}});
   }finally{button.disabled=false}
 }
 let socialCommentTarget=null;
@@ -6350,7 +6361,7 @@ window.addEventListener('click',async event=>{
     }
     else if(act==='mod')await openMod(id);
     else if(act==='modShare')await modShare(id);
-    else if(act==='sharePeer'){a.classList.toggle('selected');a.setAttribute('aria-pressed',String(a.classList.contains('selected')))}
+    else if(act==='sharePeer'){a.classList.toggle('selected');a.setAttribute('aria-pressed',String(a.classList.contains('selected')));const n=document.querySelectorAll('#sharePeers .selected').length;const b=$('.mw-share-send');b.disabled=!n;b.textContent=n?'Yuborish ('+n+')':'Yuborish'}
     else if(act==='shareSend')await sendSharedMod(a);
     else if(act==='shareSave'){await toggleTable('mod_saves',id);a.classList.toggle('selected',S.savedIds?.has(id))}
     else if(act==='shareBack')await openMod(id);
@@ -6860,6 +6871,6 @@ setInterval(()=>{mwPingPresence().catch(console.warn);if(S.page==='chat'&&S.chat
 });
 </script>
 <script src="./mw-live-chat.js?v=8"></script>
-<script src="./mw-v11.js?v=9"></script>
+<script src="./mw-v11.js?v=10"></script>
 </body>
 </html>
