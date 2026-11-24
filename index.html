@@ -2495,6 +2495,10 @@ body .grid .card .art .quick-save.saved svg{fill:#fff!important;stroke:#fff!impo
 #overlay .mw-mod-desc-box.expanded .mw-clamped-desc{display:block!important;-webkit-line-clamp:unset}
 #overlay .mw-desc-more{display:inline-block;background:none;border:0;color:#96c7e5;font:inherit;font-size:13px;font-weight:700;padding:5px 0;cursor:pointer}
 #overlay .mw-desc-more[hidden]{display:none!important}
+
+#overlay .mod-headline.mw-mod-meta-only{display:flex!important;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:12px 0 8px;min-width:0}
+#overlay .mod-headline.mw-mod-meta-only .mod-view-stat{margin-left:auto;flex-shrink:0}
+#overlay .mod-headline.mw-mod-meta-only .status{max-width:100%;overflow-wrap:anywhere}
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -5036,8 +5040,7 @@ function renderMod(m){
         ${cover(m.cover_path)?`<img loading="eager" decoding="async" src="${e(cover(m.cover_path))}" alt="">`:ico('package',66)}
         </div>
       </div>
-      <div class="mod-headline">
-        <h2>${e(localModTitle(m))}</h2>
+      <div class="mod-headline mw-mod-meta-only">
         <span class="status">${e(m.game_version)} · ${e(categoryName(m.category))}</span>
         <span class="mod-view-stat">${ico('eye',17)} <span data-mod-view-count>${count(m.views_count)}</span></span>
       </div>
