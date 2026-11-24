@@ -2421,6 +2421,8 @@ body:before,.hero:after{display:none!important}
 .mw-user-handle{display:block;font-size:11px;color:var(--muted);font-weight:400}.mw-social-card{align-items:center;gap:8px;padding:10px}.mw-social-avatar,.mw-social-detail,.mw-settings-account,.mw-logout{font:inherit;color:inherit;cursor:pointer}.mw-social-avatar{border:0;background:none;padding:0;flex:none}.mw-social-copy{flex:1;min-width:0}.mw-social-copy .linkbtn{text-align:left;white-space:normal}.mw-social-detail{border:0;background:none;text-align:left;padding:0;display:block;font-size:13px}.mw-follow-back{background:#24764f;color:#fff;border:1px solid #429d70;border-radius:9px;padding:8px;font-size:11px;font-weight:700;max-width:110px;flex:none;cursor:pointer}.mw-follow-back.following{background:#24384b;border-color:#48647b;color:#d4e6f4}.mw-settings-account{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:1px solid #385772;background:#12263b;border-radius:14px;text-align:left}.mw-settings-account>span:nth-child(2){flex:1;min-width:0}.mw-settings-account small{display:block;color:var(--muted)}.mw-logout{border:1px solid #9b4452;color:#ff8999;background:transparent;border-radius:12px;padding:12px;width:100%;font-weight:700}.mw-comment-highlight{outline:2px solid #8dd4ff}.account-avatar .av{width:100%;height:100%}
 
 .mw-notice-toolbar{margin-bottom:16px}.mw-request-card{cursor:pointer}.mw-notice-person{display:block;margin-top:4px}.mw-user-handle,.mw-social-copy .linkbtn small,.mw-profile-display-name{font-size:10px!important;line-height:1.2!important;margin:1px 0!important;opacity:.85}.mod-secondary-actions{margin-inline-start:0!important;justify-content:flex-start;width:100%}.mw-mod-id{font-size:11px;color:var(--muted);border:1px solid #385772;border-radius:7px;padding:3px 7px;justify-self:start}.mw-share-id{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;padding:10px;border:1px solid #385772;border-radius:12px}.mw-share-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0;max-height:45vh;overflow:auto}.mw-share-peer,.mw-share-tools button{border:0;background:none;color:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:6px;font:inherit;cursor:pointer}.mw-share-peer[hidden]{display:none}.mw-share-peer b,.mw-share-peer small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}.mw-share-peer small{color:var(--muted);font-size:10px}.mw-share-peer.selected{background:#244c66;border-radius:12px;outline:1px solid #a8defe}.mw-share-send{width:100%}.mw-share-tools{display:flex;justify-content:space-around;border-top:1px solid #385772;margin-top:16px;padding-top:12px}.mw-share-tools button span{display:grid;place-items:center;border-radius:50%;width:44px;height:44px;background:#233f58}.mw-share-tools button.selected span{background:#3a7999}.mw-share-tools button{font-size:11px}.mw-badge-duration{display:grid;gap:10px}.mw-badge-duration .field{width:100%}
+
+.mod-secondary-actions{margin-inline-start:auto!important;justify-content:flex-end!important;width:auto!important;align-items:flex-start!important;gap:6px!important}.mod-secondary-actions .mod-icon-action{display:flex!important;align-items:center!important;justify-content:flex-start!important;flex-direction:column!important;position:relative!important;width:44px!important;height:48px!important;padding:4px 0 20px!important;box-sizing:border-box!important}.mod-secondary-actions .mod-icon-action svg{width:24px!important;height:24px!important;flex:none!important}.mod-secondary-actions .mw-share-count{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:12px;color:var(--muted);line-height:1}.mw-share-id b{overflow-wrap:anywhere}
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -2823,7 +2825,7 @@ const EXTRA_WORDS={
     'Yuklanmoqda...':'Загрузка...',
     'Saqlangan modlar yo‘q':'Нет сохранённых модов',
     'KASHF ETISH':'ИССЛЕДОВАТЬ',
-    'Mod nomi, tavsifi yoki ID...':'Поиск по названию или описанию мода...',
+    'Mod nomi yoki tavsifini qidiring...':'Поиск по названию или описанию мода...',
     'Barcha kategoriyalar':'Все категории',
     'Barcha versiyalar':'Все версии',
     'O‘yin dunyongni':'Расширь свой',
@@ -3067,7 +3069,7 @@ function tick(p){
       '<path d="m5.4 10 3.1 3.2 6.2-6.4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'+
       '</svg></span>':''
 }
-function label(p){return e(p?.display_name||nick(p))+tick(p)+'<small class="mw-user-handle">@'+e(nick(p))+'</small>'}
+function label(p){return e(p?.display_name||nick(p))+tick(p)}
 function avatar(p,large=false){
   return `<span class="av ${large?'large':''}">${
     p?.avatar_url&&!banned(p)
@@ -3154,7 +3156,7 @@ function optionList(arr,sel){
 }
 function miniUser(p){
   return `<button class="linkbtn" data-act="user"
-    data-id="${e(p?.id)}">${e(p?.display_name||nick(p))}${tick(p)}<small class="mw-user-handle">@${e(nick(p))}</small></button>`
+    data-id="${e(p?.id)}">${e(p?.display_name||nick(p))}${tick(p)}</button>`
 }
 function localModTitle(m){
   return m['title_'+S.lang]||m.title||'';
@@ -3404,7 +3406,7 @@ async function home(){
     }
   }
   const query=DB.from('mods')
-    .select('id,public_id,author_id,title,description,category,game_version,cover_path,file_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
+    .select('id,shares_count,author_id,title,description,category,game_version,cover_path,file_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
     .eq('status','approved')
     .order(S.sort==='popular'?'views_count':S.sort==='best'?'likes_count':'created_at',{ascending:false}).limit(60);
   const savedPromise=S.homeView==='saved'?loadSavedIds():Promise.resolve();
@@ -3438,7 +3440,7 @@ async function loadExtraSavedMods(){
   const missing=[...S.savedIds].filter(id=>!existing.has(id)).slice(0,80);
   if(!missing.length)return;
   const r=await DB.from('mods')
-    .select('id,public_id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
+    .select('id,shares_count,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
     .in('id',missing).eq('status','approved').limit(80);
   check(r);
   S.feed.push(...r.data);
@@ -3452,7 +3454,7 @@ async function fetchMoreFeed(){
   const from=S.feedOffset||0;
   try{
     const r=await DB.from('mods')
-      .select('id,public_id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
+      .select('id,shares_count,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
       .eq('status','approved')
       .order(S.sort==='popular'?'views_count':S.sort==='best'?'likes_count':'created_at',{ascending:false})
       .range(from,from+59);
@@ -3478,7 +3480,7 @@ function filterMods(){
     (S.category==='all'||m.category===S.category)&&
     (!S.gameVersion||S.gameVersion==='all'||m.game_version===S.gameVersion)&&
     (view!=='saved'||S.savedIds?.has(m.id))&&
-    (!q||(/^#?\d+$/.test(q)?String(m.public_id)===q.replace(/^#/,''):`${localModTitle(m)} ${localModDesc(m)} ${m.category}`.toLocaleLowerCase().includes(q)))
+    (!q||`${localModTitle(m)} ${localModDesc(m)} ${m.category}`.toLocaleLowerCase().includes(q))
   );
   if(S.sort==='best')result.sort((a,b)=>(b.likes_count||0)-(a.likes_count||0));
   else if(S.sort==='popular')result.sort((a,b)=>(b.views_count||0)-(a.views_count||0));
@@ -3510,7 +3512,7 @@ function getProfileData(id){
   if(recent&&Date.now()-recent.at<45000)return recent.promise;
   const promise=Promise.all([
     DB.from('profiles').select('*').eq('id',id).single(),
-    DB.from('mods').select('id,public_id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
+    DB.from('mods').select('id,shares_count,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
       .eq('author_id',id).order('created_at',{ascending:false}).limit(36),
     DB.from('mods').select('id',{count:'exact',head:true})
       .eq('author_id',id).eq('status','approved'),
@@ -3698,7 +3700,7 @@ async function accountMenu(){
     const name=e(a.username);
     const row='<button class="account-switch" type="button" data-act="accountSwitch" data-id="'+e(a.id)+'">'+
       '<span class="account-avatar">'+avatar(person)+'</span>'+
-      '<span class="account-label"><b>'+e(person.display_name||a.username)+'</b><small>@'+name+' · '+
+      '<span class="account-label"><b>@'+name+'</b><small>'+
       (a.notSaved?'Saqlanmagan — qayta kirish kerak':
         a.id===active?'Hozirgi akkaunt':'Bosib almashtiring')+
       '</small></span>'+(a.id===active?ico('check',20):ico('arrow',18))+'</button>';
@@ -4847,7 +4849,7 @@ async function getMod(id){
   if(modOpenPending.has(id))return modOpenPending.get(id);
   const load=(async()=>{
     const result=await DB.from('mods')
-      .select('id,public_id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
+      .select('id,shares_count,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
       .eq('id',id).single();
     return cacheMod(check(result));
   })().finally(()=>modOpenPending.delete(id));
@@ -4857,12 +4859,12 @@ async function getMod(id){
 let shareModData=null;
 async function modShare(id){
  const m=await getMod(id);shareModData=m;
- dialog('Ulashish',`<div class="mw-share-id"><b>ID #${e(m.public_id||'—')}</b><button class="btn ghost" data-act="shareCopy">${ico('copy',17)} Nusxalash</button></div><input id="shareSearch" class="field" placeholder="Chatlarni qidiring..."><div id="sharePeers" class="mw-share-grid"><p class="muted">Yuklanmoqda...</p></div><button class="btn mw-share-send" data-act="shareSend">Yuborish</button><div class="mw-share-tools"><button data-act="shareSave" data-id="${e(id)}" class="${S.savedIds?.has(id)?'selected':''}"><span>${ico('bookmark',23)}</span>Saqlash</button><button data-act="reportMod" data-id="${e(id)}"><span>${ico('flag',23)}</span>Shikoyat</button><button data-act="shareBack" data-id="${e(id)}"><span>${ico('arrow',23)}</span>Modga qaytish</button></div>`);
+ dialog('Ulashish',`<div class="mw-share-id"><b>${e(localModTitle(m))}</b></div><input id="shareSearch" class="field" placeholder="Chatlarni qidiring..."><div id="sharePeers" class="mw-share-grid"><p class="muted">Yuklanmoqda...</p></div><button class="btn mw-share-send" data-act="shareSend">Yuborish</button><div class="mw-share-tools"><button data-act="shareSave" data-id="${e(id)}" class="${S.savedIds?.has(id)?'selected':''}"><span>${ico('bookmark',23)}</span>Saqlash</button><button data-act="reportMod" data-id="${e(id)}"><span>${ico('flag',23)}</span>Shikoyat</button><button data-act="shareBack" data-id="${e(id)}"><span>${ico('arrow',23)}</span>Modga qaytish</button></div>`);
  const uid=S.u?.id,box=$('#sharePeers');if(!uid){box.innerHTML=btn('auth',t('login'));return}
  const r=await DB.from('messages').select('sender_id,recipient_id').or('sender_id.eq.'+uid+',recipient_id.eq.'+uid).order('created_at',{ascending:false}).limit(150);check(r);
  const ids=[...new Set(r.data.map(x=>x.sender_id===uid?x.recipient_id:x.sender_id))].filter(x=>x!==uid);
  const people=await users(ids);if(!box.isConnected||S.u?.id!==uid)return;
- box.innerHTML=ids.map(pid=>{const p=people[pid];return p?`<button class="mw-share-peer" data-act="sharePeer" data-id="${e(pid)}" aria-pressed="false" data-search="${e((p.display_name||'')+' '+p.username)}">${avatar(p,true)}<b>${e(p.display_name||p.username)}</b><small>@${e(p.username)}</small></button>`:''}).join('')||blank();
+ box.innerHTML=ids.map(pid=>{const p=people[pid];return p?`<button class="mw-share-peer" data-act="sharePeer" data-id="${e(pid)}" aria-pressed="false" data-search="${e((p.display_name||'')+' '+p.username)}">${avatar(p,true)}<b>${e(p.display_name||p.username)}</b></button>`:''}).join('')||blank();
  $('#shareSearch').addEventListener('input',ev=>{const q=ev.target.value.toLowerCase();box.querySelectorAll('[data-search]').forEach(el=>el.hidden=!el.dataset.search.toLowerCase().includes(q))});
 }
 async function sendSharedMod(button){
@@ -4870,7 +4872,7 @@ async function sendSharedMod(button){
  const ids=[...document.querySelectorAll('#sharePeers .selected')].map(x=>x.dataset.id);
  if(!ids.length){toast('Chatni tanlang');return}
  const m=shareModData;button.disabled=true;
- try{check(await DB.from('messages').insert(ids.map(id=>({sender_id:S.u.id,recipient_id:id,body:'Minecraft World · '+localModTitle(m)+' · Mod ID #'+m.public_id}))));toast('Yuborildi');await openMod(m.id)}finally{button.disabled=false}
+ try{const total=check(await DB.rpc('mw_share_mod',{p_mod:m.id,p_recipients:ids}));m.shares_count=total;cacheMod(m);toast('Yuborildi');await openMod(m.id)}finally{button.disabled=false}
 }
 function renderMod(m){
   const isApproved=m.status==='approved';
@@ -4884,7 +4886,7 @@ function renderMod(m){
         </div>
       </div>
       <div class="mod-headline">
-        <h2>${e(localModTitle(m))}</h2><span class="mw-mod-id">ID #${e(m.public_id||'—')}</span>
+        <h2>${e(localModTitle(m))}</h2>
         <span class="status">${e(m.game_version)} · ${e(categoryName(m.category))}</span>
         <span class="mod-view-stat">${ico('eye',17)} <span data-mod-view-count>${count(m.views_count)}</span></span>
       </div>
@@ -4896,7 +4898,7 @@ function renderMod(m){
           data-mod-toggle="like" aria-label="Yoqtirish" aria-pressed="false">
           ${ico('heart',24)}<span data-like-count="${e(m.id)}">${count(m.likes_count)}</span>
         </button>
-          <button type="button" class="mod-icon-action" data-act="modShare" data-id="${e(m.id)}" aria-label="Ulashish" title="Ulashish"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg></button>
+          <button type="button" class="mod-icon-action" data-act="modShare" data-id="${e(m.id)}" aria-label="Ulashish" title="Ulashish"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg><span class="mw-share-count">${count(m.shares_count)}</span></button>
         </div>`:''}
       </div>
       ${isApproved?`
@@ -5826,7 +5828,7 @@ function activityCard(n,people){
  const badge=n.kind==='badge';
  return `<article class="activity-card mw-request-card ${n.is_read?'':'unread'}" data-notice-id="${e(n.id)}" ${action?'data-act="'+action+'" data-id="'+e(n.target_id||'')+'" role="button"':''} tabindex="0">
  ${badge&&actor?avatar(actor):'<span class="activity-icon">'+(badge?'<svg width="23" height="23" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#2699ee"/><path d="m5.4 10 3.1 3.2 6.2-6.4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>':ico('package',20))+'</span>'}
- <div><strong>${e(n.title)}</strong>${badge&&actor?'<b class="mw-notice-person">'+e(actor.display_name||actor.username)+'</b><small class="mw-user-handle">@'+e(actor.username)+'</small>':''}<p>${e(n.body||'')}</p><small>${when(n.created_at)}</small></div></article>`;
+ <div><strong>${e(n.title)}</strong>${badge&&actor?'<b class="mw-notice-person">'+e('@'+actor.username)+'</b>':''}<p>${e(n.body||'')}</p><small>${when(n.created_at)}</small></div></article>`;
 }
 const noticeReadPending=new Set();
 async function readActivity(card){
@@ -5884,7 +5886,7 @@ async function socialActivity(){
     const detail=follow?'Sizga obuna bo‘ldi':n.kind==='like'?'Modingizga layk bosdi':'Modingizga izoh yozdi';
     return `<article class="activity-card mw-social-card ${n.is_read?'':'unread'}" data-notice-id="${e(n.id)}">
       <button class="mw-social-avatar" data-act="user" data-id="${e(p.id)}">${avatar(p)}</button>
-      <div class="mw-social-copy"><button class="linkbtn" data-act="user" data-id="${e(p.id)}"><strong>${e(p.display_name||p.username)}${tick(p)}</strong><small>@${e(p.username)}</small></button>
+      <div class="mw-social-copy"><button class="linkbtn" data-act="user" data-id="${e(p.id)}"><strong>${e(p.display_name||p.username)}${tick(p)}</strong></button>
       <button class="mw-social-detail" data-act="${action}" data-id="${e(target||p.id)}">${e(detail)}${n.body&&!follow?'<small>'+e(n.body)+'</small>':''}</button><small>${when(n.created_at)}</small></div>
       ${follow?'<button class="mw-follow-back '+(own.has(p.id)?'following':'')+'" data-act="socialFollow" data-id="'+e(p.id)+'" aria-pressed="'+own.has(p.id)+'">'+(own.has(p.id)?'Obunani olish':'Obunani qaytarish')+'</button>':''}</article>`;
   }).join('')||blank()}</div>`);
@@ -5986,7 +5988,7 @@ async function savedModal(liked=false){
       return;
     }
     const result=await DB.from('mods')
-      .select('id,public_id,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
+      .select('id,shares_count,author_id,title,description,category,game_version,cover_path,status,likes_count,downloads_count,saves_count,comments_count,views_count,title_uz,title_ru,title_en,description_uz,description_ru,description_en,created_at')
       .in('id',ids.slice(0,90)).eq('status','approved').limit(90);
     check(result);
     if(!holder.isConnected)return;
@@ -6019,7 +6021,7 @@ function settings(){
   const on=notificationEnabled()&&pushSupported()&&Notification.permission==='granted';
   dialog(t('settings'),`
     <div class="settings-stack">
-      <button class="mw-settings-account" data-act="accounts">${avatar(S.me)}<span><strong>${e(S.me?.display_name||S.me?.username||"Profil")}</strong><small>@${e(S.me?.username||"")}</small></span><span>${ico("arrow",18)}</span></button>
+      <button class="mw-settings-account" data-act="accounts">${avatar(S.me)}<span><strong>@${e(S.me?.username||"Profil")}</strong></span><span>${ico("arrow",18)}</span></button>
       <h3>Ko‘rinish</h3>
       ${winterSetting()}
       <h3>Akkaunt</h3>
@@ -6129,14 +6131,14 @@ async function admin(){
     });
   });
   const res=await DB.from('mods')
-    .select('id,public_id,author_id,title,description,category,game_version,cover_path,file_path,status,created_at')
+    .select('id,shares_count,author_id,title,description,category,game_version,cover_path,file_path,status,created_at')
     .eq('status','pending').order('created_at',{ascending:true}).limit(60);
   check(res);
   if(!panel.isConnected)return;
   res.data.forEach(cacheMod);
   panel.innerHTML=res.data.length?res.data.map(m=>
     `<button class="admin-mod-row" data-act="adminModDetail" data-id="${e(m.id)}">
-      <span class="mod-name">${ico('package',18)} #${e(m.public_id)} · ${e(m.title)}</span>
+      <span class="mod-name">${ico('package',18)} ${e(m.title)}</span>
       <span class="mod-open">${ico('arrow',16)}</span>
     </button>`).join(''):'<p class="muted">Hozir tekshiruvdagi mod yo‘q.</p>';
 }
@@ -6151,7 +6153,7 @@ async function loadAdminSection(section,target){
     check(r);
     const people=await users(r.data.map(v=>v.user_id));
     html=r.data.map(v=>`<div class="item">
-      <div class="row">${avatar(people[v.user_id])}${miniUser(people[v.user_id])}</div>
+      <div class="row">${avatar(people[v.user_id])}<button class="linkbtn" data-act="user" data-id="${e(v.user_id)}">@${e(people[v.user_id]?.username||"")}</button></div>
       <p class="wrap">${e(v.reason)}</p>
       <div class="buttons">${adminBtn('approve_verification',t('approve'),v.id)}
        ${adminBtn('reject_verification',t('reject'),v.id,'danger')}</div>
@@ -6181,11 +6183,11 @@ async function loadAdminSection(section,target){
         ${x.target_kind==='profile'?adminBtn('ban',t('ban'),x.target_id,'danger'):''}
       </div></div>`).join('')||blank();
   }else if(section==='all'){
-    const r=await DB.from('mods').select('id,public_id,title,status,created_at')
+    const r=await DB.from('mods').select('id,title,status,created_at')
       .order('created_at',{ascending:false}).limit(50);
     check(r);
     html=r.data.map(m=>`<div class="item admin-simple-mod">
-      <b>#${e(m.public_id)} · ${e(m.title)}</b><span class="status">${e(m.status)}</span>
+      <b>${e(m.title)}</b><span class="status">${e(m.status)}</span>
       <div class="buttons">${btn('mod','Ko‘rish',m.id,'ghost')}
         ${adminBtn('delete_mod',t('delete'),m.id,'danger')}</div>
     </div>`).join('')||blank();
@@ -6215,7 +6217,7 @@ async function adminModDetail(id,preview=true){
       <div class="skeleton-art"></div><p>Mod ma’lumotlari ochilmoqda...</p>
       </div>`);
     try{
-      const result=await DB.from('mods').select('id,public_id,author_id,title,description,category,game_version,cover_path,file_path,status,created_at')
+      const result=await DB.from('mods').select('id,shares_count,author_id,title,description,category,game_version,cover_path,file_path,status,created_at')
         .eq('id',id).single();
       m=cacheMod(check(result));
     }catch(err){
@@ -6232,7 +6234,7 @@ async function adminModDetail(id,preview=true){
     ${m.status==='pending'?adminBtn('reject_mod','Rad etish',id,'danger'):''}
     ${btn('admin','Ro‘yxatga qaytish', '', 'ghost')}
   </div>`;
-  dialog('#'+(m.public_id||'')+' · '+m.title,`
+  dialog(m.title,`
     <section class="admin-mod-preview">
       ${m.cover_path?`<img class="admin-preview-image" loading="eager"
         decoding="async" src="${e(cover(m.cover_path))}" alt="Mod rasmi">`:''}
@@ -6348,7 +6350,6 @@ window.addEventListener('click',async event=>{
     }
     else if(act==='mod')await openMod(id);
     else if(act==='modShare')await modShare(id);
-    else if(act==='shareCopy'){await navigator.clipboard.writeText(String(shareModData.public_id));toast('ID nusxalandi')}
     else if(act==='sharePeer'){a.classList.toggle('selected');a.setAttribute('aria-pressed',String(a.classList.contains('selected')))}
     else if(act==='shareSend')await sendSharedMod(a);
     else if(act==='shareSave'){await toggleTable('mod_saves',id);a.classList.toggle('selected',S.savedIds?.has(id))}
@@ -6520,7 +6521,7 @@ window.addEventListener('input',ev=>{
     S.visibleMods=12;
     clearTimeout(searchTimer);
     searchTimer=setTimeout(()=>{
-      if(S.page==='home'){filterMods();const q=S.query.trim();if(/^#?\d+$/.test(q))DB.from('mods').select('*').eq('public_id',Number(q.replace(/^#/,''))).eq('status','approved').maybeSingle().then(r=>{if(!r.error&&r.data&&S.page==='home'&&S.query.trim()===q){if(!S.feed.some(m=>m.id===r.data.id))S.feed.push(r.data);filterMods()}}).catch(console.warn)}
+      if(S.page==='home')filterMods()
     },130);
   }else if(ev.target.id==='accountSearch'){
     filterAccounts()
