@@ -2506,6 +2506,17 @@ body .clickable-mod .cardbody>h3>.linkbtn{display:-webkit-box!important;-webkit-
 body .clickable-mod .cardbody>.smalltext{display:none!important}
 body .clickable-mod .card-game-version{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
 body .clickable-mod .cardbody{min-width:0}
+
+/* A nested control owns its own touch feedback, never its parent card. */
+html,body,*{-webkit-tap-highlight-color:transparent}
+@media(hover:none),(pointer:coarse){
+ body .clickable-mod:hover,body .clickable-mod:active,body .autumn-mod-list>.card.clickable-mod:hover{border-color:var(--edge)!important;transform:none!important}
+}
+body .clickable-mod:has(button:hover:not([data-act="mod"]),button:active:not([data-act="mod"])),body .clickable-mod.mw-child-press{border-color:var(--edge)!important;transform:none!important;filter:none!important}
+.mw-press-target{transition:filter .12s ease,box-shadow .12s ease}
+.mw-press-target.mw-tap-down{filter:brightness(1.24)!important;box-shadow:inset 0 0 0 999px #ffffff12!important}
+.mw-press-target.mw-tap-down:disabled{filter:none!important}
+@media(prefers-reduced-motion:reduce){.mw-press-target{transition:none}}
 </style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -7093,6 +7104,28 @@ function mwInstallBackGuard(){
   }
  });
 }
+
+
+/* Select exactly one actionable element per pointer gesture. */
+(()=>{
+ let pressed=null,parent=null;
+ function clearPress(){
+  pressed?.classList.remove('mw-tap-down');parent?.classList.remove('mw-child-press');pressed=null;parent=null;
+ }
+ document.addEventListener('pointerdown',ev=>{
+  clearPress();if(ev.button!==0||!ev.isPrimary)return;
+  const el=ev.target.closest?.('button,a[href],[role="button"],[data-act],[data-go],[data-mw],[data-v11]');
+  if(!el||el.disabled||el.getAttribute('aria-disabled')==='true')return;
+  const card=el.closest('.clickable-mod');
+  // Cover and title are entrances to the same mod; other controls are independent.
+  pressed=card&&el.dataset.act==='mod'?card:el;
+  if(card&&pressed!==card){parent=card;parent.classList.add('mw-child-press')}
+  pressed.classList.add('mw-press-target','mw-tap-down');
+ },true);
+ for(const name of ['pointerup','pointercancel','lostpointercapture','dragstart'])document.addEventListener(name,clearPress,true);
+ window.addEventListener('blur',clearPress);
+ document.addEventListener('scroll',clearPress,true);
+})();
 
 // SAYTNI ISHGA TUSHIRISH
 (async()=>{
