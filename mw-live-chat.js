@@ -106,8 +106,12 @@ window.MWChat=(()=>{
     C[key+'Offset']=0;
   }
   const offset=C[key+'Offset']||0;
-  let req=DB.from('profiles').select('id,username,display_name,avatar_url')
+  const uid=S.u.id;
+  let contacts=null;
+  if(!forGroup&&!term){const f=check(await DB.from('follows').select('follower_id,following_id').or('follower_id.eq.'+uid+',following_id.eq.'+uid));contacts=[...new Set(f.map(x=>x.follower_id===uid?x.following_id:x.follower_id))];if(!contacts.length){target.innerHTML='<p class="muted">Obunalar yo‘q. Username orqali qidiring.</p>';await searchPublicGroups(term);return;}}
+  let req=DB.from('profiles').select('id,username,display_name,avatar_url,verified,verified_until')
      .neq('id',S.u.id).order('username',{ascending:true}).range(offset,offset+49);
+  if(contacts)req=req.in('id',contacts);
   if(term)req=req.or('username.ilike.%'+term+'%,display_name.ilike.%'+term+'%');
   const all=check(await req);
   if(C[key+'Query']!==term||!target.isConnected)return;
@@ -118,7 +122,7 @@ window.MWChat=(()=>{
   if(forGroup)C.members=append?[...C.members,...visible]:visible;
   const cards=forGroup?visible.map(memberPreview).join(''):
     visible.map(p=>'<button class="mw-member-option" data-act="chatStart" data-id="'+escape(p.id)+'">'+
-    avatar(p)+'<span><b>'+escape(p.display_name||p.username)+'</b><small>@'+escape(p.username)+'</small></span></button>').join('');
+    avatar(p)+'<span><b>'+escape(p.display_name||p.username)+tick(p)+'</b><small>@'+escape(p.username)+'</small></span></button>').join('');
   if(!append)target.innerHTML=cards;
   else{target.querySelector('.mw-people-more')?.remove();target.insertAdjacentHTML('beforeend',cards)}
   C[key+'Offset']=offset+all.length;
