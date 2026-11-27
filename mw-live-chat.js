@@ -55,13 +55,8 @@ window.MWChat=(()=>{
     .select('id',{count:'exact',head:true}).in('group_id',owned).eq('status','pending'):null;
   if(pending?.error)throw pending.error;
   const requestCount=pending?.count||0;
-  const bar=$('.chat-title');
-  if(bar&&!$('#mwInviteButton')){
-   bar.insertAdjacentHTML('beforeend','<button class="btn small ghost" id="mwInviteButton" data-mw="invites">Takliflar</button>');
-  }
-  const total=(invites.count||0)+requestCount;
-  const badge=$('#mwInviteButton');if(badge){badge.hidden=!total;badge.textContent='Taklif va so‘rovlar'+(total?' ('+total+')':'');}
-  if(S.chatId?.startsWith('g:'))await openGroup(S.chatId.slice(2));
+  $('#mwInviteButton')?.remove();
+  if(S.chatId?.startsWith('g:')&&S.mw11MobileOpen)await openGroup(S.chatId.slice(2));
  }
  function renderGroups(){
   const rows=$('#chatRows');
@@ -83,7 +78,7 @@ window.MWChat=(()=>{
   entries.forEach(node=>rows.append(node));
   window.MWV11?.decorateInbox?.();
  }
- const memberPreview=p=>'<label class="mw-member-option">'+avatar(p)+'<span><b>'+escape(p.display_name||p.username)+'</b><small>@'+escape(p.username)+'</small></span>'+
+ const memberPreview=p=>'<label class="mw-member-option mw-group-pick-person">'+avatar(p)+'<span class="mw-group-pick-copy"><b>'+escape(p.display_name||p.username)+tick(p)+'</b><small>@'+escape(p.username)+(C.memberFollowers?.has(p.id)?'':' · Faqat taklif')+'</small></span>'+
   '<input type="checkbox" class="mw-check-member" value="'+escape(p.id)+'" '+(C.selected.includes(p.id)?'checked':'')+'></label>';
  function newChat(){
   if(!S.u)return;
@@ -109,6 +104,13 @@ window.MWChat=(()=>{
   const uid=S.u.id;
   let contacts=null;
   if(!forGroup&&!term){const f=check(await DB.from('follows').select('follower_id,following_id').or('follower_id.eq.'+uid+',following_id.eq.'+uid));contacts=[...new Set(f.map(x=>x.follower_id===uid?x.following_id:x.follower_id))];if(!contacts.length){target.innerHTML='<p class="muted">Obunalar yo‘q. Username orqali qidiring.</p>';await searchPublicGroups(term);return;}}
+  if(forGroup){
+   const f=check(await DB.from('follows').select('follower_id').eq('following_id',uid));
+   const followerIds=f.map(x=>x.follower_id);
+   C.memberFollowers=new Set(followerIds);
+   const verified=!!S.me?.verified&&(!S.me.verified_until||new Date(S.me.verified_until)>new Date());
+   if(!verified||!term){contacts=followerIds;if(!contacts.length){target.innerHTML='<p class="muted">Obunachilar yo‘q'+(verified?' · Taklif uchun username qidiring':'')+'</p>';return;}}
+  }
   let req=DB.from('profiles').select('id,username,display_name,avatar_url,verified,verified_until')
      .neq('id',S.u.id).order('username',{ascending:true}).range(offset,offset+49);
   if(contacts)req=req.in('id',contacts);
@@ -154,7 +156,10 @@ window.MWChat=(()=>{
  }
  async function joinPublicGroup(id){
   if(!S.u)return;
-  check(await DB.from('mw_group_members').insert({group_id:id,user_id:S.u.id}));
+  const pending=check(await DB.from('mw_group_invitations').select('id').eq('group_id',id).eq('recipient_id',S.u.id).eq('status','pending').maybeSingle());
+  if(pending)check(await DB.from('mw_group_invitations').update({status:'accepted'}).eq('id',pending.id).eq('recipient_id',S.u.id));
+  else check(await DB.from('mw_group_members').insert({group_id:id,user_id:S.u.id}));
+  notificationCount().catch(console.warn);
   await openGroup(id);await load();
  }
  async function requestJoin(id){
@@ -186,7 +191,7 @@ window.MWChat=(()=>{
   searchPeople('',true);
   if(g?.visibility!=='private')usernameStatus().catch(console.warn);
  }
- function visibility(){const w=$('#mwUsernameWrap');if(w)w.hidden=$('#mwGroupForm [name=visibility]:checked')?.value==='private'}
+ function visibility(){const w=$('#mwUsernameWrap');if(w){w.hidden=$('#mwGroupForm [name=visibility]:checked')?.value==='private';const input=$('#mwGroupUsername');if(input)input.disabled=w.hidden;}}
 
  async function usernameStatus(){
   const input=$('#mwGroupUsername'),output=$('#mwUsernameState');
@@ -265,20 +270,21 @@ window.MWChat=(()=>{
    const request=check(await DB.from('mw_group_badge_requests').select('id').eq('group_id',id).eq('status','pending').maybeSingle());
    review=!!request;
   }
-  if(!member&&!review&&g.visibility!=='public')throw Error('Bu guruhga a’zo emassiz');
+  const invitation=!member?check(await DB.from('mw_group_invitations').select('id').eq('group_id',id).eq('recipient_id',S.u.id).eq('status','pending').maybeSingle()):null;
+  if(!member&&!review&&g.visibility!=='public'&&!invitation)throw Error('Bu guruhga a’zo emassiz');
   const preview=!member&&!review;
   S.chatId='g:'+id;C.activeId=id;
   const area=$('#conversation');if(!area)return;
   area.innerHTML='<header class="chat-toolbar">'+
      '<span class="mw11-group-header-avatar">'+(g.avatar_url?'<img class="av" src="'+escape(g.avatar_url)+'" alt="">':icon('users',28))+'</span>'+
-     '<button class="linkbtn mw11-head-name" data-mw="group-info" data-id="'+escape(id)+'"><strong>'+escape(g.name)+tick({verified:C.badges.has(id)})+'</strong><small>@'+escape(g.username||'maxfiy')+'</small></button>'+
+     '<button class="linkbtn mw11-head-name" data-mw="group-info" data-id="'+escape(id)+'"><strong>'+escape(g.name)+tick({verified:C.badges.has(id)})+'</strong><small>'+(g.visibility==='public'?'@'+escape(g.username||''):'Maxfiy guruh')+'</small></button>'+
      '<button type="button" class="mw11-chat-options-btn" data-v11="options" data-thread="g:'+escape(id)+'" aria-label="Guruh sozlamalari">'+icon('more-vertical',22)+'</button></header>'+
    '<div class="messages" id="msgs"></div>'+(preview?'<div class="mw-join-footer"><button type="button" class="btn" data-mw="join-public" data-id="'+escape(id)+'">Qo‘shilish</button></div>':'<form class="chat-compose" id="mwGroupMessage" data-id="'+escape(id)+'">'+
    '<input class="field" name="body" maxlength="2000" placeholder="Xabar yozing..."><button class="btn" type="submit">'+icon('send',20)+'</button></form>');
   window.MWV11?.applyTheme?.('g:'+id).catch(console.warn);
   if(S.mw11MobileOpen)window.MWV11?.openMobileThread?.();
   renderGroups();
-  if(preview){$('#msgs').innerHTML='<p class="muted mw-preview-note">Ommaviy guruh · Xabarlarni ko‘rish va yozish uchun qo‘shiling.</p>';return;}
+  if(preview&&g.visibility!=='public'){$('#msgs').innerHTML='<p class="muted mw-preview-note">Maxfiy guruh · Xabarlarni ko‘rish uchun taklifni qabul qiling.</p>';return;}
   const rows=check(await DB.from('mw_group_messages').select('id,sender_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type,is_join_event').eq('group_id',id).order('created_at',{ascending:false}).limit(65));
   const people=await users(rows.map(m=>m.sender_id));
   if(S.chatId!=='g:'+id||!$('#msgs'))return;
@@ -297,7 +303,7 @@ window.MWChat=(()=>{
   const membership=members.some(m=>m.user_id===S.u.id);
   const badge=check(await DB.from('mw_group_badges').select('group_id,verified_until').eq('group_id',id).maybeSingle());
   const certified=!!badge&&(!badge.verified_until||new Date(badge.verified_until)>new Date());
-  const application=own&&!certified?check(await DB.from('mw_group_badge_requests').select('id,status')
+  const application=own&&group.visibility==='public'&&!certified?check(await DB.from('mw_group_badge_requests').select('id,status')
     .eq('group_id',id).eq('status','pending').maybeSingle()):null;
   const pending=own?check(await DB.from('mw_group_join_requests')
     .select('id,requester_id').eq('group_id',id).eq('status','pending')):[];
@@ -323,7 +329,7 @@ window.MWChat=(()=>{
   dialog('Guruh ma’lumotlari',`
     <div class="mw-group-top">
       ${group.avatar_url?'<img class="av large" src="'+escape(group.avatar_url)+'" alt="">':icon('users',40)}
-      <div><h3>${escape(group.name)} ${tick({verified:certified})}</h3><p>@${escape(group.username||'maxfiy')}</p><p>${escape(group.bio||'')}</p></div>
+      <div><h3>${escape(group.name)} ${tick({verified:certified})}</h3><p>${group.visibility==='public'?'@'+escape(group.username||''):'Maxfiy guruh'}</p><p>${escape(group.bio||'')}</p></div>
     </div>
     <h3>A’zolar · ${members.length}</h3>
     <div class="mw-member-list">${membersHtml}</div>
@@ -334,8 +340,8 @@ window.MWChat=(()=>{
       '<div class="buttons"><button class="btn" data-mw="review-join" data-id="'+escape(req.id)+'" data-status="accepted">Qabul qilish</button>'+
       '<button class="btn ghost" data-mw="review-join" data-id="'+escape(req.id)+'" data-status="declined">Rad etish</button></div></div>').join('')+'</div>':''}
     ${own||S.me?.is_admin?'<div class="buttons"><button class="btn ghost" data-v11="theme-open" data-thread="g:'+escape(id)+'">Chat fonini tanlash</button></div>':''}
-    ${own&&certified?'<div class="settings-row"><b>Ko‘k belgi tasdiqlangan</b><small class="muted">'+(badge.verified_until?'Amal qilish muddati: '+escape(new Date(badge.verified_until).toLocaleDateString('uz-UZ')):'Muddatsiz')+'</small></div>':''}
-    ${own&&!certified?'<div class="buttons">'+(application?'<span class="status">Ko‘k belgi arizasi tekshiruvda</span>':'<button class="btn ghost" data-mw="group-badge-apply" data-id="'+escape(id)+'">Guruh uchun ko‘k belgi arizasi</button>')+'</div>':''}
+    ${own&&group.visibility==='public'&&certified?'<div class="settings-row"><b>Ko‘k belgi tasdiqlangan</b><small class="muted">'+(badge.verified_until?'Amal qilish muddati: '+escape(new Date(badge.verified_until).toLocaleDateString('uz-UZ')):'Muddatsiz')+'</small></div>':''}
+    ${own&&group.visibility==='public'&&!certified?'<div class="buttons">'+(application?'<span class="status">Ko‘k belgi arizasi tekshiruvda</span>':'<button class="btn ghost" data-mw="group-badge-apply" data-id="'+escape(id)+'">Guruh uchun ko‘k belgi arizasi</button>')+'</div>':''}
     <div class="buttons">${own?
       '<button class="btn" data-mw="edit-group" data-id="'+escape(id)+'">Tahrirlash / a’zo qo‘shish</button>'+
       '<button class="btn danger" data-mw="delete-group" data-id="'+escape(id)+'">Guruhni o‘chirish</button>':
@@ -384,7 +390,10 @@ window.MWChat=(()=>{
   if(command==='new-chat')newChat();
   else if(command==='new-group')editGroup();
   else if(command==='more-people')await searchPeople(button.dataset.kind==='members'?C.memberQuery:C.personQuery,button.dataset.kind==='members',true);
-  else if(command==='discover-group')await discoverGroup(id);
+  else if(command==='discover-group'){
+   if(S.page!=='chat'){close();S.chatId='g:'+id;S.mw11MobileOpen=true;await go('chat');}
+   await discoverGroup(id);
+  }
   else if(command==='join-public'){button.disabled=true;try{await joinPublicGroup(id)}finally{button.disabled=false;}}
   else if(command==='request-join')await requestJoin(id);
   else if(command==='review-join'){
@@ -414,11 +423,11 @@ window.MWChat=(()=>{
   else if(command==='invites')await invitations();
   else if(command==='answer'){
    check(await DB.from('mw_group_invitations').update({status:button.dataset.status}).eq('id',id).eq('recipient_id',S.u.id));
-   close();await load();
+   await notificationCount();await notifications();
   }
   else if(command==='group-badge-apply'){
-   const g=check(await DB.from('mw_groups').select('owner_id,name').eq('id',id).single());
-   if(g.owner_id!==S.u.id)throw Error('Faqat guruh egasi ariza bera oladi');
+   const g=check(await DB.from('mw_groups').select('owner_id,name,visibility').eq('id',id).single());
+   if(g.owner_id!==S.u.id||g.visibility!=='public')throw Error('Faqat ommaviy guruh egasi ariza bera oladi');
    dialog('Guruh uchun ko‘k belgi','<form id="mwGroupBadgeForm" data-id="'+escape(id)+'">'+
     '<p>'+escape(g.name)+' uchun tasdiqlash so‘rovi</p>'+
     '<label>Guruh nima sababdan tasdiqlanishi kerak?</label>'+
@@ -536,7 +545,8 @@ window.MWChat=(()=>{
   if(ev.target.closest('.mw-avatar-button')&&ev.target.files?.[0]){
    const reader=new FileReader();reader.onload=()=>{
     const l=ev.target.closest('.mw-avatar-button');
-    l.querySelector('img')?.remove();
+    if(!l)return;
+    l.querySelectorAll('img,svg').forEach(el=>el.remove());
     l.insertAdjacentHTML('afterbegin','<img src="'+reader.result+'" alt="">');
    };reader.readAsDataURL(ev.target.files[0]);
   }
