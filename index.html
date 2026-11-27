@@ -2534,6 +2534,7 @@ body .clickable-mod:has(button:hover:not([data-act="mod"]),button:active:not([da
 #overlay .mw-share-peer>b.mw-share-name{justify-content:center}
 #overlay .mw-account-name>span:first-child,#overlay .mw-share-name>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #overlay .mw-account-name .tick,#overlay .mw-share-name .tick{flex:0 0 auto!important;width:16px!important;height:16px!important;margin:0!important}
+.mw-community-account{flex-wrap:nowrap;gap:8px}.mw-community-person{display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-align:left;background:none;border:0;color:inherit;font:inherit;padding:0;cursor:pointer}.mw-community-person .av{flex:none}.mw-community-copy{min-width:0;overflow-wrap:anywhere}.mw-community-copy strong{display:block;color:var(--text);}.mw-community-copy small{display:block;margin-top:3px}.mw-community-account .mw-mod-follow{margin-left:auto;white-space:nowrap}
 #overlay .mw-review-group-link{display:flex;align-items:center;text-align:left;gap:12px;width:100%;padding:12px;border:1px solid var(--edge);border-radius:12px;background:#172f46;color:inherit;cursor:pointer;font:inherit}#overlay .mw-review-group-link>span:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere}#overlay .mw-review-group-link small{display:block;color:var(--muted)}#overlay .mw-review-group-link .av{flex:none;width:54px;height:54px;border-radius:50%}</style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -2731,7 +2732,7 @@ function cleanButtonText(value){
 
 const S={
   u:null,me:null,page:'home',profileId:null,
-  sort:'new',category:'all',query:'',tab:'play',
+  sort:'new',category:'all',query:'',tab:'accounts',
   chatId:null,lang:localStorage.getItem('mw_lang')||'uz',
   feed:[],cache:{},channel:null,homeView:'all',visibleMods:12,gameVersion:'all',savedIds:new Set()
 };
@@ -3404,14 +3405,7 @@ function fastLoadingShell(page,id){
       <div class="fast-skeleton-line half"></div>
     </section><div class="grid" id="profilePreview"></div>`;
   }else if(page==='community'){
-    $('#app').innerHTML=`<div class="hero" style="padding:22px">
-        <h1>${ico('users',30)} ${t('community')}</h1></div>
-      <div class="tabs">
-        <button data-act="tab" data-tab="play" class="${S.tab==='play'?'on':''}">${t('play')}</button>
-        <button data-act="tab" data-tab="accounts" class="${S.tab==='accounts'?'on':''}">${t('accounts')}</button>
-      </div><div id="communityPreview" class="list">
-        <div class="fast-skeleton-line"></div><div class="fast-skeleton-line half"></div>
-      </div>`;
+    communityShell();
   }else{
     $('#app').innerHTML='<div class="empty">'+ico('package',25)+'</div>';
   }
@@ -3431,7 +3425,7 @@ async function go(page='home',id=null){
   if(page!=='chat')window.MWV11?.resetMobileThread?.();
   document.querySelectorAll('[data-go]').forEach(x=>
     x.classList.toggle('on',x.dataset.go===page));
-  const useCache=page==='community'||page==='profile';
+  const useCache=page==='profile';
   const key=screenKey(page,target);
   let cached=useCache?fastScreens.get(key):null;
   if(!cached&&page==='profile'&&S.u?.id){
@@ -3765,7 +3759,7 @@ function scheduleFastPrefetch(){
   const task=()=>{
     if(S.u?.id!==uid)return;
     getProfileData(uid).catch(console.warn);
-    prefetchCommunity().catch(console.warn);
+    // Community now lists accounts only.
   };
   if('requestIdleCallback' in window)
     requestIdleCallback(task,{timeout:3500});
@@ -5447,38 +5441,12 @@ async function download(id){
 }
 let communityReq=0;
 const COMMUNITY_TTL=60000;
-function communityShell(tab){
-  if(tab==='play'){
-    $('#app').innerHTML=`
-      <div class="hero winter-community">
-        <h1>${ico('users',32)} ${t('community')}</h1>
-        <p>${t('intro')}</p>
-      </div>
-      <div class="tabs">
-        <button class="on" data-act="tab" data-tab="play">${t('play')}</button>
-        <button data-act="tab" data-tab="accounts">${t('accounts')}</button>
-      </div>
-      <div class="bar">
-        <h2>${t('play')}</h2>
-        ${btn('invite',t('invite'))}
-      </div>
-      <div class="list" id="communityResults">
-        <div class="fast-skeleton-line"></div>
-        <div class="fast-skeleton-line half"></div>
-      </div>`;
-  }else{
-    $('#app').innerHTML=`
-      <div class="hero winter-community"><h1>${ico('users',32)} ${t('community')}</h1><p>${t('intro')}</p></div>
-      <div class="tabs">
-        <button data-act="tab" data-tab="play">${t('play')}</button>
-        <button class="on" data-act="tab" data-tab="accounts">${t('accounts')}</button>
-      </div>
-      <input class="field" id="accountSearch"
-        placeholder="Username qidirish...">
-      <div id="accountRows" class="list" style="margin-top:15px">
-        <div class="fast-skeleton-line"></div>
-      </div>`;
-  }
+function communityShell(){
+  $('#app').innerHTML=`
+    <input class="field" id="accountSearch" placeholder="Username qidirish...">
+    <div id="accountRows" class="list" style="margin-top:15px">
+      <div class="fast-skeleton-line"></div>
+    </div>`;
 }
 function cachedPeople(ids){
   const map={};
@@ -5516,70 +5484,38 @@ function renderCommunityPlays(posts,joined,mp){
 }
 async function community(){
   const request=++communityReq;
-  const tab=S.tab;
+  S.tab='accounts';
   const uid=S.u?.id||null;
-  const stillHere=()=>S.page==='community'&&S.tab===tab&&communityReq===request;
-  if(tab==='play'){
-    communityShell(tab);
-    const old=S.communityData;
-    if(old?.uid===uid&&Date.now()-old.at<COMMUNITY_TTL){
-      renderCommunityPlays(old.posts,old.joined,old.people);
-      saveScreen('community',null);
-      return;
-    }
-    const [postsResult,joinsResult]=await Promise.all([
-      DB.from('play_posts')
-        .select('id,author_id,title,details,game_version,play_mode,play_at,joins_count')
-        .order('play_at',{ascending:true}).limit(40),
-      uid?DB.from('play_joins').select('play_id').eq('user_id',uid):
-        Promise.resolve({data:[]})
-    ]);
-    check(postsResult);check(joinsResult);
-    if(!stillHere())return;
-    const posts=postsResult.data||[];
-    const joined=new Set((joinsResult.data||[]).map(x=>x.play_id));
-    const ids=posts.map(x=>x.author_id);
-    const people=cachedPeople(ids);
-    S.communityData={uid,at:Date.now(),posts,joined,people};
-    renderCommunityPlays(posts,joined,people);
-    saveScreen('community',null);
-    if(ids.length){
-      users(ids).then(mp=>{
-        if(!stillHere())return;
-        Object.assign(S.communityData.people,mp);
-        renderCommunityPlays(posts,joined,S.communityData.people);
-        saveScreen('community',null);
-      }).catch(console.warn);
-    }
-  }else{
-    communityShell(tab);
-    if(S.accounts&&S.accountsAt&&Date.now()-S.accountsAt<COMMUNITY_TTL){
-      filterAccounts();saveScreen('community',null);return;
-    }
+  const stillHere=()=>S.page==='community'&&communityReq===request&&(S.u?.id||null)===uid;
+  communityShell();
+  let profiles=S.accounts;
+  if(!profiles||!S.accountsAt||Date.now()-S.accountsAt>=COMMUNITY_TTL){
     const r=await DB.from('profiles')
       .select('id,username,avatar_url,public_id,verified,verified_until,display_name,bio,banned_permanently,banned_until')
       .order('public_id',{ascending:false}).limit(80);
     check(r);
     if(!stillHere())return;
-    S.accounts=r.data;
+    profiles=S.accounts=r.data||[];
     S.accountsAt=Date.now();
-    setCachedProfiles(r.data);
-    filterAccounts();
-    saveScreen('community',null);
+    setCachedProfiles(profiles);
   }
+  const ids=profiles.filter(p=>p.id!==uid).map(p=>p.id);
+  const follows=uid&&ids.length?check(await DB.from('follows').select('following_id').eq('follower_id',uid).in('following_id',ids)):[];
+  if(!stillHere())return;
+  S.accountFollowing=new Set((follows||[]).map(x=>x.following_id));
+  filterAccounts();
 }
 function filterAccounts(){
-  let q=($('#accountSearch')?.value||'').toLowerCase();
-  let a=(S.accounts||[]).filter(p=>p.username.includes(q));
-  $('#accountRows').innerHTML=a.length?
-    a.map(p=>`<div class="item row">
-      ${avatar(p)}
-      <div style="flex:1">
-        ${miniUser(p)}
-        <div class="muted mini">ID #${p.public_id}</div>
-      </div>
-      ${btn('user',t('profile'),p.id,'ghost')}
-    </div>`).join(''):blank()
+  const box=$('#accountRows');if(!box)return;
+  const q=($('#accountSearch')?.value||'').trim().toLowerCase();
+  const rows=(S.accounts||[]).filter(p=>(p.username||'').toLowerCase().includes(q)||(p.display_name||'').toLowerCase().includes(q));
+  box.innerHTML=rows.length?rows.map(p=>{
+    const following=!!S.accountFollowing?.has(p.id);
+    return `<div class="item row mw-community-account">
+      <button type="button" class="mw-community-person" data-act="user" data-id="${e(p.id)}">${avatar(p)}<span class="mw-community-copy"><strong>${e(p.display_name||p.username)}${tick(p)}</strong><small class="muted">ID #${e(p.public_id)}</small></span></button>
+      ${S.u?.id===p.id?'':`<button class="mw-follow-back mw-mod-follow ${following?'following':''}" data-act="socialFollow" data-id="${e(p.id)}" aria-pressed="${following}">${following?'Obunani olish':'Obuna bo‘lish'}</button>`}
+    </div>`;
+  }).join(''):blank();
 }
 async function playMembers(id){
   if(!requireUser())return;
@@ -6128,6 +6064,7 @@ async function socialFollow(id,button){
     const r=await DB.from('follows').select('following_id').eq('follower_id',uid).eq('following_id',id).maybeSingle();check(r);
     check(r.data?await DB.from('follows').delete().eq('follower_id',uid).eq('following_id',id):await DB.from('follows').insert({follower_id:uid,following_id:id}));
     invalidateProfileData();
+    if(S.accountFollowing){if(r.data)S.accountFollowing.delete(id);else S.accountFollowing.add(id);}
     document.querySelectorAll('[data-act="socialFollow"]').forEach(b=>{if(b.dataset.id===id){b.classList.toggle('following',!r.data);b.setAttribute('aria-pressed',String(!r.data));b.textContent=r.data?(b.classList.contains('mw-mod-follow')?'Obuna bo‘lish':'Obunani qaytarish'):'Obunani olish'}});
   }finally{button.disabled=false}
 }
