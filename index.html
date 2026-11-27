@@ -7100,7 +7100,7 @@ function mwInstallBackGuard(){
   mwHomeExitAt=0;mwBackBusy=true;mwBackRestoring=true;
   try{
    if($('#overlay').classList.contains('open'))await mwBackDialog();
-   else if(S.page==='chat'&&S.mw11MobileOpen){S.mw11MobileOpen=false;window.MWV11?.resetMobileThread?.();}
+   else if(S.page==='chat'&&S.mw11MobileOpen){window.MWV11?.backMobileThread?.();}
    else{
     const prev=mwPageStack.pop();
     if(prev){S.chatId=prev.chatId;await go(prev.page,prev.id);}
@@ -7194,7 +7194,7 @@ function mwInstallBackGuard(){
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=review24"></script>
-<script src="./mw-v11.js?v=10"></script>
+<script src="./mw-live-chat.js?v=review25"></script>
+<script src="./mw-v11.js?v=11"></script>
 </body>
 </html>
