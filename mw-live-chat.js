@@ -143,26 +143,19 @@ window.MWChat=(()=>{
   const groups=check(await req);
   if(!target.isConnected||String($('#mwPersonSearch')?.value||'').trim().replace(/^@/,'')!==term)return;
   target.innerHTML=groups.map(g=>'<button type="button" class="mw-member-option mw-public-group-item" data-mw="discover-group" data-id="'+escape(g.id)+'">'+
-    (g.avatar_url?'<img class="mw-public-group-avatar" src="'+escape(g.avatar_url)+'" alt="">':icon('users',32))+
+    avatar({avatar_url:g.avatar_url,username:g.name})+
     '<span><b>'+escape(g.name)+'</b><small>@'+escape(g.username||'')+
     (g.bio?' · '+escape(g.bio.slice(0,55)):'')+'</small></span></button>').join('')||
    '<p class="muted">Ommaviy guruh topilmadi.</p>';
  }
  async function discoverGroup(id){
   if(!S.u)return;
-  const group=check(await DB.from('mw_groups').select('id,name,username,bio,avatar_url,visibility')
-    .eq('id',id).eq('visibility','public').single());
-  const joined=check(await DB.from('mw_group_members').select('user_id').eq('group_id',id).eq('user_id',S.u.id).maybeSingle());
-  const old=check(await DB.from('mw_group_join_requests').select('id,status')
-    .eq('group_id',id).eq('requester_id',S.u.id).maybeSingle());
-  dialog('Ommaviy guruh',
-   '<div class="mw-group-top">'+
-   (group.avatar_url?'<img class="av large" src="'+escape(group.avatar_url)+'" alt="">':icon('users',40))+
-   '<div><h3>'+escape(group.name)+'</h3><p>@'+escape(group.username||'')+'</p></div></div>'+
-   '<p>'+escape(group.bio||'')+'</p>'+
-   (joined?'<button class="btn" data-mw="open" data-id="'+escape(id)+'">Guruhni ochish</button>':
-    old?.status==='pending'?'<p class="mw-request-pending">Qo‘shilish so‘rovi yuborilgan, egasining javobi kutilmoqda</p>':
-    '<button class="btn" data-mw="request-join" data-id="'+escape(id)+'">Qo‘shilish uchun so‘rov yuborish</button>'));
+  close();S.mw11MobileOpen=true;await openGroup(id);
+ }
+ async function joinPublicGroup(id){
+  if(!S.u)return;
+  check(await DB.from('mw_group_members').insert({group_id:id,user_id:S.u.id}));
+  await openGroup(id);await load();
  }
  async function requestJoin(id){
   if(!S.u)return;
@@ -260,30 +253,33 @@ window.MWChat=(()=>{
   else if(joinedNow.length)toast(joinedNow.length+' a’zo guruhga qo‘shildi');
   if(failed)toast(failed+' ta taklif yuborilmadi');
  }
- const groupBubble=(m,p,rows)=>'<div class="mw11-group-message">'+
+ const groupBubble=(m,p,rows)=>m.is_join_event?'<div class="mw-join-event"><button type="button" data-act="user" data-id="'+escape(m.sender_id)+'">'+escape(p?.display_name||p?.username||'Ishtirokchi')+'</button> guruhga qo‘shildi</div>':'<div class="mw11-group-message">'+
    (m.sender_id!==S.u.id?'<span class="mw11-group-sender">'+escape(p?.display_name||p?.username||'Ishtirokchi')+'</span>':'')+
    (window.MWV11?.bubble?.(m,'group',rows)||'<div class="bubble">'+escape(m.body)+'</div>')+'</div>';
  async function openGroup(id){
   if(!S.u||S.page!=='chat')return;
   const g=check(await DB.from('mw_groups').select('*').eq('id',id).single());
   const member=check(await DB.from('mw_group_members').select('user_id').eq('group_id',id).eq('user_id',S.u.id).maybeSingle());
-  if(!member){
-   if(!(S.me?.is_admin===true&&S.me.username==='admin'))throw Error('Bu guruhga a’zo emassiz');
+  let review=false;
+  if(!member&&S.me?.is_admin===true&&S.me.username==='admin'){
    const request=check(await DB.from('mw_group_badge_requests').select('id').eq('group_id',id).eq('status','pending').maybeSingle());
-   if(!request)throw Error('Chat arizasi tekshiruvda emas');
+   review=!!request;
   }
+  if(!member&&!review&&g.visibility!=='public')throw Error('Bu guruhga a’zo emassiz');
+  const preview=!member&&!review;
   S.chatId='g:'+id;C.activeId=id;
   const area=$('#conversation');if(!area)return;
   area.innerHTML='<header class="chat-toolbar">'+
      '<span class="mw11-group-header-avatar">'+(g.avatar_url?'<img class="av" src="'+escape(g.avatar_url)+'" alt="">':icon('users',28))+'</span>'+
      '<button class="linkbtn mw11-head-name" data-mw="group-info" data-id="'+escape(id)+'"><strong>'+escape(g.name)+tick({verified:C.badges.has(id)})+'</strong><small>@'+escape(g.username||'maxfiy')+'</small></button>'+
      '<button type="button" class="mw11-chat-options-btn" data-v11="options" data-thread="g:'+escape(id)+'" aria-label="Guruh sozlamalari">'+icon('more-vertical',22)+'</button></header>'+
-   '<div class="messages" id="msgs"></div><form class="chat-compose" id="mwGroupMessage" data-id="'+escape(id)+'">'+
-   '<input class="field" name="body" maxlength="2000" placeholder="Xabar yozing..."><button class="btn" type="submit">'+icon('send',20)+'</button></form>';
+   '<div class="messages" id="msgs"></div>'+(preview?'<div class="mw-join-footer"><button type="button" class="btn" data-mw="join-public" data-id="'+escape(id)+'">Qo‘shilish</button></div>':'<form class="chat-compose" id="mwGroupMessage" data-id="'+escape(id)+'">'+
+   '<input class="field" name="body" maxlength="2000" placeholder="Xabar yozing..."><button class="btn" type="submit">'+icon('send',20)+'</button></form>');
   window.MWV11?.applyTheme?.('g:'+id).catch(console.warn);
   if(S.mw11MobileOpen)window.MWV11?.openMobileThread?.();
   renderGroups();
-  const rows=check(await DB.from('mw_group_messages').select('id,sender_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type').eq('group_id',id).order('created_at',{ascending:false}).limit(65));
+  if(preview){$('#msgs').innerHTML='<p class="muted mw-preview-note">Ommaviy guruh · Xabarlarni ko‘rish va yozish uchun qo‘shiling.</p>';return;}
+  const rows=check(await DB.from('mw_group_messages').select('id,sender_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type,is_join_event').eq('group_id',id).order('created_at',{ascending:false}).limit(65));
   const people=await users(rows.map(m=>m.sender_id));
   if(S.chatId!=='g:'+id||!$('#msgs'))return;
   const ordered=rows.slice().reverse();
@@ -389,6 +385,7 @@ window.MWChat=(()=>{
   else if(command==='new-group')editGroup();
   else if(command==='more-people')await searchPeople(button.dataset.kind==='members'?C.memberQuery:C.personQuery,button.dataset.kind==='members',true);
   else if(command==='discover-group')await discoverGroup(id);
+  else if(command==='join-public'){button.disabled=true;try{await joinPublicGroup(id)}finally{button.disabled=false;}}
   else if(command==='request-join')await requestJoin(id);
   else if(command==='review-join'){
    const row=check(await DB.from('mw_group_join_requests').update({status:button.dataset.status,decided_at:new Date().toISOString()})
