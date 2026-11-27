@@ -70,7 +70,7 @@ window.MWChat=(()=>{
   for(const g of C.groups){
    const html='<button type="button" class="chat-peer mw-group-item '+(S.chatId==='g:'+g.id?'active':'')+'" data-mw="open" data-id="'+escape(g.id)+'">'+
     '<span class="account-avatar">'+(g.avatar_url?'<img class="av" src="'+escape(g.avatar_url)+'" alt="">':icon('users',25))+'</span>'+
-    '<span class="peer-text"><b>'+escape(g.name)+(C.badges.has(g.id)?'<span class="mw-verified-chat" title="Tasdiqlangan guruh">✓</span>':'')+'</b><small>'+escape(C.preview[g.id]||('@'+(g.username||'maxfiy')))+'</small></span></button>';
+    '<span class="peer-text"><b>'+escape(g.name)+tick({verified:C.badges.has(g.id)})+'</b><small>'+escape(C.preview[g.id]||('@'+(g.username||'maxfiy')))+'</small></span></button>';
    rows.insertAdjacentHTML('beforeend',html);
   }
   // Keep world, direct and group threads together; newest activity first.
@@ -272,7 +272,7 @@ window.MWChat=(()=>{
   const area=$('#conversation');if(!area)return;
   area.innerHTML='<header class="chat-toolbar">'+
      '<span class="mw11-group-header-avatar">'+(g.avatar_url?'<img class="av" src="'+escape(g.avatar_url)+'" alt="">':icon('users',28))+'</span>'+
-     '<button class="linkbtn mw11-head-name" data-mw="group-info" data-id="'+escape(id)+'"><strong>'+escape(g.name)+(C.badges.has(id)?'<span class="mw-verified-chat" title="Tasdiqlangan guruh">✓</span>':'')+'</strong><small>@'+escape(g.username||'maxfiy')+'</small></button>'+
+     '<button class="linkbtn mw11-head-name" data-mw="group-info" data-id="'+escape(id)+'"><strong>'+escape(g.name)+tick({verified:C.badges.has(id)})+'</strong><small>@'+escape(g.username||'maxfiy')+'</small></button>'+
      '<button type="button" class="mw11-chat-options-btn" data-v11="options" data-thread="g:'+escape(id)+'" aria-label="Guruh sozlamalari">'+icon('more-vertical',22)+'</button></header>'+
    '<div class="messages" id="msgs"></div><form class="chat-compose" id="mwGroupMessage" data-id="'+escape(id)+'">'+
    '<input class="field" name="body" maxlength="2000" placeholder="Xabar yozing..."><button class="btn" type="submit">'+icon('send',20)+'</button></form>';
@@ -323,7 +323,7 @@ window.MWChat=(()=>{
   dialog('Guruh ma’lumotlari',`
     <div class="mw-group-top">
       ${group.avatar_url?'<img class="av large" src="'+escape(group.avatar_url)+'" alt="">':icon('users',40)}
-      <div><h3>${escape(group.name)} ${certified?'<span class="mw-verified-chat">✓</span>':''}</h3><p>@${escape(group.username||'maxfiy')}</p><p>${escape(group.bio||'')}</p></div>
+      <div><h3>${escape(group.name)} ${tick({verified:certified})}</h3><p>@${escape(group.username||'maxfiy')}</p><p>${escape(group.bio||'')}</p></div>
     </div>
     <h3>A’zolar · ${members.length}</h3>
     <div class="mw-member-list">${membersHtml}</div>
