@@ -2536,6 +2536,7 @@ body .clickable-mod:has(button:hover:not([data-act="mod"]),button:active:not([da
 #overlay .mw-account-name .tick,#overlay .mw-share-name .tick{flex:0 0 auto!important;width:16px!important;height:16px!important;margin:0!important}
 .mw-community-account{flex-wrap:nowrap;gap:8px}.mw-community-person{display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-align:left;background:none;border:0;color:inherit;font:inherit;padding:0;cursor:pointer}.mw-community-person .av{flex:none}.mw-community-copy{min-width:0;overflow-wrap:anywhere}.mw-community-copy strong{display:block;color:var(--text);}.mw-community-copy small{display:block;margin-top:3px}.mw-community-account .mw-mod-follow{margin-left:auto;white-space:nowrap}
 #overlay .mw-member-option>.av,.mw-global-person>.av{flex:0 0 46px!important;width:46px!important;min-width:46px!important;height:46px!important;border-radius:50%!important;overflow:hidden;display:grid;place-items:center}#overlay .mw-member-option>.av img,.mw-global-person>.av img{width:100%;height:100%;object-fit:cover;border-radius:50%}#overlay .mw-public-group-item{background:transparent!important;border:0!important;border-bottom:1px solid #ffffff15!important;border-radius:0!important}#app .chat-peer[hidden],#app #mw11NoResults[hidden]{display:none!important}.mw-global-person{margin:5px 0;background:transparent;border:0;border-bottom:1px solid #ffffff15;border-radius:0}.mw-join-event{align-self:center;max-width:90%;border-radius:18px;background:#29445bd9;color:#d9e9f6;padding:5px 12px;font-size:12px;margin:6px auto;text-align:center}.mw-join-event button{background:none;border:0;color:inherit;font:inherit;font-weight:700;padding:0;cursor:pointer}.mw-join-footer{padding:12px;flex:none;display:flex;justify-content:center}.mw-join-footer .btn{width:100%}.mw-preview-note{text-align:center;margin:auto}.mw-dm-limit{padding:10px;text-align:center;font-size:12px;color:var(--muted);flex:none}
+#overlay #mwGroupForm .mw-group-pick-person{display:flex!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:10px!important;min-height:64px!important;margin:0!important}#overlay #mwGroupForm .mw-group-pick-copy{display:block!important;flex:1;min-width:0;overflow-wrap:anywhere}#overlay #mwGroupForm .mw-group-pick-copy b,#overlay #mwGroupForm .mw-group-pick-copy small{display:block;line-height:1.35}#overlay #mwGroupForm .mw-check-member{flex:0 0 19px!important;width:19px!important;height:19px!important;margin:0!important}#overlay #mwGroupForm .mw-avatar-button{display:grid!important;place-items:center;position:relative;isolation:isolate}#overlay #mwGroupForm .mw-avatar-button>img{position:absolute;inset:0;width:100%!important;height:100%!important}#overlay #mwGroupForm .mw-avatar-button:has(img)>svg{display:none!important}#overlay #mwUsernameWrap[hidden]{display:none!important}.mw-invite-notice{padding:10px;border:1px solid var(--edge);border-radius:13px;margin:8px 0}.mw-invite-open{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;color:inherit;text-align:left;padding:0;font:inherit;cursor:pointer}.mw-invite-open .av{flex:0 0 44px;width:44px;height:44px}.mw-invite-open small{display:block;color:var(--muted)}.mw-invite-notice .buttons{justify-content:flex-end;gap:8px}.mw-invite-notice .mw-invite-yes{background:#2487cb!important;color:white!important}.mw-invite-notice .mw-invite-no{background:#9e3546!important;color:white!important}
 #overlay .mw-review-group-link{display:flex;align-items:center;text-align:left;gap:12px;width:100%;padding:12px;border:1px solid var(--edge);border-radius:12px;background:#172f46;color:inherit;cursor:pointer;font:inherit}#overlay .mw-review-group-link>span:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere}#overlay .mw-review-group-link small{display:block;color:var(--muted)}#overlay .mw-review-group-link .av{flex:none;width:54px;height:54px;border-radius:50%}</style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -5901,9 +5902,9 @@ const SOCIAL_KINDS=['follow','like','comment'];
 async function notificationCount(){
   const uid=S.u?.id;
   if(!uid){$('#alertCount').hidden=true;$('#socialCount').hidden=true;return}
-  const counts=await Promise.all([REQUEST_KINDS,SOCIAL_KINDS].map(k=>DB.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',uid).in('kind',k).eq('is_read',false)));
+  const counts=await Promise.all([... [REQUEST_KINDS,SOCIAL_KINDS].map(k=>DB.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',uid).in('kind',k).eq('is_read',false)),DB.from('mw_group_invitations').select('id',{count:'exact',head:true}).eq('recipient_id',uid).eq('status','pending')]);
   if(S.u?.id!==uid)return;
-  ['alertCount','socialCount'].forEach((id,i)=>{const n=counts[i].count||0;$('#'+id).hidden=!n;$('#'+id).textContent=n>99?'99+':String(n)});
+  ['alertCount','socialCount'].forEach((id,i)=>{const n=(counts[i].count||0)+(i===0?(counts[2].count||0):0);$('#'+id).hidden=!n;$('#'+id).textContent=n>99?'99+':String(n)});
 }
 async function onIncomingDirect(msg){
   if(!S.u||msg.sender_id===S.u.id)return;
@@ -6049,7 +6050,11 @@ async function notifications(){
   check(r);if(S.u?.id!==uid)return;
   const people=await users(r.data.map(n=>n.actor_id)).catch(()=>({}));if(S.u?.id!==uid)return;
   const groups=await noticeGroups(r.data);if(S.u?.id!==uid)return;
-  dialog(t('notifications'),`<div class="mw-notice-toolbar">${btn('markRead',t('mark'))}</div><div class="activity-list">${r.data.map(n=>activityCard(n,people,groups)).join('')||blank()}</div>`);
+  const invites=check(await DB.from('mw_group_invitations').select('id,group_id').eq('recipient_id',uid).eq('status','pending'));
+  const invited=invites.length?check(await DB.from('mw_groups').select('id,name,username,avatar_url,visibility').in('id',invites.map(i=>i.group_id))):[];
+  if(S.u?.id!==uid)return;
+  const cards=invites.map(i=>{const g=invited.find(x=>x.id===i.group_id);if(!g)return '';return `<article class="mw-invite-notice"><button class="mw-invite-open" data-mw="discover-group" data-id="${e(g.id)}">${avatar({avatar_url:g.avatar_url,username:g.name})}<span><strong>${e(g.name)}</strong>${g.visibility==='public'?'<small>@'+e(g.username)+'</small>':''}</span></button><div class="buttons"><button class="btn mw-invite-yes" data-mw="answer" data-id="${e(i.id)}" data-status="accepted">Ruxsat</button><button class="btn mw-invite-no" data-mw="answer" data-id="${e(i.id)}" data-status="declined">Rad etish</button></div></article>`;}).join('');
+  dialog(t('notifications'),`<div class="mw-notice-toolbar">${btn('markRead',t('mark'))}</div><div class="activity-list">${cards+(r.data.map(n=>activityCard(n,people,groups)).join(''))||blank()}</div>`);
 }
 async function socialActivity(){
   if(!requireUser())return;
@@ -6227,6 +6232,8 @@ async function settings(){
   const [fresh,badge]=await Promise.all([DB.from('profiles').select('verified,verified_until').eq('id',uid).maybeSingle(),DB.from('verification_requests').select('id').eq('user_id',uid).eq('status','pending').maybeSingle()]);
   check(fresh);check(badge);if(S.u?.id!==uid)return;if(fresh.data&&S.me)Object.assign(S.me,fresh.data);
   const on=notificationEnabled()&&pushSupported()&&Notification.permission==='granted';
+  const approval=check(await DB.from('mw_chat_settings').select('require_group_approval').eq('user_id',uid).maybeSingle());
+  if(S.u?.id!==uid)return;
   dialog(t('settings'),`
     <div class="settings-stack">
       <button class="mw-settings-account" data-act="accounts">${avatar(S.me)}<span><strong>@${e(S.me?.username||"Profil")}${tick(S.me)}</strong></span><span>${ico("arrow",18)}</span></button>
@@ -6241,6 +6248,7 @@ async function settings(){
           <option value="en" ${S.lang==='en'?'selected':''}>English</option>
         </select>
       </div>
+      <div class="settings-row"><label class="mw-switch-row"><span><strong>Guruhga qo‘shish uchun ruxsatim</strong><small>Yoqilsa, avval taklif yuboriladi.</small></span><input type="checkbox" id="mwGroupApprovalSetting" ${approval?.require_group_approval!==false?'checked':''}></label></div>
       <h3>Bildirishnomalar va ilova</h3>
       <div class="settings-row">
         <b>${ico('bell',19)} Bildirishnomalar</b>
@@ -6268,6 +6276,11 @@ async function settings(){
       <button class="mw-logout" data-act="logout">Chiqish</button>
     </div>`);
 }
+document.addEventListener('change',async event=>{
+ const input=event.target;if(input.id!=='mwGroupApprovalSetting'||!S.u)return;
+ const uid=S.u.id,value=input.checked;input.disabled=true;
+ try{check(await DB.from('mw_chat_settings').upsert({user_id:uid,require_group_approval:value}));toast('Sozlama saqlandi');}catch(err){input.checked=!value;toast(err.message)}finally{input.disabled=false;}
+});
 async function badgeRequest(){
   if(!requireUser())return;const uid=S.u.id;const pending=await DB.from('verification_requests').select('id').eq('user_id',uid).eq('status','pending').maybeSingle();check(pending);if(S.u?.id!==uid)return;if(pending.data){toast('Arizangiz tekshiruvda');await settings();return}
   dialog(t('request'),`
@@ -7212,7 +7225,7 @@ function mwInstallBackGuard(){
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=contacts26"></script>
+<script src="./mw-live-chat.js?v=groups27"></script>
 <script src="./mw-v11.js?v=12"></script>
 </body>
 </html>
