@@ -337,9 +337,7 @@ window.MWV11=(()=>{
     const rows=document.getElementById('chatRows');
     if(!rows||S.page!=='chat')return;
     const title=document.querySelector('.chat-title');
-    if(title&&!document.getElementById('mw11SavedOpen')){
-      title.insertAdjacentHTML('beforeend','<button type="button" class="btn small ghost" id="mw11SavedOpen" data-v11="saved-open">'+ico('bookmark',17)+' '+T('save')+'</button>');
-    }
+    document.getElementById('mw11SavedOpen')?.remove();
     if(title&&!document.getElementById('mw11InboxControls')){
       title.insertAdjacentHTML('afterend','<div class="mw11-inbox-controls" id="mw11InboxControls">'+
         '<input type="search" id="mw11InboxSearch" class="field" placeholder="'+T('search')+'" value="'+esc(V.search)+'">'+
@@ -739,7 +737,10 @@ window.MWV11=(()=>{
   function resetMobileThread(){
     S.mw11MobileOpen=false;
     document.body.classList.remove('mw11-thread-mode');
-    document.querySelector('#app')?.classList.remove('mw11-mobile-thread-open','mw11-chat-page');
+    const app=document.querySelector('#app');
+    app?.classList.remove('mw11-mobile-thread-open');
+    app?.classList.toggle('mw11-chat-page',S.page==='chat');
+    if(S.page==='chat')window.scrollTo(0,0);
   }
   function prepareChatScreen(){
     document.querySelector('#app')?.classList.add('mw11-chat-page');
