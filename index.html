@@ -2535,6 +2535,7 @@ body .clickable-mod:has(button:hover:not([data-act="mod"]),button:active:not([da
 #overlay .mw-account-name>span:first-child,#overlay .mw-share-name>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #overlay .mw-account-name .tick,#overlay .mw-share-name .tick{flex:0 0 auto!important;width:16px!important;height:16px!important;margin:0!important}
 .mw-community-account{flex-wrap:nowrap;gap:8px}.mw-community-person{display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-align:left;background:none;border:0;color:inherit;font:inherit;padding:0;cursor:pointer}.mw-community-person .av{flex:none}.mw-community-copy{min-width:0;overflow-wrap:anywhere}.mw-community-copy strong{display:block;color:var(--text);}.mw-community-copy small{display:block;margin-top:3px}.mw-community-account .mw-mod-follow{margin-left:auto;white-space:nowrap}
+#overlay .mw-member-option>.av,.mw-global-person>.av{flex:0 0 46px!important;width:46px!important;min-width:46px!important;height:46px!important;border-radius:50%!important;overflow:hidden;display:grid;place-items:center}#overlay .mw-member-option>.av img,.mw-global-person>.av img{width:100%;height:100%;object-fit:cover;border-radius:50%}#overlay .mw-public-group-item{background:transparent!important;border:0!important;border-bottom:1px solid #ffffff15!important;border-radius:0!important}#app .chat-peer[hidden],#app #mw11NoResults[hidden]{display:none!important}.mw-global-person{margin:5px 0;background:transparent;border:0;border-bottom:1px solid #ffffff15;border-radius:0}.mw-join-event{align-self:center;max-width:90%;border-radius:18px;background:#29445bd9;color:#d9e9f6;padding:5px 12px;font-size:12px;margin:6px auto;text-align:center}.mw-join-event button{background:none;border:0;color:inherit;font:inherit;font-weight:700;padding:0;cursor:pointer}.mw-join-footer{padding:12px;flex:none;display:flex;justify-content:center}.mw-join-footer .btn{width:100%}.mw-preview-note{text-align:center;margin:auto}.mw-dm-limit{padding:10px;text-align:center;font-size:12px;color:var(--muted);flex:none}
 #overlay .mw-review-group-link{display:flex;align-items:center;text-align:left;gap:12px;width:100%;padding:12px;border:1px solid var(--edge);border-radius:12px;background:#172f46;color:inherit;cursor:pointer;font:inherit}#overlay .mw-review-group-link>span:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere}#overlay .mw-review-group-link small{display:block;color:var(--muted)}#overlay .mw-review-group-link .av{flex:none;width:54px;height:54px;border-radius:50%}</style>
 <link rel="stylesheet" href="./winter.css?v=20.2">
 <script>
@@ -5717,6 +5718,20 @@ function chatBubble(body,mine,whenText,extra=''){
     <small>${whenText} ${extra}</small>
   </div>`;
 }
+async function mwRefreshDmComposer(id){
+  const uid=S.u?.id;if(!uid)return;
+  const [f,history]=await Promise.all([
+    DB.from('follows').select('follower_id').eq('follower_id',id).eq('following_id',uid).maybeSingle(),
+    DB.from('mw_dm_contact_history').select('sender_id').eq('sender_id',uid).eq('recipient_id',id).maybeSingle()
+  ]);
+  if(f.error||history.error||S.u?.id!==uid||S.page!=='chat'||S.chatId!==id)return;
+  const form=$('#msgForm');if(!form||form.dataset.id!==id)return;
+  $('#mwDmLimit')?.remove();
+  form.dataset.limited=String(!f.data);
+  const blocked=!f.data&&!!history.data;
+  for(const input of form.querySelectorAll('input,button'))input.disabled=blocked;
+  if(!f.data)form.insertAdjacentHTML('beforebegin','<div class="mw-dm-limit" id="mwDmLimit">'+(blocked?'U sizga obuna bo‘lmaguncha boshqa xabar yubora olmaysiz.':'Faqat bitta xabar yuborishingiz mumkin.')+'</div>');
+}
 async function conversation(id){
   if(!S.u||id==='world')return;
   S.chatId=id;
@@ -5767,6 +5782,7 @@ async function conversation(id){
   chatRows();
   mwFriendPresence(id,id).catch(console.warn);
   window.MWV11?.markRead?.('u:'+id).catch(console.warn);
+  mwRefreshDmComposer(id).catch(console.warn);
 }
 async function worldConversation(){
   if(!requireUser())return;
@@ -6837,6 +6853,7 @@ window.addEventListener('submit',async ev=>{
       const files=window.MWV11?.selectedAttachments?.(f)||[];
       if(!text&&!files.length)return;
       const mediaList=files.length?files:[null];
+      if(f.dataset.limited==='true'&&mediaList.length>1){toast('Bir martalik so‘rovda faqat bitta xabar yuborish mumkin');return;}
       const sent=[];
       for(let i=0;i<mediaList.length;i++){
         const media=mediaList[i]?await window.MWV11.uploadAttachment(f,'dm',f.dataset.id,mediaList[i]):{};
@@ -6859,6 +6876,7 @@ window.addEventListener('submit',async ev=>{
       S.mwDirectTimes=S.mwDirectTimes||{};S.mwDirectTimes[f.dataset.id]=Date.now();
       S.mwLastMessage=S.mwLastMessage||{};S.mwLastMessage[f.dataset.id]='Siz: '+sent[sent.length-1].body.slice(0,65);
       markChatSeen(f.dataset.id);chatRows();
+      mwRefreshDmComposer(f.dataset.id).catch(console.warn);
       mwMaybeExpireImages().catch(console.warn);
       if(!S.chatPeers?.includes(f.dataset.id)){
         S.chatPeers=[f.dataset.id,...(S.chatPeers||[])];
@@ -7194,7 +7212,7 @@ function mwInstallBackGuard(){
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=review25"></script>
-<script src="./mw-v11.js?v=11"></script>
+<script src="./mw-live-chat.js?v=contacts26"></script>
+<script src="./mw-v11.js?v=12"></script>
 </body>
 </html>
