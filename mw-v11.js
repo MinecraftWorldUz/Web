@@ -4,9 +4,9 @@ window.MWV11=(()=>{
   const V={rows:new Map(),prefs:new Map(),reply:null,filter:'all',search:'',activeMessage:null,loadedFor:null,longPressTimer:null,longPressTriggered:false,mediaCache:new Map(),mediaUser:null,readTimes:new Map()};
   const esc=e;
   const messages={
-    uz:{all:'Barchasi',unread:'O‘qilmagan',archive:'Arxiv',search:'Chat yoki @username qidirish',reply:'Javob berish',edit:'Tahrirlash',remove:'O‘chirish',copy:'Nusxalash',forward:'Uzatish',reaction:'Reaksiya',save:'Saqlash',pinned:'Mahkamlangan',pin:'Mahkamlash',unpin:'Mahkamlashni olib tashlash',mute:'Ovozsiz',unmute:'Ovozni yoqish',arch:'Arxivlash',unarch:'Arxivdan chiqarish',deleteAsk:'Xabarni o‘chirasizmi?',confirm:'Saqlash',replying:'Javob',searchMsg:'Xabar ichidan qidirish',empty:'Hozircha hech narsa topilmadi',newMsg:'Yangi xabar',noReply:'Xabar',self:'Siz'},
-    ru:{all:'Все',unread:'Непрочитанные',archive:'Архив',search:'Поиск чатов или @username',reply:'Ответить',edit:'Изменить',remove:'Удалить',copy:'Копировать',forward:'Переслать',reaction:'Реакция',save:'Сохранить',pinned:'Закреплено',pin:'Закрепить',unpin:'Открепить',mute:'Без звука',unmute:'Включить звук',arch:'В архив',unarch:'Из архива',deleteAsk:'Удалить сообщение?',confirm:'Сохранить',replying:'Ответ',searchMsg:'Поиск в сообщениях',empty:'Ничего не найдено',newMsg:'Новое сообщение',noReply:'Сообщение',self:'Вы'},
-    en:{all:'All',unread:'Unread',archive:'Archive',search:'Search chats or @username',reply:'Reply',edit:'Edit',remove:'Delete',copy:'Copy',forward:'Forward',reaction:'React',save:'Save',pinned:'Pinned',pin:'Pin',unpin:'Unpin',mute:'Mute',unmute:'Unmute',arch:'Archive',unarch:'Unarchive',deleteAsk:'Delete this message?',confirm:'Save',replying:'Reply',searchMsg:'Find messages',empty:'Nothing found',newMsg:'New message',noReply:'Message',self:'You'}
+    uz:{all:'Barchasi',unread:'O‘qilmagan',archive:'Arxiv',requests:'So‘rovlar',search:'Chat yoki @username qidirish',reply:'Javob berish',edit:'Tahrirlash',remove:'O‘chirish',copy:'Nusxalash',forward:'Uzatish',reaction:'Reaksiya',save:'Saqlash',pinned:'Mahkamlangan',pin:'Mahkamlash',unpin:'Mahkamlashni olib tashlash',mute:'Ovozsiz',unmute:'Ovozni yoqish',arch:'Arxivlash',unarch:'Arxivdan chiqarish',deleteAsk:'Xabarni o‘chirasizmi?',confirm:'Saqlash',replying:'Javob',searchMsg:'Xabar ichidan qidirish',empty:'Hozircha hech narsa topilmadi',newMsg:'Yangi xabar',noReply:'Xabar',self:'Siz'},
+    ru:{all:'Все',unread:'Непрочитанные',archive:'Архив',requests:'Запросы',search:'Поиск чатов или @username',reply:'Ответить',edit:'Изменить',remove:'Удалить',copy:'Копировать',forward:'Переслать',reaction:'Реакция',save:'Сохранить',pinned:'Закреплено',pin:'Закрепить',unpin:'Открепить',mute:'Без звука',unmute:'Включить звук',arch:'В архив',unarch:'Из архива',deleteAsk:'Удалить сообщение?',confirm:'Сохранить',replying:'Ответ',searchMsg:'Поиск в сообщениях',empty:'Ничего не найдено',newMsg:'Новое сообщение',noReply:'Сообщение',self:'Вы'},
+    en:{all:'All',unread:'Unread',archive:'Archive',requests:'Requests',search:'Search chats or @username',reply:'Reply',edit:'Edit',remove:'Delete',copy:'Copy',forward:'Forward',reaction:'React',save:'Save',pinned:'Pinned',pin:'Pin',unpin:'Unpin',mute:'Mute',unmute:'Unmute',arch:'Archive',unarch:'Unarchive',deleteAsk:'Delete this message?',confirm:'Save',replying:'Reply',searchMsg:'Find messages',empty:'Nothing found',newMsg:'New message',noReply:'Message',self:'You'}
   };
   const T=k=>(messages[S.lang]||messages.uz)[k]||messages.uz[k]||k;
   const scopeKey=scope=>scope==='world'?'world':scope==='group'?S.chatId:'u:'+S.chatId;
@@ -333,6 +333,35 @@ window.MWV11=(()=>{
     }
     decorateInbox();
   }
+  async function refreshRequestPeers(force=false){
+    const uid=authUser();if(!uid)return;
+    if(V.requestUid!==uid){V.requestUid=uid;V.requestPeers=new Set();V.requestAt=0;}
+    if(!force&&Date.now()-(V.requestAt||0)<1500)return;
+    V.requestAt=Date.now();
+    const [incoming,following]=await Promise.all([
+      DB.from('mw_dm_contact_history').select('sender_id').eq('recipient_id',uid),
+      DB.from('follows').select('following_id').eq('follower_id',uid)
+    ]);
+    if(incoming.error||following.error||authUser()!==uid)return;
+    const own=new Set((following.data||[]).map(x=>x.following_id));
+    const next=new Set((incoming.data||[]).map(x=>x.sender_id).filter(id=>!own.has(id)));
+    const changed=next.size!==V.requestPeers.size||[...next].some(id=>!V.requestPeers.has(id));
+    V.requestPeers=next;
+    if(changed&&S.page==='chat')decorateInbox();
+  }
+  async function searchAllPeople(){
+    const q=V.search.trim().replace(/^@/,'').replace(/[%*,()]/g,'').slice(0,30);
+    const uid=authUser();if(!q||!uid)return;
+    const req=(V.peopleSeq||0)+1;V.peopleSeq=req;
+    const p=check(await DB.from('profiles').select('id,username,display_name,avatar_url,verified,verified_until').neq('id',uid).or('username.ilike.%'+q+'%,display_name.ilike.%'+q+'%').limit(50));
+    const settings=p.length?check(await DB.from('mw_chat_settings').select('user_id,discoverable').in('user_id',p.map(x=>x.id))):[];
+    if(req!==V.peopleSeq||S.page!=='chat'||authUser()!==uid||!V.search.trim())return;
+    const rows=document.getElementById('chatRows');if(!rows)return;
+    const hidden=new Set(settings.filter(x=>x.discoverable===false).map(x=>x.user_id));
+    const visible=p.filter(x=>!hidden.has(x.id)&&!(S.chatPeers||[]).includes(x.id));
+    document.getElementById('mw11GlobalResults')?.remove();
+    rows.insertAdjacentHTML('beforeend','<div id="mw11GlobalResults"><h3 class="mw-public-groups-title">Akkauntlar</h3>'+ (visible.map(x=>'<button type="button" class="mw-member-option mw-global-person" data-act="chatStart" data-id="'+esc(x.id)+'">'+avatar(x)+'<span><b>'+esc(x.display_name||x.username)+tick(x)+'</b><small>@'+esc(x.username)+'</small></span></button>').join('')||'<p class="muted">Boshqa akkaunt topilmadi</p>')+'</div>');
+  }
   function decorateInbox(){
     const rows=document.getElementById('chatRows');
     if(!rows||S.page!=='chat')return;
@@ -341,9 +370,10 @@ window.MWV11=(()=>{
     if(title&&!document.getElementById('mw11InboxControls')){
       title.insertAdjacentHTML('afterend','<div class="mw11-inbox-controls" id="mw11InboxControls">'+
         '<input type="search" id="mw11InboxSearch" class="field" placeholder="'+T('search')+'" value="'+esc(V.search)+'">'+
-        '<div class="mw11-tabs">'+['all','unread','archive'].map(k=>'<button type="button" data-v11="filter" data-filter="'+k+'" class="'+(V.filter===k?'active':'')+'">'+T(k)+'</button>').join('')+'</div></div>');
+        '<div class="mw11-tabs">'+['all','unread','archive','requests'].map(k=>'<button type="button" data-v11="filter" data-filter="'+k+'" class="'+(V.filter===k?'active':'')+'">'+T(k)+'</button>').join('')+'</div></div>');
     }
     const list=[...rows.querySelectorAll('.chat-peer')];
+    refreshRequestPeers().catch(console.warn);
     const activity=p=>{
       const id=p.dataset.id||'';
       const key=p.classList.contains('mw-group-item')?'g:'+id:id==='world'?'world':'u:'+id;
@@ -361,9 +391,9 @@ window.MWV11=(()=>{
       const label=(p.textContent||'').toLowerCase();
       const unread=!!p.querySelector('.chat-unread')||
         (thread.startsWith('g:')&&activity(p)>new Date(pref.last_read_at||'1970-01-01').getTime());
-      p.hidden=(!((V.filter==='archive')===!!pref.archived))||
-        (V.filter==='unread'&&!unread)||
-        (V.search&&!label.includes(V.search.toLowerCase()));
+      const isRequest=thread.startsWith('u:')&&V.requestPeers?.has(p.dataset.id);
+      p.hidden=(V.filter==='requests'?!isRequest:!!isRequest||((V.filter==='archive')!==!!pref.archived))||
+        (V.filter==='unread'&&!unread)||(V.search&&!label.includes(V.search.toLowerCase()));
       const old=p.querySelector('.mw11-chat-options');if(old)old.remove();
       p.dataset.mw11Thread=thread;
       p.title='Chatni ochish · Sozlamalar uchun bosib turing';
@@ -375,7 +405,9 @@ window.MWV11=(()=>{
     }
     let empty=document.getElementById('mw11NoResults');
     if(!empty){rows.insertAdjacentHTML('beforeend','<p class="muted mw11-no-results" id="mw11NoResults">'+T('empty')+'</p>');empty=document.getElementById('mw11NoResults')}
-    if(empty)empty.hidden=list.some(p=>!p.hidden);
+    if(empty)empty.hidden=list.some(p=>!p.hidden)||!!V.search.trim();
+    if(V.search.trim())searchAllPeople().catch(console.warn);
+    else document.getElementById('mw11GlobalResults')?.remove();
   }
   async function fetchMessage(scope,id){
     const existing=V.rows.get(rxKey(scope,id));if(existing)return existing;
@@ -787,5 +819,5 @@ window.MWV11=(()=>{
     else refreshRoomReceipts(scope,rows).catch(console.warn);
   },30000);
 
-  return {bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate,uploadAttachment,selectedAttachments,loadMedia,clearAttachment,refreshDmReceipts,refreshRoomReceipts,themePicker,applyTheme};
+  return {refreshRequestPeers,bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate,uploadAttachment,selectedAttachments,loadMedia,clearAttachment,refreshDmReceipts,refreshRoomReceipts,themePicker,applyTheme};
 })();
