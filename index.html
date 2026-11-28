@@ -2711,6 +2711,25 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
 .mw-chat-menu-grid .mw-chat-menu-tile:active{background:#25465f!important}
 #app.mw11-chat-page #msgs:not([data-mw-theme]),#app.mw11-chat-page #msgs[data-mw-theme="standard"],.mw-theme-swatch[data-theme="standard"]{background:#142a40!important;background-image:none!important;animation:none!important}
 #app.mw11-chat-page #msgs[data-mw-theme="standard"]::before{display:none!important}
+
+/* Profile layout: handle above avatar, display name above biography. */
+.mw-instagram-profile .mw-profile-heading{display:flex;align-items:center;gap:8px;margin-bottom:17px}
+.mw-instagram-profile .mw-profile-handle{display:flex;align-items:center;gap:5px;min-width:0;flex:1;font-size:20px!important;overflow-wrap:anywhere}
+.mw-instagram-profile .mw-profile-more{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border:0!important;border-radius:50%!important;background:#1d354c!important;color:#d4eafa!important;box-shadow:none!important;padding:0!important}
+.mw-instagram-profile .mw-profile-real-name{font-size:16px;line-height:1.35;overflow-wrap:anywhere}
+.mw-instagram-profile .mw-profile-actions:not(.mw-own-profile-actions){display:flex;gap:8px;flex-wrap:nowrap;width:100%}
+.mw-instagram-profile .mw-profile-follow,.mw-instagram-profile .mw-profile-chat{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;min-width:0;min-height:44px;border:1px solid #4d7794;border-radius:11px!important;font-size:14px;font-weight:650;padding:10px 8px;box-shadow:none!important;cursor:pointer;white-space:normal}
+.mw-instagram-profile .mw-profile-follow{background:#8bc9e9!important;color:#10283d!important}
+.mw-instagram-profile .mw-profile-follow.is-following,.mw-instagram-profile .mw-profile-chat{background:#203b53!important;color:#dceeff!important}
+.mw-instagram-profile .mw-profile-follow:disabled{opacity:.65}
+#profileMods+.mw-profile-mods>.mw-profile-empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:145px;border:1px solid #29485e;border-radius:16px;background:#13273abf;color:#a9c5d9;font-size:14px;text-align:center;padding:22px}
+.mw-profile-info{display:grid;gap:12px}
+.mw-profile-info-person,.mw-profile-info-row{display:flex;align-items:center;gap:13px;padding:13px;border-radius:12px;background:#192f43}
+.mw-profile-info-person>.av{flex:0 0 48px;width:48px;height:48px;border-radius:50%;overflow:hidden}
+.mw-profile-info-person>.av img{width:100%;height:100%;object-fit:cover}
+.mw-profile-info-person>div,.mw-profile-info-row>div{display:flex;flex-direction:column;gap:5px;min-width:0;overflow-wrap:anywhere}
+.mw-profile-info small{color:#a8c0d2;font-size:12px}
+.mw-profile-report{display:flex;align-items:center;gap:9px;padding:13px;border:1px solid #684b55;border-radius:12px;background:transparent!important;color:#f29da4!important;box-shadow:none!important;text-align:left}
 </style>
 </head>
 <body>
@@ -3497,7 +3516,7 @@ function saveScreen(page,id){
   fastScreens.set(screenKey(page,id),snapshot);
   // Cache only profile views, not chats or private messages.
   if(page==='profile'&&S.u?.id){
-    try{localStorage.setItem('mw_profile_v2:'+S.u.id+':'+id+':'+S.lang,JSON.stringify(snapshot))}catch(error){}
+    try{localStorage.setItem('mw_profile_v3:'+S.u.id+':'+id+':'+S.lang,JSON.stringify(snapshot))}catch(error){}
   }
   if(fastScreens.size>12)fastScreens.delete(fastScreens.keys().next().value);
 }
@@ -3541,7 +3560,7 @@ async function go(page='home',id=null){
   let cached=useCache?fastScreens.get(key):null;
   if(!cached&&page==='profile'&&S.u?.id){
     try{
-      const saved=JSON.parse(localStorage.getItem('mw_profile_v2:'+S.u.id+':'+target+':'+S.lang)||'null');
+      const saved=JSON.parse(localStorage.getItem('mw_profile_v3:'+S.u.id+':'+target+':'+S.lang)||'null');
       if(saved?.html&&Date.now()-saved.at<24*60*60*1000)cached=saved;
     }catch(error){}
   }
@@ -3884,13 +3903,13 @@ async function profile(id,nav=navigationSeq){
   const mine=S.u?.id===id;
   const [person,mods,modCount,fc,gc,f]=await getProfileData(id);
   if(nav!==navigationSeq||S.page!=='profile'||S.profileId!==id)return;
-  const p=check(person);check(mods);setCachedProfiles([p]);
+  const p=check(person);check(mods);check(f);setCachedProfiles([p]);
   $('#app').innerHTML=`
     <section class="banner mw-instagram-profile">
       <div class="mw-profile-heading">
-        <strong>${e(p.display_name||p.username)}</strong>
+        <strong class="mw-profile-handle">@${e(p.username)}${tick(p)}</strong>
         ${p.is_admin?'<span class="status">ADMIN</span>':''}
-        ${tick(p)}
+        <button type="button" class="mw-profile-more" data-act="profileInfo" data-id="${e(id)}" aria-label="Akkaunt ma’lumotlari">${ico('more-vertical',23)}</button>
       </div>
       <div class="mw-profile-summary">
         <div class="mw-profile-avatar">${avatar(p,true)}</div>
@@ -3901,23 +3920,20 @@ async function profile(id,nav=navigationSeq){
         </div>
       </div>
       <div class="mw-profile-details">
-        <small class="muted mw-profile-display-name">@${e(p.username)}${tick(p)}</small>
-        <small class="muted">ID #${e(p.public_id)}</small>
+        <strong class="mw-profile-real-name">${e(p.display_name||p.username)}</strong>
         ${banned(p)?'<p class="wrap">Akkaunt cheklangan</p>':p.bio?'<p class="wrap profile-bio">'+e(p.bio)+'</p>':''}
       </div>
       <div class="mw-profile-actions ${mine?'mw-own-profile-actions':''}">
         ${mine?
           btn('editProfile',t('editProfile'))+btn('likedFromProfile',S.lang==='ru'?'Понравившиеся':S.lang==='en'?'My likes':'Likelarim','','ghost')+btn('savedFromProfile',S.lang==='ru'?'Сохранённые':S.lang==='en'?'Saved':'Saqlanganlar','','ghost'):
-          btn('follow',f.data?t('unfollow'):t('follow'),id)+
-          btn('startChat',t('chat'),id,'ghost')+
-          btn('reportUser',t('report'),id,'ghost')}
+          profileFollowActions(id,!!f.data)}
       </div>
     </section>
     <div class="bar mw-profile-mods-heading" id="profileMods">
       <h2>${t('mods')}</h2>
     </div>
     <div class="grid mw-profile-mods">
-      ${mods.data.length?mods.data.map(m=>card(m,p,mine)).join(''):blank()}
+      ${mods.data.length?mods.data.map(m=>card(m,p,mine)).join(''):'<div class="mw-profile-empty">'+ico('package',32)+'<strong>Hozircha modlar yo‘q</strong></div>'}
     </div>`;
   saveScreen('profile',id);
 }
@@ -3932,22 +3948,46 @@ async function followList(type,id){
       ${avatar(mp[x[other]])}${miniUser(mp[x[other]])}
     </div>`).join(''):blank())
 }
-async function toggleFollow(id){
-  if(!requireUser())return;
-  let r=await DB.from('follows').select('follower_id')
-    .eq('follower_id',S.u.id).eq('following_id',id).maybeSingle();
-  check(r);
-  check(r.data?
-    await DB.from('follows').delete()
-      .eq('follower_id',S.u.id).eq('following_id',id):
-    await DB.from('follows').insert({
-      follower_id:S.u.id,following_id:id
-    })
-  );
-  invalidateProfileData();
-  await go('profile',id)
+function profileFollowActions(id,following){
+  const label=following?(S.lang==='uz'?'Obunani olish':t('unfollow')):t('follow');
+  return '<button type="button" class="mw-profile-follow'+(following?' is-following':'')+'" data-act="follow" data-id="'+e(id)+'" aria-pressed="'+following+'">'+ico(following?'check':'plus',19)+'<span>'+e(label)+'</span></button>'+
+    (following?'<button type="button" class="mw-profile-chat" data-act="startChat" data-id="'+e(id)+'">'+ico('chat',19)+'<span>'+e(t('chat'))+'</span></button>':'');
 }
-
+async function profileInfo(id){
+  const p=knownProfiles.get(id)?.p;
+  const show=person=>{
+    const date=person.created_at?new Date(person.created_at):null;
+    const joined=date&&Number.isFinite(date.getTime())?date.toLocaleDateString(S.lang==='ru'?'ru-RU':S.lang==='en'?'en-US':'uz-UZ',{day:'numeric',month:'long',year:'numeric'}):'Ma’lumot yo‘q';
+    dialog('Akkaunt ma’lumotlari','<div class="mw-profile-info"><div class="mw-profile-info-person">'+avatar(person,true)+'<div><strong>@'+e(person.username)+tick(person)+'</strong><small>'+e(person.display_name||'')+'</small></div></div><div class="mw-profile-info-row">'+ico('clock',21)+'<div><small>Akkaunt ochilgan sana</small><b>'+e(joined)+'</b></div></div><div class="mw-profile-info-row">'+ico('user',21)+'<div><small>Akkaunt ID</small><b>#'+e(person.public_id??'—')+'</b></div></div>'+(S.u?.id!==id?'<button type="button" class="mw-profile-report" data-act="reportUser" data-id="'+e(id)+'">'+ico('flag',20)+' Shikoyat qilish</button>':'')+'</div>');
+  };
+  if(p&&p.created_at&&p.public_id!=null){show(p);return;}
+  const person=check(await DB.from('profiles').select('id,username,display_name,avatar_url,verified,verified_until,banned_permanently,banned_until,created_at,public_id').eq('id',id).single());
+  if(S.page==='profile'&&S.profileId===id)show(person);
+}
+const mwProfileFollowBusy=new Set();
+async function toggleFollow(id,button){
+  if(!requireUser()||id===S.u.id)return;
+  const uid=S.u.id,key=uid+'|'+id;
+  if(mwProfileFollowBusy.has(key))return;
+  mwProfileFollowBusy.add(key);
+  if(button)button.disabled=true;
+  try{
+    const desired=button?.hasAttribute('aria-pressed')?button.getAttribute('aria-pressed')!=='true':!check(await DB.from('follows').select('follower_id').eq('follower_id',uid).eq('following_id',id).maybeSingle());
+    if(desired){
+      const result=await DB.from('follows').upsert({follower_id:uid,following_id:id},{onConflict:'follower_id,following_id',ignoreDuplicates:true});
+      check(result);
+    }else check(await DB.from('follows').delete().eq('follower_id',uid).eq('following_id',id));
+    if(S.u?.id!==uid)return;
+    if(S.accountFollowing){if(desired)S.accountFollowing.add(id);else S.accountFollowing.delete(id);}
+    invalidateProfileData();
+    try{localStorage.removeItem('mw_profile_v3:'+uid+':'+id+':'+S.lang)}catch{}
+    if(S.page==='profile'&&S.profileId===id){
+      const actions=document.querySelector('.mw-profile-actions:not(.mw-own-profile-actions)');
+      if(actions)actions.innerHTML=profileFollowActions(id,desired);
+      await profile(id,navigationSeq);
+    }
+  }finally{mwProfileFollowBusy.delete(key);if(button?.isConnected)button.disabled=false;}
+}
 
 const ACCOUNT_STORE_KEY='mw_saved_accounts_v1';
 const ACCOUNT_MAX=5;
@@ -6750,7 +6790,8 @@ window.addEventListener('click',async event=>{
       if(!S.query.trim()&&S.visibleMods>=total&&S.hasMore)await fetchMoreFeed();
       else{S.visibleMods+=12;filterMods()}
     }
-    else if(act==='follow')await toggleFollow(id);
+    else if(act==='follow')await toggleFollow(id,a);
+    else if(act==='profileInfo')await profileInfo(id);
     else if(act==='profileMods')
       $('#profileMods')?.scrollIntoView({behavior:'smooth',block:'start'});
     else if(act==='followers'||act==='following')
