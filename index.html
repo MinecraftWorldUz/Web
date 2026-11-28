@@ -7335,7 +7335,28 @@ function mwRouteKey(){
 function mwRouteDepth(){
  return (S.page==='home'?0:Math.max(1,mwPageStack.length))+($('#overlay').classList.contains('open')?1+mwDialogStack.length:0)+(S.page==='chat'&&S.mw11MobileOpen?1:0);
 }
+// Keep the current page in this tab across browser refreshes.
+const MW_RESUME_KEY='mw_tab_resume_v1';
+function mwSaveResume(){
+ if(mwInitialNavigation)return;
+ try{
+  sessionStorage.setItem(MW_RESUME_KEY,JSON.stringify({
+   uid:S.u?.id||null,page:S.page,profileId:S.profileId||null,
+   chatId:S.page==='chat'?S.chatId:null,mobileOpen:!!S.mw11MobileOpen,
+   mod:$('#overlay')?.classList.contains('open')?activeModId:null,
+   y:Math.max(0,window.scrollY||0)
+  }));
+ }catch(err){}
+}
+function mwReadResume(){
+ try{return JSON.parse(sessionStorage.getItem(MW_RESUME_KEY)||'null')}catch{return null}
+}
+window.addEventListener('pagehide',mwSaveResume);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)mwSaveResume()});
+let mwResumeScrollTimer;
+window.addEventListener('scroll',()=>{clearTimeout(mwResumeScrollTimer);mwResumeScrollTimer=setTimeout(mwSaveResume,150)},{passive:true});
 function mwSyncRoute(){
+ mwSaveResume();
  if(!mwHistoryReady||mwBackRestoring||mwBackBusy)return;
  const key=mwRouteKey(),depth=mwRouteDepth();
  if(key===mwLastRoute)return;
@@ -7388,7 +7409,7 @@ function mwInstallBackGuard(){
   }catch(err){console.warn(err)}
   finally{
    mwBackRestoring=false;mwBackBusy=false;
-   mwLastRoute=mwRouteKey();mwLastDepth=mwRouteDepth();
+   mwLastRoute=mwRouteKey();mwLastDepth=mwRouteDepth();mwSaveResume();
    // Never push or recreate a history entry after Back. Chromium can
    // otherwise mark the whole document skippable on the next Back gesture.
   }
@@ -7428,8 +7449,23 @@ function mwInstallBackGuard(){
   uiObserver.observe($('#app'),{childList:true,subtree:true,characterData:true});
   uiObserver.observe($('#overlay'),{childList:true,subtree:true,characterData:true});
   mwInstallBackGuard();
-  await Promise.allSettled([go('home'),refreshUser()]);
+  const resume=mwReadResume();
+  await refreshUser().catch(console.warn);
+  const params=new URLSearchParams(location.search);
+  const validId=id=>typeof id==='string'&&/^[0-9a-f-]{36}$/i.test(id);
+  const same=resume&&resume.uid===(S.u?.id||null)&&!params.has('mod')&&!params.has('notice');
+  let page=same&&['home','community','profile','chat','create'].includes(resume.page)?resume.page:'home';
+  if(!S.u&&['chat','create'].includes(page))page='home';
+  if(page==='chat'){
+   const thread=resume.chatId;
+   if(validId(thread)||typeof thread==='string'&&thread.startsWith('g:')&&validId(thread.slice(2)))S.chatId=thread;
+   S.mw11MobileOpen=!!(S.chatId&&resume.mobileOpen);
+  }
+  await go(page,page==='profile'&&validId(resume?.profileId)?resume.profileId:null);
+  if(same&&validId(resume.mod))await openMod(resume.mod).catch(console.warn);
+  if(same&&Number.isFinite(resume.y)&&page!=='chat')requestAnimationFrame(()=>window.scrollTo(0,resume.y));
   mwInitialNavigation=false;
+  mwSaveResume();
   offerPush();
   mwPageStack.length=0;
   mwPingPresence().catch(console.warn);
