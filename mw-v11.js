@@ -569,10 +569,10 @@ window.MWV11=(()=>{
       const id=thread.slice(2);
       const [g,mark]=await Promise.all([
         DB.from('mw_groups').select('owner_id').eq('id',id).maybeSingle(),
-        DB.from('mw_group_badges').select('group_id').eq('group_id',id).maybeSingle()
+        DB.from('mw_group_badges').select('group_id,verified_until').eq('group_id',id).maybeSingle()
       ]);
       if(g.error)throw g.error;if(mark.error)throw mark.error;
-      return {edit:!!(S.me?.is_admin&&S.me?.username==='admin'||g.data?.owner_id===authUser()),premium:!!mark.data};
+      return {edit:g.data?.owner_id===authUser(),premium:!!mark.data&&(!mark.data.verified_until||new Date(mark.data.verified_until)>new Date())};
     }
     const valid=!!S.me?.verified&&(!S.me?.verified_until||new Date(S.me.verified_until)>new Date());
     return {edit:true,premium:valid};
@@ -623,6 +623,7 @@ window.MWV11=(()=>{
   }
   async function themePicker(thread){
     const access=await themeAccess(thread);
+    if(!access.edit){toast('Chat fonini faqat guruh egasi o‘zgartirishi mumkin');return;}
     const current=document.querySelector('#conversation #msgs')?.dataset.mwTheme||'forest';
     dialog('Minecraft chat fonlari','<p class="muted">10 ta oddiy fon, yana 5 ta ko‘k belgili chat uchun maxsus fon.</p>'+
       '<div class="mw-theme-grid">'+themes.map(([id,emoji,label])=>
@@ -652,7 +653,8 @@ window.MWV11=(()=>{
       '<button data-v11="pref" data-thread="'+esc(thread)+'" data-field="pinned">'+ico('bookmark',18)+' '+T(pref.pinned?'unpin':'pin')+'</button>'+
       '<button data-v11="pref" data-thread="'+esc(thread)+'" data-field="muted">'+ico('bell',18)+' '+T(pref.muted?'unmute':'mute')+'</button>'+
       '<button data-v11="pref" data-thread="'+esc(thread)+'" data-field="archived">'+ico('folder',18)+' '+T(pref.archived?'unarch':'arch')+'</button>'+
-      '<button data-v11="theme-open" data-thread="'+esc(thread)+'">'+ico('image',18)+' Chat fonini tanlash</button></div>');
+      '<span id="mwThemeOption"></span></div>');
+    const option=document.getElementById('mwThemeOption');themeAccess(thread).then(access=>{if(option?.isConnected&&access.edit)option.innerHTML='<button data-v11="theme-open" data-thread="'+esc(thread)+'">'+ico('image',18)+' Chat fonini tanlash</button>';}).catch(console.warn);
   }
   function handle(e){
     if(V.longPressTriggered){V.longPressTriggered=false;e.preventDefault();e.stopImmediatePropagation();return}
@@ -694,8 +696,8 @@ window.MWV11=(()=>{
         const header=document.querySelector('#conversation .chat-toolbar');
         if(!header)return;
         const old=document.getElementById('mw11ChatSearch');
-        if(old){old.closest('.mw11-thread-search')?.remove();document.querySelectorAll('#msgs [data-v11-msg]').forEach(n=>n.style.display='');return}
-        header.insertAdjacentHTML('afterend','<div class="mw11-thread-search"><input id="mw11ChatSearch" class="field" placeholder="'+T('searchMsg')+'"></div>');
+        if(old){clearTimeout(V.threadSearchTimer);old.closest('.mw11-thread-search')?.remove();return}
+        header.insertAdjacentHTML('afterend','<div class="mw11-thread-search"><input id="mw11ChatSearch" class="field" placeholder="'+T('searchMsg')+'"><div id="mw11ThreadResults" hidden></div></div>');
         document.getElementById('mw11ChatSearch')?.focus();
         return;
       }
@@ -752,10 +754,8 @@ window.MWV11=(()=>{
   window.addEventListener('input',event=>{
     if(event.target.id==='mw11InboxSearch'){V.search=event.target.value;decorateInbox()}
     if(event.target.id==='mw11ChatSearch'){
-      const value=event.target.value.toLowerCase();
-      document.querySelectorAll('#msgs [data-v11-msg]').forEach(node=>{
-        node.style.display=node.textContent.toLowerCase().includes(value)?'':'none';
-      });
+      clearTimeout(V.threadSearchTimer);
+      const input=event.target;V.threadSearchTimer=setTimeout(()=>searchThread(input).catch(err=>{const box=document.getElementById('mw11ThreadResults');if(input.isConnected&&box){box.hidden=false;box.textContent=err.message||'Qidiruvda xato';}}),250);
     }
   },true);
 
@@ -770,10 +770,24 @@ window.MWV11=(()=>{
     const btn=form.querySelector('[type="submit"]');if(btn)btn.disabled=true;
     saveEdit(form).catch(err=>{console.error(err);toast(err.message)}).finally(()=>{if(btn)btn.disabled=false});
   },true);
+  async function searchThread(input){
+    const thread=S.chatId,uid=authUser(),value=input.value.trim(),box=document.getElementById('mw11ThreadResults');
+    if(!box||!uid)return;
+    if(!value){box.hidden=true;box.replaceChildren();return;}
+    box.hidden=false;box.textContent='Qidirilmoqda...';
+    const scope=thread==='world'?'world':thread.startsWith('g:')?'group':'dm';
+    let query=DB.from(scope==='world'?'world_chat_messages':scope==='group'?'mw_group_messages':'messages').select('id,body,created_at');
+    if(scope==='group')query=query.eq('group_id',thread.slice(2));
+    if(scope==='dm')query=query.or('and(sender_id.eq.'+uid+',recipient_id.eq.'+thread+'),and(sender_id.eq.'+thread+',recipient_id.eq.'+uid+')');
+    const rows=check(await query.ilike('body','%'+value.replace(/[%_]/g,'')+'%').order('created_at',{ascending:false}).limit(60));
+    if(!input.isConnected||input.value.trim()!==value||S.chatId!==thread||authUser()!==uid)return;
+    box.innerHTML=rows.length?rows.map(m=>'<button type="button" class="mw-thread-result" data-result-id="'+esc(m.id)+'"><small>'+esc(new Date(m.created_at).toLocaleString())+'</small><span>'+esc(m.body||'')+'</span></button>').join(''):'<p class="muted">Xabar topilmadi.</p>';
+    box.querySelectorAll('[data-result-id]').forEach(b=>b.addEventListener('click',()=>{const n=document.querySelector('#msgs [data-v11-msg="'+b.dataset.resultId+'"]');if(n){n.scrollIntoView({block:'center'});n.classList.add('mw-search-hit');setTimeout(()=>n.classList.remove('mw-search-hit'),1600);}else{b.classList.add('mw-search-hit');}}));
+  }
   function addThreadSearch(){
     const bar=document.querySelector('#conversation .chat-toolbar');
     if(bar&&!document.getElementById('mw11SearchToggle')){
-      bar.insertAdjacentHTML('beforeend','<button type="button" id="mw11SearchToggle" data-v11="search-toggle" aria-label="'+T('searchMsg')+'">'+ico('search',18)+'</button>');
+      bar.insertAdjacentHTML('beforeend','<button type="button" id="mw11SearchToggle" data-v11="search-toggle" aria-label="'+T('searchMsg')+'">'+'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></button>');
     }
     const form=document.querySelector('#conversation .chat-compose');
     if(form&&!form.querySelector('.mw11-attachment-input')){
