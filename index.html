@@ -6921,11 +6921,11 @@ window.addEventListener('submit',async ev=>{
       const mediaList=files.length?files:[null];
       if(f.dataset.limited==='true'&&mediaList.length>1){toast('Bir martalik so‘rovda faqat bitta xabar yuborish mumkin');return;}
       const sent=[];
-      const pending=window.MWV11?.beginPending?.(text||'📎 Fayl');
+      const pending=window.MWV11?.beginPending?.(text||'Fayl');
       try{
       for(let i=0;i<mediaList.length;i++){
         const media=mediaList[i]?await window.MWV11.uploadAttachment(f,'dm',f.dataset.id,mediaList[i]):{};
-        const body=(i===0&&text)|| (media.attachment_type==='image'?'🖼 Rasm':'📎 '+(media.attachment_name||'Fayl'));
+        const body=(i===0&&text)|| (media.attachment_type==='image'?'Rasm':'Fayl: '+(media.attachment_name||'Fayl'));
         const result=check(await DB.from('messages').insert({
           sender_id:S.u.id,recipient_id:f.dataset.id,body,...media,
           reply_to:i===0?(window.MWV11?.replyId?.('dm','u:'+f.dataset.id)||null):null
@@ -6961,11 +6961,11 @@ window.addEventListener('submit',async ev=>{
       if(!text&&!files.length)return;
       const mediaList=files.length?files:[null];
       const sent=[];
-      const pending=window.MWV11?.beginPending?.(text||'📎 Fayl');
+      const pending=window.MWV11?.beginPending?.(text||'Fayl');
       try{
       for(let i=0;i<mediaList.length;i++){
         const media=mediaList[i]?await window.MWV11.uploadAttachment(f,'world','world',mediaList[i]):{};
-        const body=(i===0&&text)||(media.attachment_type==='image'?'🖼 Rasm':'📎 '+(media.attachment_name||'Fayl'));
+        const body=(i===0&&text)||(media.attachment_type==='image'?'Rasm':'Fayl: '+(media.attachment_name||'Fayl'));
         const result=check(await DB.from('world_chat_messages').insert({
           author_id:S.u.id,body,...media,
           reply_to:i===0?(window.MWV11?.replyId?.('world','world')||null):null
@@ -7107,7 +7107,7 @@ async function mwFriendPresence(peer,thread){
   const at=new Date(data.last_seen_at),minutes=Math.floor((Date.now()-at.getTime())/60000);
   if(minutes<0||!Number.isFinite(minutes))return;
   const formatted=at.toLocaleString('uz-UZ',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-  small.textContent=minutes<2?'🟢 Onlayn':'Oxirgi marta: '+formatted;
+  small.textContent=minutes<2?'Onlayn':'Oxirgi marta: '+formatted;
 }
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')mwPingPresence().catch(console.warn)});
 setInterval(()=>{mwPingPresence().catch(console.warn);if(S.page==='chat'&&S.chatId&&S.chatId!=='world'&&!S.chatId.startsWith('g:'))mwFriendPresence(S.chatId,S.chatId).catch(console.warn)},60000);
@@ -7286,7 +7286,7 @@ function mwInstallBackGuard(){
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=groups29"></script>
-<script src="./mw-v11.js?v=13"></script>
+<script src="./mw-live-chat.js?v=groups31"></script>
+<script src="./mw-v11.js?v=14"></script>
 </body>
 </html>
