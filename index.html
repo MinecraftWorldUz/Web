@@ -2730,6 +2730,12 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
 .mw-profile-info-person>div,.mw-profile-info-row>div{display:flex;flex-direction:column;gap:5px;min-width:0;overflow-wrap:anywhere}
 .mw-profile-info small{color:#a8c0d2;font-size:12px}
 .mw-profile-report{display:flex;align-items:center;gap:9px;padding:13px;border:1px solid #684b55;border-radius:12px;background:transparent!important;color:#f29da4!important;box-shadow:none!important;text-align:left}
+
+.mw-profile-bio-box{width:100%;min-width:0}
+.mw-profile-bio-box:not(.expanded) .profile-bio{display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.mw-profile-bio-box.expanded .profile-bio{display:block!important;overflow:visible}
+.mw-profile-bio-more{display:inline-flex;align-items:center;gap:5px;background:transparent!important;border:0!important;color:#9dd7f6!important;box-shadow:none!important;font-size:13px;font-weight:650;padding:6px 0!important;cursor:pointer}
+.mw-profile-bio-more[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -3516,7 +3522,7 @@ function saveScreen(page,id){
   fastScreens.set(screenKey(page,id),snapshot);
   // Cache only profile views, not chats or private messages.
   if(page==='profile'&&S.u?.id){
-    try{localStorage.setItem('mw_profile_v3:'+S.u.id+':'+id+':'+S.lang,JSON.stringify(snapshot))}catch(error){}
+    try{localStorage.setItem('mw_profile_v4:'+S.u.id+':'+id+':'+S.lang,JSON.stringify(snapshot))}catch(error){}
   }
   if(fastScreens.size>12)fastScreens.delete(fastScreens.keys().next().value);
 }
@@ -3560,7 +3566,7 @@ async function go(page='home',id=null){
   let cached=useCache?fastScreens.get(key):null;
   if(!cached&&page==='profile'&&S.u?.id){
     try{
-      const saved=JSON.parse(localStorage.getItem('mw_profile_v3:'+S.u.id+':'+target+':'+S.lang)||'null');
+      const saved=JSON.parse(localStorage.getItem('mw_profile_v4:'+S.u.id+':'+target+':'+S.lang)||'null');
       if(saved?.html&&Date.now()-saved.at<24*60*60*1000)cached=saved;
     }catch(error){}
   }
@@ -3921,7 +3927,7 @@ async function profile(id,nav=navigationSeq){
       </div>
       <div class="mw-profile-details">
         <strong class="mw-profile-real-name">${e(p.display_name||p.username)}</strong>
-        ${banned(p)?'<p class="wrap">Akkaunt cheklangan</p>':p.bio?'<p class="wrap profile-bio">'+e(p.bio)+'</p>':''}
+        ${banned(p)?'<p class="wrap">Akkaunt cheklangan</p>':p.bio?'<div class="mw-profile-bio-box"><p class="wrap profile-bio">'+e(p.bio)+'</p><button type="button" class="mw-profile-bio-more" aria-expanded="false" hidden>Yana</button></div>':''}
       </div>
       <div class="mw-profile-actions ${mine?'mw-own-profile-actions':''}">
         ${mine?
@@ -3937,6 +3943,25 @@ async function profile(id,nav=navigationSeq){
     </div>`;
   saveScreen('profile',id);
 }
+function mwMeasureProfileBio(){
+  const box=document.querySelector('.mw-profile-bio-box');
+  if(!box)return;
+  const p=box.querySelector('.profile-bio'),button=box.querySelector('.mw-profile-bio-more');
+  if(!p||!button||box.classList.contains('expanded'))return;
+  button.hidden=p.scrollHeight>p.clientHeight+1?false:true;
+}
+let mwBioFrame=0;
+function mwScheduleProfileBio(){cancelAnimationFrame(mwBioFrame);mwBioFrame=requestAnimationFrame(mwMeasureProfileBio);}
+new MutationObserver(mwScheduleProfileBio).observe(document.getElementById('app'),{childList:true,subtree:true});
+window.addEventListener('resize',mwScheduleProfileBio);
+document.fonts?.ready.then(mwScheduleProfileBio);
+window.addEventListener('click',ev=>{
+  const b=ev.target.closest('.mw-profile-bio-more');if(!b)return;
+  const box=b.closest('.mw-profile-bio-box'),expanded=box.classList.toggle('expanded');
+  b.setAttribute('aria-expanded',String(expanded));
+  b.innerHTML=expanded?'Kamroq <span aria-hidden="true">⌃</span>':'Yana <span aria-hidden="true">⌄</span>';
+  if(!expanded)mwScheduleProfileBio();
+});
 async function followList(type,id){
   let key=type==='followers'?'following_id':'follower_id';
   let other=type==='followers'?'follower_id':'following_id';
@@ -3980,7 +4005,7 @@ async function toggleFollow(id,button){
     if(S.u?.id!==uid)return;
     if(S.accountFollowing){if(desired)S.accountFollowing.add(id);else S.accountFollowing.delete(id);}
     invalidateProfileData();
-    try{localStorage.removeItem('mw_profile_v3:'+uid+':'+id+':'+S.lang)}catch{}
+    try{localStorage.removeItem('mw_profile_v4:'+uid+':'+id+':'+S.lang)}catch{}
     if(S.page==='profile'&&S.profileId===id){
       const actions=document.querySelector('.mw-profile-actions:not(.mw-own-profile-actions)');
       if(actions)actions.innerHTML=profileFollowActions(id,desired);
