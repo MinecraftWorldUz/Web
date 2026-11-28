@@ -191,7 +191,7 @@ window.MWV11=(()=>{
   };
   async function compressChatImage(file){
     if(file.size<=512000)return file;
-    if(!confirm(file.type==='image/gif'?'GIF 500 KB dan katta. Kichraytirishda animatsiya saqlanmaydi. Davom etishga rozimisiz?':'Rasm 500 KB dan katta. Sifatini biroz pasaytirib 500 KB gacha kichraytirishga rozimisiz?'))throw Error('Rasm yuborish bekor qilindi');
+    if(!await mwConfirm(file.type==='image/gif'?'GIF 500 KB dan katta. Kichraytirishda animatsiya saqlanmaydi. Davom etishga rozimisiz?':'Rasm 500 KB dan katta. Sifatini biroz pasaytirib 500 KB gacha kichraytirishga rozimisiz?'))throw Error('Rasm yuborish bekor qilindi');
     const bmp=await createImageBitmap(file);
     try{
       let scale=Math.min(1,1600/Math.max(bmp.width,bmp.height));
@@ -470,7 +470,7 @@ window.MWV11=(()=>{
     close();await refreshThread();
   }
   async function deleteMessage(scope,id){
-    if(!confirm(T('deleteAsk')))return;
+    if(!await mwConfirm(T('deleteAsk')))return;
     const original=await fetchMessage(scope,id);
     const table=scope==='group'?'mw_group_messages':scope==='world'?'world_chat_messages':'messages';
     const col=scope==='world'?'author_id':'sender_id';
