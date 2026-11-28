@@ -536,7 +536,7 @@ window.MWV11=(()=>{
     const directs=(S.chatPeers||[]).filter(x=>x!==authUser());
     const groups=window.MWChat?.groups?.()||[];
     dialog(T('forward'),'<div class="mw11-actions">'+
-      '<button data-v11="forward-send" data-dest="world">'+ico('globe',17)+' Umumiy chat</button>'+
+
       directs.map(x=>'<button data-v11="forward-send" data-dest="u:'+esc(x)+'">'+ico('user',17)+' '+esc(S.chatUsers?.[x]?.display_name||S.chatUsers?.[x]?.username||x.slice(0,8))+'</button>').join('')+
       groups.map(x=>'<button data-v11="forward-send" data-dest="g:'+esc(x.id)+'">'+ico('users',17)+' '+esc(x.name)+'</button>').join('')+'</div>');
   }
@@ -545,7 +545,7 @@ window.MWV11=(()=>{
     if(!m||!m.body)throw Error('Xabar topilmadi');
     const body='↪ '+m.body.slice(0,1998);
     let r;
-    if(dest==='world')r=await DB.from('world_chat_messages').insert({author_id:authUser(),body});
+    if(dest==='world')r=await DB.from('mw_group_messages').insert({group_id:MW_WORLD_GROUP,sender_id:authUser(),body});
     else if(dest.startsWith('g:'))r=await DB.from('mw_group_messages').insert({group_id:dest.slice(2),sender_id:authUser(),body});
     else r=await DB.from('messages').insert({sender_id:authUser(),recipient_id:dest.slice(2),body});
     if(r.error)throw r.error;
@@ -554,12 +554,11 @@ window.MWV11=(()=>{
     await go('chat');
   }
   const themes=[
-    ['forest','🌲','O‘rmon'],['stone','🪨','Tosh'],['grass','🌿','Maysa'],
-    ['oak','🪵','Eman'],['sunset','🌅','Quyosh botishi'],
-    ['night','🌙','Tun'],['desert','🏜️','Cho‘l'],
-    ['nether','🔥','Nether'],['ocean','🌊','Okean'],['sky','☁️','Osmon'],
-    ['autumn','🍂','Kuzgi yaproqlar'],['embers','✨','Uchqunlar'],
-    ['snow','❄️','Qor'],['portal','💜','Portal'],['fireflies','🌟','Yorug‘ hasharotlar']
+    ['forest','','Tayga'],['stone','','Qoyalar'],['grass','','Jungli'],['oak','','O‘rmon'],
+    ['sunset','','Oltin vodiy'],['night','','Deep Dark'],['desert','','End'],
+    ['nether','','Nether'],['ocean','','Tog‘ ko‘li'],['sky','','Qorli tog‘'],
+    ['autumn','','Kuzgi tayga'],['embers','','Nether uchqunlari'],['snow','','Qorli tog‘lar'],
+    ['portal','','End olami'],['fireflies','','Sirli jungli']
   ];
   const premiumThemes=new Set(themes.slice(10).map(x=>x[0]));
   const themeStorage=thread=>'mw_theme_'+(authUser()||'guest')+'_'+thread;
@@ -604,8 +603,8 @@ window.MWV11=(()=>{
     if(holder.dataset.mwTheme===id&&holder.dataset.mwThemeReady==='1')return;
     themeCache.set(cacheKey,id);holder.dataset.mwTheme=id;holder.dataset.mwThemeReady='1';
     holder.querySelector('.mw-theme-particles')?.remove();
-    const symbols={autumn:'◆',embers:'✦',snow:'❄',portal:'✧',fireflies:'✳'};
-    if(symbols[id]){
+    const symbols={autumn:'',embers:'',snow:'',portal:'',fireflies:''};
+    if(Object.hasOwn(symbols,id)){
       const particles=document.createElement('div');
       particles.className='mw-theme-particles';
       particles.setAttribute('aria-hidden','true');
@@ -625,14 +624,14 @@ window.MWV11=(()=>{
     const access=await themeAccess(thread);
     if(!access.edit){toast('Chat fonini faqat guruh egasi o‘zgartirishi mumkin');return;}
     const current=document.querySelector('#conversation #msgs')?.dataset.mwTheme||'forest';
-    dialog('Minecraft chat fonlari','<p class="muted">10 ta oddiy fon, yana 5 ta ko‘k belgili chat uchun maxsus fon.</p>'+
+    dialog('Minecraft chat fonlari','<p class="muted">Minecraft manzaralari: 10 ta oddiy va 5 ta animatsiyali maxsus fon.</p>'+
       '<div class="mw-theme-grid">'+themes.map(([id,emoji,label])=>
         '<button type="button" data-v11="theme-select" data-thread="'+esc(thread)+'" data-theme="'+id+'" '+
         ((!access.edit||(premiumThemes.has(id)&&!access.premium))?'disabled ':'')+
         'class="mw-theme-choice '+(id===current?'chosen':'')+'">'+
-        '<span class="mw-theme-swatch" data-theme="'+id+'">'+ico('image',22)+'</span>'+
+        '<span class="mw-theme-swatch" data-theme="'+id+'">'+'</span>'+
         '<strong>'+esc(label)+'</strong><small>'+(premiumThemes.has(id)?'Premium':'Oddiy')+'</small></button>').join('')+'</div>'+
-      (!access.edit?'<p class="muted">Bu chat fonini faqat chat egasi yoki admin o‘zgartiradi.</p>':''));
+      '<p class="muted mw-theme-credit">Minecraft kadrlar: Xbox México, <a href="https://commons.wikimedia.org/wiki/Category:Screenshots_of_Minecraft" target="_blank" rel="noopener">Wikimedia Commons</a> · <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>. Fon uchun rang, kesim va animatsiya qo‘llangan.</p>');
   }
   async function selectTheme(thread,id){
     if(!themes.some(t=>t[0]===id))throw Error('Fon topilmadi');
