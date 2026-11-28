@@ -187,10 +187,11 @@ window.MWChat=(()=>{
  }
 
  function editGroup(g=null){
+  if(g&&g.owner_id!==S.u?.id)throw Error('Faqat guruh egasi tahrirlay oladi');
   C.group=g;C.selected=[];C.selectedNames=new Map();C.memberLocked=new Map();
   dialog(g?'Guruhni tahrirlash':'Guruh yaratish','<form id="mwGroupForm" data-id="'+escape(g?.id||'')+'">'+
-   '<div class="mw-group-top"><label class="mw-avatar-button">'+(g?.avatar_url?'<img src="'+escape(g.avatar_url)+'" alt="">':icon('users',38))+
-   '<span>＋</span><input type="file" name="avatar" accept="image/png,image/jpeg,image/webp"></label>'+
+   '<div class="mw-group-top"><div class="mw-avatar-edit-stack"><label class="mw-avatar-button"><span id="mwGroupAvatarPreview" class="mw-group-avatar-preview">'+(g?.avatar_url?'<img src="'+escape(g.avatar_url)+'" alt="">':icon('users',38))+
+   '</span><span>＋</span><input type="file" name="avatar" accept="image/png,image/jpeg,image/webp"></label><button type="button" id="mwRemoveGroupAvatar" class="mw-avatar-remove" '+(g?.avatar_url?'':'hidden')+'>'+icon('trash',16)+' Rasmni o‘chirish</button></div>'+
    '<div class="formgroup"><label>Guruh nomi</label><input class="field" name="name" value="'+escape(g?.name||'')+'" maxlength="48" required></div></div>'+
    '<div class="formgroup"><label>Bio</label><textarea class="field" name="bio" maxlength="280">'+escape(g?.bio||'')+'</textarea></div>'+
    '<div class="formgroup"><label>Guruh turi</label><label class="mw-switch-row"><input type="radio" name="visibility" value="public" '+(g?.visibility==='private'?'':'checked')+'> Ommaviy</label>'+
@@ -201,6 +202,12 @@ window.MWChat=(()=>{
    '<button class="mw-group-save" type="submit">'+icon('check',19)+' Saqlash</button>'+
    (g&&g.owner_id===S.u?.id?'<div class="mw-group-delete-zone"><button type="button" class="mw-group-delete" data-mw="delete-group" data-id="'+escape(g.id)+'">'+icon('trash',18)+' Guruhni o‘chirish</button></div>':'')+
    '</form>');
+  const form=$('#mwGroupForm'),file=form.querySelector('[name="avatar"]'),remove=$('#mwRemoveGroupAvatar'),preview=$('#mwGroupAvatarPreview');
+  remove.addEventListener('click',()=>{
+    if(g&&g.owner_id!==S.u?.id)return;
+    form.dataset.removeAvatar='1';file.value='';preview.innerHTML=icon('users',38);remove.hidden=true;
+  });
+  file.addEventListener('change',()=>{if(file.files?.length){form.dataset.removeAvatar='0';remove.hidden=false;}});
   visibility();
   searchPeople('',true);
   if(g?.visibility!=='private')usernameStatus().catch(console.warn);
@@ -233,7 +240,8 @@ window.MWChat=(()=>{
    check(r);
    if(!r.data)throw Error('Username band');
   }
-  let avatar_url=C.group?.avatar_url||null;
+  if(C.group&&C.group.owner_id!==S.u?.id)throw Error('Faqat guruh egasi tahrirlay oladi');
+  let avatar_url=form.dataset.removeAvatar==='1'?null:(C.group?.avatar_url||null);
   const file=d.get('avatar');
   if(file?.size){
    const path=await upload('avatars',file,2097152,['image/jpeg','image/png','image/webp']);
