@@ -2736,6 +2736,14 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
 .mw-profile-bio-box.expanded .profile-bio{display:block!important;overflow:visible}
 .mw-profile-bio-more{display:inline-flex;align-items:center;gap:5px;background:transparent!important;border:0!important;color:#9dd7f6!important;box-shadow:none!important;font-size:13px;font-weight:650;padding:6px 0!important;cursor:pointer}
 .mw-profile-bio-more[hidden]{display:none!important}
+
+/* Compact personal profile action bar */
+.mw-instagram-profile .mw-profile-actions.mw-own-profile-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px!important;margin-top:14px}
+.mw-instagram-profile .mw-own-profile-actions>.btn{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:5px!important;min-width:0!important;min-height:48px!important;height:auto!important;padding:7px 3px!important;border-radius:12px!important;border:1px solid #36566e!important;background:#1b3349!important;color:#dceefa!important;box-shadow:none!important;font-size:11px!important;font-weight:600;line-height:1.2;text-align:center;white-space:normal}
+.mw-instagram-profile .mw-own-profile-actions>.btn .svg-icon{width:19px!important;height:19px!important;flex:none}
+.mw-instagram-profile .mw-own-profile-actions>.btn[data-act="editProfile"]{background:#254860!important;border-color:#527c96!important;color:#e1f3ff!important}
+.mw-instagram-profile .mw-own-profile-actions>.btn:active{background:#345773!important}
+.mw-instagram-profile .mw-own-profile-actions>.btn>span{overflow-wrap:normal}
 </style>
 </head>
 <body>
@@ -3522,7 +3530,7 @@ function saveScreen(page,id){
   fastScreens.set(screenKey(page,id),snapshot);
   // Cache only profile views, not chats or private messages.
   if(page==='profile'&&S.u?.id){
-    try{localStorage.setItem('mw_profile_v4:'+S.u.id+':'+id+':'+S.lang,JSON.stringify(snapshot))}catch(error){}
+    try{localStorage.setItem('mw_profile_v5:'+S.u.id+':'+id+':'+S.lang,JSON.stringify(snapshot))}catch(error){}
   }
   if(fastScreens.size>12)fastScreens.delete(fastScreens.keys().next().value);
 }
@@ -3566,7 +3574,7 @@ async function go(page='home',id=null){
   let cached=useCache?fastScreens.get(key):null;
   if(!cached&&page==='profile'&&S.u?.id){
     try{
-      const saved=JSON.parse(localStorage.getItem('mw_profile_v4:'+S.u.id+':'+target+':'+S.lang)||'null');
+      const saved=JSON.parse(localStorage.getItem('mw_profile_v5:'+S.u.id+':'+target+':'+S.lang)||'null');
       if(saved?.html&&Date.now()-saved.at<24*60*60*1000)cached=saved;
     }catch(error){}
   }
@@ -4005,7 +4013,7 @@ async function toggleFollow(id,button){
     if(S.u?.id!==uid)return;
     if(S.accountFollowing){if(desired)S.accountFollowing.add(id);else S.accountFollowing.delete(id);}
     invalidateProfileData();
-    try{localStorage.removeItem('mw_profile_v4:'+uid+':'+id+':'+S.lang)}catch{}
+    try{localStorage.removeItem('mw_profile_v5:'+uid+':'+id+':'+S.lang)}catch{}
     if(S.page==='profile'&&S.profileId===id){
       const actions=document.querySelector('.mw-profile-actions:not(.mw-own-profile-actions)');
       if(actions)actions.innerHTML=profileFollowActions(id,desired);
