@@ -192,7 +192,9 @@ window.MWChat=(()=>{
    '<div class="formgroup"><label>Guruhga odam qo‘shish</label><input class="field" id="mwMemberSearch" placeholder="Ism yoki @username">'+
    '<div id="mwMemberResults" class="mw-member-list"></div><small id="mwSelectedCount"></small></div>'+
    (g?'<button type="button" class="btn ghost" data-v11="theme-open" data-thread="g:'+escape(g.id)+'">Chat fonini tanlash</button>':'')+
-   '<button class="btn" type="submit">Saqlash</button></form>');
+   '<button class="btn" type="submit">Saqlash</button>'+
+   (g&&g.owner_id===S.u?.id?'<div class="mw-group-delete-zone"><button type="button" class="btn danger" data-mw="delete-group" data-id="'+escape(g.id)+'">'+icon('trash',18)+' Guruhni o‘chirish</button></div>':'')+
+   '</form>');
   visibility();
   searchPeople('',true);
   if(g?.visibility!=='private')usernameStatus().catch(console.warn);
@@ -362,7 +364,7 @@ window.MWChat=(()=>{
       ${own||S.me?.is_admin?actionTile('image','Fon','data-v11="theme-open" data-thread="g:'+escape(id)+'"'):''}
       ${own?actionTile('users','A’zo','data-mw="edit-group" data-member-focus="1" data-id="'+escape(id)+'"'):''}
       ${own?actionTile('edit','Tahrir','data-mw="edit-group" data-id="'+escape(id)+'"'):''}
-      ${own?actionTile('trash','O‘chirish','data-mw="delete-group" data-id="'+escape(id)+'"',true):membership?actionTile('logout','Chiqish','data-mw="leave-group" data-id="'+escape(id)+'"',true):''}
+      ${!own&&membership?actionTile('logout','Chiqish','data-mw="leave-group" data-id="'+escape(id)+'"',true):''}
     </div>
     <h3 class="mw-info-members-title">A’zolar <span>${members.length}</span></h3>
     <div class="mw-member-list mw-info-members">${membersHtml}</div>
