@@ -1,7 +1,7 @@
-const CACHE='mw-public-shell-winter-v25';
+const CACHE='mw-public-shell-winter-v26';
 const SCOPE=self.registration.scope;
 const INDEX=new URL('./index.html',SCOPE).href;
-const PUBLIC_ASSETS=['./assets/winter-logo-192.png?v=21','./favicon.ico?v=21','./manifest.webmanifest','./winter.css?v=20.2','./assets/winter-mountains.webp','./mw-live-chat.js?v=groups36','./chat-landscapes.js?v=1','./mw-v11.js?v=20'].map(path=>new URL(path,SCOPE).href);
+const PUBLIC_ASSETS=['./assets/winter-logo-192.png?v=21','./favicon.ico?v=21','./manifest.webmanifest','./winter.css?v=20.2','./assets/winter-mountains.webp','./mw-live-chat.js?v=groups36','./chat-landscapes.js?v=2','./mw-v11.js?v=20'].map(path=>new URL(path,SCOPE).href);
 self.addEventListener('install',event=>{
   event.waitUntil((async()=>{
     const cache=await caches.open(CACHE);
