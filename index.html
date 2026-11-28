@@ -2659,6 +2659,21 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
 #mwGroupInfoLoading .mw11-member-person small{font-size:12px}
 #mwGroupInfoLoading .mw-info-role{flex:none;background:#203f58;color:#a9dafa;border-radius:18px;padding:5px 9px;font-size:11px}
 @media(max-width:360px){#mwGroupInfoLoading .mw-info-actions{gap:4px}#mwGroupInfoLoading .mw-info-action{font-size:10px}#mwGroupInfoLoading .mw-info-avatar{width:76px;height:76px;flex-basis:76px}}
+
+.mw-question{width:min(420px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:0;border:1px solid #456681;border-radius:18px;background:#14273b;color:#e5f3ff;box-shadow:0 18px 65px #0009;overflow:auto}
+.mw-question::backdrop{background:#030b15b8;backdrop-filter:blur(3px)}
+.mw-question-form{padding:20px;display:grid;gap:16px;margin:0}
+.mw-question-form header{display:flex;align-items:center;gap:10px;position:static;background:transparent;padding:0;border:0}
+.mw-question-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#25455f;color:#b9e2ff;flex:none}
+.mw-question-form header strong{font-size:18px;flex:1}
+.mw-question-close{display:grid;place-items:center;width:34px;height:34px;border:0;background:transparent;color:#b9d5e9;border-radius:9px;box-shadow:none;padding:0}
+.mw-question-form p{font-size:15px;line-height:1.6;margin:0;color:#c8dce9;overflow-wrap:anywhere}
+.mw-question-form footer{display:flex;justify-content:flex-end;gap:10px;background:transparent;position:static;border:0;padding:0}
+.mw-question-form footer button{min-height:44px;border-radius:11px;padding:10px 15px;font-size:14px;font-weight:600;box-shadow:none;border:1px solid #4a708a;cursor:pointer}
+.mw-question-cancel{background:#20374b;color:#dcecf7}
+.mw-question-ok{background:#91cbea;color:#10283a}
+.mw-question-ok.is-danger{background:#733d43;color:#fff;border-color:#ad646b}
+.mw-question-input{width:100%;resize:vertical;box-sizing:border-box}
 </style>
 </head>
 <body>
@@ -4852,7 +4867,7 @@ document.addEventListener('click',async event=>{
     await mwDraftOpenForm(open.dataset.openDraft);
     mwDraftRenderList()
   }else if(remove){
-    if(!confirm('Bu saqlangan mod qoralamasini o‘chirasizmi?'))return;
+    if(!await mwConfirm('Bu saqlangan mod qoralamasini o‘chirasizmi?'))return;
     await mwDraftDelete(remove.dataset.deleteDraft);
     const form=document.getElementById('modForm');
     if(form?.dataset.draftId===remove.dataset.deleteDraft){
@@ -5057,22 +5072,35 @@ async function editMod(id){
     .eq('id',id).eq('author_id',S.u.id).single());
   dialog(t('edit'),modFields(m))
 }
-function confirmModDeletion(id,name){
-  return new Promise(resolve=>{
-    const layer=document.createElement('div');
-    layer.className='mw-mod-picker-overlay mw-delete-confirm';
-    layer.innerHTML='<div class="mw-mod-picker-dialog" role="alertdialog" aria-modal="true" aria-labelledby="mwDeleteTitle"><div class="mw-mod-picker-header"><strong id="mwDeleteTitle">Modni o‘chirish</strong></div><div class="mw-delete-confirm-body"><p>«'+e(name)+'» modini butunlay o‘chirishni tasdiqlaysizmi? Bu amalni ortga qaytarib bo‘lmaydi.</p><div class="mw-delete-confirm-actions"><button type="button" class="btn ghost" data-delete-cancel>'+e(t('cancel'))+'</button><button type="button" class="btn danger" data-delete-confirm>'+ico('trash',17)+' '+e(t('delete'))+'</button></div></div></div>';
+// Site-owned dialogs, separate from the current page or profile editor.
+let mwQuestionQueue=Promise.resolve();
+function mwQuestion(message,options={}){
+  const run=()=>new Promise(resolve=>{
     const prior=document.activeElement;
-    const finish=value=>{layer.remove();document.removeEventListener('keydown',onKey,true);if(prior?.isConnected)prior.focus();resolve(value)};
-    const onKey=event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();finish(false)}};
-    layer.addEventListener('click',event=>{
-      if(event.target===layer||event.target.closest('[data-delete-cancel]'))finish(false);
-      else if(event.target.closest('[data-delete-confirm]'))finish(true);
-    });
-    document.body.appendChild(layer);
-    document.addEventListener('keydown',onKey,true);
-    layer.querySelector('[data-delete-cancel]').focus();
+    const modal=document.createElement('dialog');
+    modal.className='mw-question';
+    modal.setAttribute('aria-labelledby','mwQuestionTitle');
+    modal.setAttribute('aria-describedby','mwQuestionText');
+    const inputMode=options.input===true;
+    const title=options.title||(inputMode?'Ma’lumot kiriting':'Tasdiqlash');
+    modal.innerHTML='<form class="mw-question-form"><header><span class="mw-question-icon">'+ico(options.danger?'trash':'info',22)+'</span><strong id="mwQuestionTitle">'+e(title)+'</strong><button type="button" class="mw-question-close" aria-label="Yopish">'+ico('x',20)+'</button></header><p id="mwQuestionText">'+e(String(message))+'</p>'+(inputMode?'<textarea class="field mw-question-input" rows="3" aria-label="'+e(title)+'"></textarea>':'')+'<footer><button type="button" class="mw-question-cancel">'+e(t('cancel'))+'</button><button type="submit" class="mw-question-ok'+(options.danger?' is-danger':'')+'">'+e(options.ok||'Tasdiqlash')+'</button></footer></form>';
+    const input=modal.querySelector('textarea');if(input)input.value=String(options.initial??'');
+    let settled=false;
+    const finish=value=>{if(settled)return;settled=true;modal.close();modal.remove();if(prior?.isConnected)prior.focus({preventScroll:true});resolve(value)};
+    const cancel=()=>finish(inputMode?null:false);
+    modal.addEventListener('cancel',ev=>{ev.preventDefault();cancel()});
+    modal.addEventListener('close',cancel);
+    modal.addEventListener('click',ev=>{if(ev.target===modal||ev.target.closest('.mw-question-close,.mw-question-cancel'))cancel()});
+    modal.addEventListener('submit',ev=>{ev.preventDefault();ev.stopImmediatePropagation();finish(inputMode?input.value:true)});
+    modal.addEventListener('keydown',ev=>{if(ev.key==='Escape')ev.stopPropagation()});
+    document.body.appendChild(modal);modal.showModal();(input||modal.querySelector('.mw-question-cancel')).focus({preventScroll:true});
   });
+  const result=mwQuestionQueue.then(run,run);mwQuestionQueue=result.catch(()=>{});return result;
+}
+function mwConfirm(message,options={}){return mwQuestion(message,{danger:/o‘chir|o'chir|chiqar/i.test(message),...options})}
+function mwPrompt(message,initial=''){return mwQuestion(message,{input:true,initial,ok:'Saqlash'})}
+function confirmModDeletion(id,name){
+  return mwConfirm('«'+name+'» modini butunlay o‘chirishni tasdiqlaysizmi? Bu amalni ortga qaytarib bo‘lmaydi.',{title:'Modni o‘chirish',danger:true,ok:'O‘chirish'});
 }
 const modDeletePending=new Set();
 async function removeMod(id){
@@ -6578,7 +6606,7 @@ async function adminAction(cmd,id,chosenDays=undefined){
   }
   if(cmd==='approve_verification')days=chosenDays;
   if(cmd==='ban'){
-    let raw=prompt(
+    let raw=await mwPrompt(
       'Necha kun? Bo‘sh qoldirsang muddatsiz bo‘ladi:',''
     );
     if(raw===null)return;
@@ -6589,11 +6617,11 @@ async function adminAction(cmd,id,chosenDays=undefined){
     }
   }
   if(cmd==='reject_mod'){
-    note=prompt('Rad etish sababi:','');
+    note=await mwPrompt('Rad etish sababi:','');
     if(note===null)return
   }
   if(['delete_mod','ban'].includes(cmd)&&
-    !confirm('Tasdiqlaysizmi?'))return;
+    !await mwConfirm('Tasdiqlaysizmi?'))return;
   if(cmd==='approve_verification'||cmd==='reject_verification'){
     if(mwBadgeActionsInFlight.has(id))return;
     mwBadgeActionsInFlight.add(id);
@@ -6707,7 +6735,7 @@ window.addEventListener('click',async event=>{
     else if(act==='reportUser')report('profile',id);
     else if(act==='reportMsg')report('message',id);
     else if(act==='removeComment'){
-      if(confirm('Izoh o‘chirilsinmi?')){
+      if(await mwConfirm('Izoh o‘chirilsinmi?')){
         check(await DB.from('comments').delete().eq('id',id));
         await comments($('#commentList').dataset.mod)
       }
@@ -6735,7 +6763,7 @@ window.addEventListener('click',async event=>{
     }
     else if(act==='playMembers')await playMembers(id);
     else if(act==='removeInvite'){
-      if(confirm('Taklif o‘chirilsinmi?')){
+      if(await mwConfirm('Taklif o‘chirilsinmi?')){
         check(await DB.from('play_posts').delete().eq('id',id));
         await community()
       }
@@ -6747,8 +6775,8 @@ window.addEventListener('click',async event=>{
       await worldConversation();
     }
     else if(act==='worldLeave'){
-      if(!confirm('Umumiy chatdan chiqmoqchimisiz?'))return;
-      if(!confirm('Tasdiqlang: umumiy chat ro‘yxatdan chiqadi, keyin qayta qo‘shilishingiz mumkin.'))return;
+      if(!await mwConfirm('Umumiy chatdan chiqmoqchimisiz?'))return;
+      if(!await mwConfirm('Tasdiqlang: umumiy chat ro‘yxatdan chiqadi, keyin qayta qo‘shilishingiz mumkin.'))return;
       await worldUpdate({joined:false});
       await worldConversation();
     }
@@ -7286,7 +7314,7 @@ function mwInstallBackGuard(){
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=groups31"></script>
-<script src="./mw-v11.js?v=14"></script>
+<script src="./mw-live-chat.js?v=groups32"></script>
+<script src="./mw-v11.js?v=15"></script>
 </body>
 </html>
