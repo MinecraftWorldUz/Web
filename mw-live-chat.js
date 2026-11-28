@@ -345,32 +345,36 @@ window.MWChat=(()=>{
   const membersHtml=members.map(m=>`<div class="mw-member-option mw11-member-manage">
       <button type="button" class="mw11-member-person" data-act="user" data-id="${escape(m.user_id)}">
         ${avatar(map[m.user_id])}
-        <span>${label(map[m.user_id])} ${m.user_id===group.owner_id?' · Egasi':''}<small class="muted">${escape(presenceText(m.user_id))}</small></span>
+        <span><b>${label(map[m.user_id])}</b><small class="muted">${escape(presenceText(m.user_id))}</small></span>
       </button>
+      ${m.user_id===group.owner_id?'<span class="mw-info-role">Egasi</span>':''}
       ${own&&m.user_id!==group.owner_id?`<button type="button" class="mw11-kick" data-mw="kick" data-id="${escape(id)}"
         data-user="${escape(m.user_id)}" aria-label="A’zoni guruhdan chiqarish" title="Guruhdan chiqarish">${icon('x',18)}</button>`:''}
     </div>`).join('');
+  const actionTile=(glyph,title,attrs,danger=false)=>'<button type="button" class="mw-info-action'+(danger?' mw-info-danger':'')+'" '+attrs+' aria-label="'+escape(title)+'">'+icon(glyph,24)+'<span>'+escape(title)+'</span></button>';
   holder.innerHTML=`
-    <div class="mw-group-top">
-      ${group.avatar_url?'<img class="av large" src="'+escape(group.avatar_url)+'" alt="">':icon('users',40)}
-      <div><h3>${escape(group.name)} ${tick({verified:certified})}</h3><p>${group.visibility==='public'?'@'+escape(group.username||''):'Maxfiy guruh'}</p><p>${escape(group.bio||'')}</p></div>
+    <div class="mw-info-hero">
+      <div class="mw-info-avatar">${group.avatar_url?'<img src="'+escape(group.avatar_url)+'" alt="">':icon('users',40)}</div>
+      <div class="mw-info-copy"><h3>${escape(group.name)} ${tick({verified:certified})}</h3><p>${group.visibility==='public'?'@'+escape(group.username||''):'Maxfiy guruh'}</p><span class="mw-info-count">${icon('users',16)} ${members.length} a’zo</span>${group.bio?'<p>'+escape(group.bio)+'</p>':''}</div>
     </div>
-    <h3>A’zolar · ${members.length}</h3>
-    <div class="mw-member-list">${membersHtml}</div>
+    <div class="mw-info-actions">
+      ${actionTile('chat','Chat','data-act="close"')}
+      ${own||S.me?.is_admin?actionTile('image','Fon','data-v11="theme-open" data-thread="g:'+escape(id)+'"'):''}
+      ${own?actionTile('users','A’zo','data-mw="edit-group" data-member-focus="1" data-id="'+escape(id)+'"'):''}
+      ${own?actionTile('edit','Tahrir','data-mw="edit-group" data-id="'+escape(id)+'"'):''}
+      ${own?actionTile('trash','O‘chirish','data-mw="delete-group" data-id="'+escape(id)+'"',true):membership?actionTile('logout','Chiqish','data-mw="leave-group" data-id="'+escape(id)+'"',true):''}
+    </div>
+    <h3 class="mw-info-members-title">A’zolar <span>${members.length}</span></h3>
+    <div class="mw-member-list mw-info-members">${membersHtml}</div>
     ${own&&pending.length?'<h3>Qo‘shilish so‘rovlari ('+pending.length+')</h3>'+
       '<div class="mw-member-list">'+pending.map(req=>'<div class="mw-invite-card">'+
       '<div class="mw-invite-person">'+avatar(map[req.requester_id])+
       '<strong>'+escape(map[req.requester_id]?.display_name||map[req.requester_id]?.username||'Foydalanuvchi')+'</strong></div>'+
       '<div class="buttons"><button class="btn" data-mw="review-join" data-id="'+escape(req.id)+'" data-status="accepted">Qabul qilish</button>'+
       '<button class="btn ghost" data-mw="review-join" data-id="'+escape(req.id)+'" data-status="declined">Rad etish</button></div></div>').join('')+'</div>':''}
-    ${own||S.me?.is_admin?'<div class="buttons"><button class="btn ghost" data-v11="theme-open" data-thread="g:'+escape(id)+'">Chat fonini tanlash</button></div>':''}
     ${own&&group.visibility==='public'&&certified?'<div class="settings-row"><b>Ko‘k belgi tasdiqlangan</b><small class="muted">'+(badge.verified_until?'Amal qilish muddati: '+escape(new Date(badge.verified_until).toLocaleDateString('uz-UZ')):'Muddatsiz')+'</small></div>':''}
     ${own&&group.visibility==='public'&&!certified?'<div class="buttons">'+(application?'<span class="status">Ko‘k belgi arizasi tekshiruvda</span>':'<button class="btn ghost" data-mw="group-badge-apply" data-id="'+escape(id)+'">Guruh uchun ko‘k belgi arizasi</button>')+'</div>':''}
-    <div class="buttons">${own?
-      '<button class="btn" data-mw="edit-group" data-id="'+escape(id)+'">Tahrirlash / a’zo qo‘shish</button>'+
-      '<button class="btn danger" data-mw="delete-group" data-id="'+escape(id)+'">Guruhni o‘chirish</button>':
-      (membership?'<button class="btn danger" data-mw="leave-group" data-id="'+escape(id)+'">Guruhdan chiqish</button>':'')}
-    </div>`;
+    `;
   const presenceTask=memberIds.length?DB.from("mw_presence").select("user_id,last_seen_at").in("user_id",memberIds):Promise.resolve({data:[]});
   Promise.resolve(presenceTask).then(result=>{if(!alive()||result.error)return;for(const row of result.data||[])times.set(row.user_id,row.last_seen_at);for(const node of holder.querySelectorAll(".mw11-member-person")){const small=node.querySelector("small");if(small)small.textContent=presenceText(node.dataset.id);}}).catch(console.warn);
   if(missing.length)users(missing).then(people=>{if(!alive())return;for(const node of holder.querySelectorAll("[data-mw=review-join]")){const req=pending.find(x=>x.id===node.dataset.id);const name=node.closest(".mw-invite-card")?.querySelector("strong");if(name&&req&&people[req.requester_id])name.textContent=people[req.requester_id].display_name||people[req.requester_id].username;}}).catch(console.warn);
@@ -436,6 +440,7 @@ window.MWChat=(()=>{
    const g=check(await DB.from('mw_groups').select('*').eq('id',id).single());
    if(g.owner_id!==S.u.id)throw Error('Faqat guruh egasi tahrirlay oladi');
    editGroup(g);
+   if(button.dataset.memberFocus==='1')requestAnimationFrame(()=>$('#mwMemberSearch')?.focus());
   }
   else if(command==='kick'){
    const targetId=button.dataset.user;
