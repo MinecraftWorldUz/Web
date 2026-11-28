@@ -17,7 +17,13 @@ window.MWChat=(()=>{
      C.last[g]=new Date(payload.new.created_at).getTime();
      C.preview[g]=String(payload.new.body||'').slice(0,65);
      renderGroups();
-     if(S.page==='chat'&&S.chatId==='g:'+g&&payload.new.sender_id!==uid)openGroup(g).catch(console.warn);
+     if(S.page==='chat'&&S.chatId==='g:'+g&&payload.new.sender_id!==uid){
+       const m=payload.new;users([m.sender_id]).then(people=>{
+         if(S.u?.id!==uid||S.page!=='chat'||S.chatId!=='g:'+g||!$('#conversation #mwGroupMessage'))return;
+         window.MWV11?.appendDated?.(m,groupBubble(m,people[m.sender_id],[m]));
+         window.MWV11?.afterRender?.([m],'group');window.MWV11?.markRead?.('g:'+g).catch(console.warn);
+       }).catch(console.warn);
+     }
     })
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'mw_group_members',filter:`user_id=eq.${uid}`},()=>{
       if(S.u?.id!==uid)return;
@@ -56,7 +62,7 @@ window.MWChat=(()=>{
   if(pending?.error)throw pending.error;
   const requestCount=pending?.count||0;
   $('#mwInviteButton')?.remove();
-  if(S.chatId?.startsWith('g:')&&S.mw11MobileOpen)await openGroup(S.chatId.slice(2));
+  if(S.chatId?.startsWith('g:')&&S.mw11MobileOpen&&!$('#conversation #mwGroupMessage')&&!$('#conversation .mw-join-footer'))await openGroup(S.chatId.slice(2));
  }
  function renderGroups(){
   const rows=$('#chatRows');
@@ -109,7 +115,7 @@ window.MWChat=(()=>{
    const followerIds=f.map(x=>x.follower_id);
    C.memberFollowers=new Set(followerIds);
    const verified=!!S.me?.verified&&(!S.me.verified_until||new Date(S.me.verified_until)>new Date());
-   if(!verified||!term){contacts=followerIds;if(!contacts.length){target.innerHTML='<p class="muted">Obunachilar yo‘q'+(verified?' · Taklif uchun username qidiring':'')+'</p>';return;}}
+   {contacts=followerIds;if(!contacts.length){target.innerHTML='<p class="muted">Obunachilar yo‘q'+(verified?' · Taklif uchun username qidiring':'')+'</p>';return;}}
   }
   let req=DB.from('profiles').select('id,username,display_name,avatar_url,verified,verified_until')
      .neq('id',S.u.id).order('username',{ascending:true}).range(offset,offset+49);
@@ -238,7 +244,7 @@ window.MWChat=(()=>{
     try{
      const existing=check(await DB.from('mw_group_invitations').select('id,status')
        .eq('group_id',group.id).eq('recipient_id',recipient_id).maybeSingle());
-     if(existing?.status==='pending'){requested.push(C.selectedNames.get(recipient_id)||recipient_id.slice(0,7));continue;}
+     if(existing?.status==='pending'){const setting=check(await DB.from('mw_chat_settings').select('require_group_approval').eq('user_id',recipient_id).maybeSingle());if(setting?.require_group_approval!==false){requested.push(C.selectedNames.get(recipient_id)||recipient_id.slice(0,7));continue;}}
      if(existing)check(await DB.from('mw_group_invitations').delete().eq('id',existing.id));
      const invitation=check(await DB.from('mw_group_invitations')
        .insert({group_id:group.id,sender_id:S.u.id,recipient_id})
@@ -263,8 +269,12 @@ window.MWChat=(()=>{
    (window.MWV11?.bubble?.(m,'group',rows)||'<div class="bubble">'+escape(m.body)+'</div>')+'</div>';
  async function openGroup(id){
   if(!S.u||S.page!=='chat')return;
-  const g=check(await DB.from('mw_groups').select('*').eq('id',id).single());
-  const member=check(await DB.from('mw_group_members').select('user_id').eq('group_id',id).eq('user_id',S.u.id).maybeSingle());
+  const uid=S.u.id, seq=(C.openSeq||0)+1;C.openSeq=seq;
+  S.chatId='g:'+id;
+  const same=C.activeId===id&&$('#conversation #msgs')&&($('#conversation #mwGroupMessage')?.dataset.id===id);
+  const [gr,mr]=await Promise.all([DB.from('mw_groups').select('*').eq('id',id).single(),DB.from('mw_group_members').select('user_id').eq('group_id',id).eq('user_id',uid).maybeSingle()]);
+  const g=check(gr),member=check(mr);
+  if(S.u?.id!==uid||S.page!=='chat'||S.chatId!=='g:'+id||C.openSeq!==seq)return;
   let review=false;
   if(!member&&S.me?.is_admin===true&&S.me.username==='admin'){
    const request=check(await DB.from('mw_group_badge_requests').select('id').eq('group_id',id).eq('status','pending').maybeSingle());
@@ -273,21 +283,22 @@ window.MWChat=(()=>{
   const invitation=!member?check(await DB.from('mw_group_invitations').select('id').eq('group_id',id).eq('recipient_id',S.u.id).eq('status','pending').maybeSingle()):null;
   if(!member&&!review&&g.visibility!=='public'&&!invitation)throw Error('Bu guruhga a’zo emassiz');
   const preview=!member&&!review;
+  if(S.u?.id!==uid||S.page!=='chat'||S.chatId!=='g:'+id||C.openSeq!==seq)return;
   S.chatId='g:'+id;C.activeId=id;
   const area=$('#conversation');if(!area)return;
-  area.innerHTML='<header class="chat-toolbar">'+
+  if(!same||!member)area.innerHTML='<header class="chat-toolbar">'+
      '<span class="mw11-group-header-avatar">'+(g.avatar_url?'<img class="av" src="'+escape(g.avatar_url)+'" alt="">':icon('users',28))+'</span>'+
      '<button class="linkbtn mw11-head-name" data-mw="group-info" data-id="'+escape(id)+'"><strong>'+escape(g.name)+tick({verified:C.badges.has(id)})+'</strong><small>'+(g.visibility==='public'?'@'+escape(g.username||''):'Maxfiy guruh')+'</small></button>'+
      '<button type="button" class="mw11-chat-options-btn" data-v11="options" data-thread="g:'+escape(id)+'" aria-label="Guruh sozlamalari">'+icon('more-vertical',22)+'</button></header>'+
    '<div class="messages" id="msgs"></div>'+(preview?'<div class="mw-join-footer"><button type="button" class="btn" data-mw="join-public" data-id="'+escape(id)+'">Qo‘shilish</button></div>':'<form class="chat-compose" id="mwGroupMessage" data-id="'+escape(id)+'">'+
    '<input class="field" name="body" maxlength="2000" placeholder="Xabar yozing..."><button class="btn" type="submit">'+icon('send',20)+'</button></form>');
-  window.MWV11?.applyTheme?.('g:'+id).catch(console.warn);
+  if(!same)window.MWV11?.applyTheme?.('g:'+id).catch(console.warn);
   if(S.mw11MobileOpen)window.MWV11?.openMobileThread?.();
   renderGroups();
   if(preview&&g.visibility!=='public'){$('#msgs').innerHTML='<p class="muted mw-preview-note">Maxfiy guruh · Xabarlarni ko‘rish uchun taklifni qabul qiling.</p>';return;}
   const rows=check(await DB.from('mw_group_messages').select('id,sender_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type,is_join_event').eq('group_id',id).order('created_at',{ascending:false}).limit(65));
   const people=await users(rows.map(m=>m.sender_id));
-  if(S.chatId!=='g:'+id||!$('#msgs'))return;
+  if(S.u?.id!==uid||S.page!=='chat'||S.chatId!=='g:'+id||C.openSeq!==seq||!$('#msgs'))return;
   const ordered=rows.slice().reverse();
   $('#msgs').innerHTML=(window.MWV11?.dated?.(ordered,m=>groupBubble(m,people[m.sender_id],ordered))||
    ordered.map(m=>groupBubble(m,people[m.sender_id],ordered)).join(''))||'<p class="muted">Birinchi xabarni yuboring</p>';
@@ -566,15 +577,20 @@ window.MWChat=(()=>{
     const files=window.MWV11?.selectedAttachments?.(f)||[];
     if(!text&&!files.length)return;
     let lastBody=text;
+    const pending=window.MWV11?.beginPending?.(text||'📎 Fayl');
+    try{
     for(const [i,file] of (files.length?files:[null]).entries()){
       const media=file?await window.MWV11.uploadAttachment(f,'group',f.dataset.id,file):{};
       const body=(i===0&&text)||(media.attachment_type==='image'?'🖼 Rasm':'📎 '+(media.attachment_name||'Fayl'));
-      check(await DB.from('mw_group_messages').insert({group_id:f.dataset.id,sender_id:S.u.id,body,...media,
-        reply_to:i===0?(window.MWV11?.replyId?.('group','g:'+f.dataset.id)||null):null}));
+      const result=check(await DB.from('mw_group_messages').insert({group_id:f.dataset.id,sender_id:S.u.id,body,...media,
+        reply_to:i===0?(window.MWV11?.replyId?.('group','g:'+f.dataset.id)||null):null}).select('id,sender_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type,is_join_event').single());
+      if(S.chatId==='g:'+f.dataset.id){window.MWV11?.finishPending?.(pending);window.MWV11?.appendDated?.(result,groupBubble(result,S.me,[result]));window.MWV11?.afterRender?.([result],'group');}
       lastBody=body;
     }
     f.reset();window.MWV11?.clearAttachment?.(f);window.MWV11?.clearReply?.();
-    C.last[f.dataset.id]=Date.now();C.preview[f.dataset.id]='Siz: '+lastBody.slice(0,65);await openGroup(f.dataset.id);
+    window.MWV11?.finishPending?.(pending);
+    C.last[f.dataset.id]=Date.now();C.preview[f.dataset.id]='Siz: '+lastBody.slice(0,65);renderGroups();
+    }catch(err){window.MWV11?.finishPending?.(pending,true);throw err;}
     window.mwMaybeExpireImages?.().catch(console.warn);
    }
   }catch(err){console.error(err);toast(err.code==='23505'?'Username band':err.message)}
