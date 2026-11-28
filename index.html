@@ -2744,6 +2744,11 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
 .mw-instagram-profile .mw-own-profile-actions>.btn[data-act="editProfile"]{background:#254860!important;border-color:#527c96!important;color:#e1f3ff!important}
 .mw-instagram-profile .mw-own-profile-actions>.btn:active{background:#345773!important}
 .mw-instagram-profile .mw-own-profile-actions>.btn>span{overflow-wrap:normal}
+
+.mw-avatar-edit-stack{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
+.mw-avatar-remove{display:flex;align-items:center;justify-content:center;gap:4px;background:transparent!important;border:0!important;box-shadow:none!important;color:#f2a0a6!important;font-size:11px;padding:4px 0!important;white-space:normal;cursor:pointer}
+.mw-avatar-remove[hidden]{display:none!important}
+.mw-edit-username .field{padding-inline:14px!important}
 </style>
 </head>
 <body>
@@ -4440,13 +4445,13 @@ function editProfile(){
   dialog(t('editProfile'),`
     <form id="editProfileForm" class="mw-profile-edit-form">
       <div class="mw-edit-top">
-        <label class="mw-avatar-edit" title="Avatarni almashtirish">
+        <div class="mw-avatar-edit-stack"><label class="mw-avatar-edit" title="Avatarni almashtirish">
           <span id="avatarPreview">${avatar(S.me,true)}</span>
           <span class="mw-photo-plus">${ico('plus',16)}</span>
           <input id="pick-avatar" type="file" name="avatar"
             accept="image/jpeg,image/png,image/webp,image/gif"
             aria-label="Avatarni almashtirish">
-        </label>
+        </label><button type="button" class="mw-avatar-remove" id="mwRemoveAvatar" ${S.me.avatar_url?'':'hidden'}>${ico('trash',16)} Rasmni o‘chirish</button></div>
         <div class="mw-edit-name">
           <label for="mwDisplayName">Ism</label>
           <input class="field" id="mwDisplayName" name="display_name" maxlength="60"
@@ -4459,27 +4464,22 @@ function editProfile(){
       <div class="formgroup">
         <label for="mwEditUsername">Username</label>
         <div class="mw-edit-username">
-          <span>@</span>
           <input class="field" id="mwEditUsername" name="username" required
             maxlength="20" spellcheck="false" autocapitalize="off"
             value="${e(S.me.username)}">
         </div>
         <small class="mw-username-hint" id="mwAccountNameCheck"></small>
       </div>
-      <fieldset class="mw-edit-privacy">
-        <legend>Chat maxfiyligi</legend>
-        <label class="mw-switch-row"><span>
-          <strong>Chat turi: <b id="mwVisibilityStatus">Ommaviy</b></strong>
-          <small>Ommaviy bo‘lsa qidiruvda chiqadi, maxfiy bo‘lsa eski suhbatlaringiz saqlanadi</small>
-        </span><input type="checkbox" id="mwPublicProfile" checked></label>
-        <label class="mw-switch-row"><span>
-          <strong>Guruhga qo‘shishdan oldin so‘rash</strong>
-          <small>Yoqilgan bo‘lsa taklifni qabul qilasiz, o‘chirilsa guruhga avtomatik qo‘shilasiz</small>
-        </span><input type="checkbox" id="mwInviteApproval" checked></label>
-      </fieldset>
       <button class="btn mw-edit-save" type="submit">${t('save')}</button>
     </form>`);
-  window.MWChat?.loadProfileSettings?.().catch(err=>console.warn('Chat privacy:',err));
+  const form=$('#editProfileForm'),pick=$('#pick-avatar'),remove=$('#mwRemoveAvatar');
+  remove.addEventListener('click',()=>{
+    form.dataset.removeAvatar='1';avatarCroppedFile=null;pick.value='';
+    $('#avatarPreview').innerHTML=avatar({...S.me,avatar_url:null},true);
+    remove.hidden=true;
+  });
+  pick.addEventListener('change',()=>{if(pick.files?.length){form.dataset.removeAvatar='0';remove.hidden=false;}});
+
   $('#mwEditUsername')?.dispatchEvent(new Event('input',{bubbles:true}));
 }
 async function saveProfile(f){
@@ -4494,7 +4494,7 @@ async function saveProfile(f){
   const usernameCheck=await DB.rpc('mw_username_available',{candidate:username,kind:'profile'});
   check(usernameCheck);
   if(!usernameCheck.data)throw Error('Username band');
-  let avatar_url=S.me.avatar_url;
+  let avatar_url=f.dataset.removeAvatar==='1'?null:S.me.avatar_url;
   let fi=x.get('avatar');
   if(fi?.size){
     let path=await upload('avatars',fi,2097152,
@@ -4506,7 +4506,6 @@ async function saveProfile(f){
     .update({username,display_name,bio,avatar_url}).eq('id',S.u.id);
   if(r.error?.code==='23505')throw Error('Bu username band');
   check(r);
-  await window.MWChat?.saveProfileSettings?.();
   knownProfiles.delete(S.u.id);if(S.cache)delete S.cache[S.u.id];
   feedLoadedAt=0;feedLoaded=false;
   try{for(const key of ['mw_public_feed_v4','mw_public_feed_v5',FEED_CACHE_KEY])localStorage.removeItem(key);}catch{}
