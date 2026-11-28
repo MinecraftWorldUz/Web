@@ -2632,6 +2632,31 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
     -webkit-tap-highlight-color:transparent;
   }
 }
+
+/* Compact group profile */
+#mwGroupInfoLoading .mw-info-hero{display:flex;align-items:center;gap:18px;padding:12px 0 20px}
+#mwGroupInfoLoading .mw-info-avatar{width:92px;height:92px;flex:0 0 92px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#203b55;border:2px solid #559bc8}
+#mwGroupInfoLoading .mw-info-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+#mwGroupInfoLoading .mw-info-copy{flex:1;min-width:0}
+#mwGroupInfoLoading .mw-info-copy h3{font-size:24px;line-height:1.25;margin:0 0 7px;overflow-wrap:anywhere}
+#mwGroupInfoLoading .mw-info-copy p{margin:4px 0;color:#a9c3d7;font-size:14px;overflow-wrap:anywhere}
+#mwGroupInfoLoading .mw-info-count{display:inline-flex;align-items:center;gap:5px;background:#20394f;border-radius:20px;padding:5px 10px;font-size:13px;margin-top:5px}
+#mwGroupInfoLoading .mw-info-actions{display:flex;gap:7px;align-items:stretch;margin:0 0 20px}
+#mwGroupInfoLoading .mw-info-action{flex:1 1 0;min-width:0;min-height:66px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:7px;padding:9px 2px;border:1px solid #34536c;border-radius:14px;background:#182e42;color:#e5f3ff;box-shadow:none;font-size:11px;font-weight:500;white-space:nowrap;cursor:pointer}
+#mwGroupInfoLoading .mw-info-action svg{flex:none;width:23px;height:23px}
+#mwGroupInfoLoading .mw-info-action.mw-info-danger{color:#ff9696}
+#mwGroupInfoLoading .mw-info-action:active{background:#29465e}
+#mwGroupInfoLoading .mw-info-members-title{display:flex;align-items:center;gap:9px;border-top:1px solid #29465e;padding-top:16px;margin:0 0 12px;font-size:19px}
+#mwGroupInfoLoading .mw-info-members-title span{font-size:12px;background:#20394f;border-radius:20px;padding:4px 9px}
+#mwGroupInfoLoading .mw-info-members{border:1px solid #29465e;border-radius:16px;overflow:hidden;background:#14293c;display:flex;flex-direction:column;gap:0}
+#mwGroupInfoLoading .mw-info-members .mw-member-option{display:flex;align-items:center;gap:8px;border:0;border-bottom:1px solid #29465e;border-radius:0;margin:0;background:transparent;box-shadow:none;padding:10px}
+#mwGroupInfoLoading .mw-info-members .mw-member-option:last-child{border-bottom:0}
+#mwGroupInfoLoading .mw11-member-person{flex:1;min-width:0;display:flex;align-items:center;gap:10px;background:transparent;border:0;text-align:left;box-shadow:none;padding:0}
+#mwGroupInfoLoading .mw11-member-person>span{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px;overflow-wrap:anywhere}
+#mwGroupInfoLoading .mw11-member-person b{font-size:15px}
+#mwGroupInfoLoading .mw11-member-person small{font-size:12px}
+#mwGroupInfoLoading .mw-info-role{flex:none;background:#203f58;color:#a9dafa;border-radius:18px;padding:5px 9px;font-size:11px}
+@media(max-width:360px){#mwGroupInfoLoading .mw-info-actions{gap:4px}#mwGroupInfoLoading .mw-info-action{font-size:10px}#mwGroupInfoLoading .mw-info-avatar{width:76px;height:76px;flex-basis:76px}}
 </style>
 </head>
 <body>
@@ -7259,7 +7284,7 @@ function mwInstallBackGuard(){
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=groups28"></script>
+<script src="./mw-live-chat.js?v=groups29"></script>
 <script src="./mw-v11.js?v=13"></script>
 </body>
 </html>
