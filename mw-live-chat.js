@@ -342,7 +342,7 @@ window.MWChat=(()=>{
     const date=times.get(id);if(!date)return '';
     const d=new Date(date),delta=Date.now()-d.getTime();
     if(!Number.isFinite(delta)||delta<0)return '';
-    return delta<120000?' · 🟢 Onlayn':' · oxirgi onlayn '+d.toLocaleString('uz-UZ',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return delta<120000?'Onlayn':'Oxirgi onlayn '+d.toLocaleString('uz-UZ',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   };
   const membersHtml=members.map(m=>`<div class="mw-member-option mw11-member-manage">
       <button type="button" class="mw11-member-person" data-act="user" data-id="${escape(m.user_id)}">
@@ -601,11 +601,11 @@ window.MWChat=(()=>{
     const files=window.MWV11?.selectedAttachments?.(f)||[];
     if(!text&&!files.length)return;
     let lastBody=text;
-    const pending=window.MWV11?.beginPending?.(text||'📎 Fayl');
+    const pending=window.MWV11?.beginPending?.(text||'Fayl');
     try{
     for(const [i,file] of (files.length?files:[null]).entries()){
       const media=file?await window.MWV11.uploadAttachment(f,'group',f.dataset.id,file):{};
-      const body=(i===0&&text)||(media.attachment_type==='image'?'🖼 Rasm':'📎 '+(media.attachment_name||'Fayl'));
+      const body=(i===0&&text)||(media.attachment_type==='image'?'Rasm':'Fayl: '+(media.attachment_name||'Fayl'));
       const result=check(await DB.from('mw_group_messages').insert({group_id:f.dataset.id,sender_id:S.u.id,body,...media,
         reply_to:i===0?(window.MWV11?.replyId?.('group','g:'+f.dataset.id)||null):null}).select('id,sender_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type,is_join_event').single());
       if(S.chatId==='g:'+f.dataset.id){window.MWV11?.finishPending?.(pending);window.MWV11?.appendDated?.(result,groupBubble(result,S.me,[result]));window.MWV11?.afterRender?.([result],'group');}
