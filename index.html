@@ -2602,6 +2602,19 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
 .card-metrics > span { display:inline-flex; align-items:center; gap:3px; white-space:nowrap; }
 .card-metrics .svg-icon { flex:none; }
 .card-game-version { display:block; color:#a6c1d6; font-size:12px; }
+
+/* Shared settings switches */
+.settings-stack .mw-setting-line{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;margin:0;padding:0;text-align:start;cursor:pointer}
+.settings-stack .mw-setting-copy{display:flex;flex-direction:column;align-items:flex-start;gap:7px;flex:1;min-width:0}
+.settings-stack .mw-setting-copy strong{display:block;font-size:16px;font-weight:700;line-height:1.4;overflow-wrap:anywhere}
+.settings-stack .mw-setting-copy small{display:block;font-size:13px;font-weight:400;line-height:1.5;color:var(--muted,#adc3d5);overflow-wrap:anywhere}
+.settings-stack .mw-setting-toggle{appearance:none;-webkit-appearance:none;position:relative;display:block;flex:0 0 46px;width:46px;height:26px;min-width:46px;min-height:26px;margin:0;padding:0;border:1px solid #7893a9;border-radius:999px;background:#35495c;box-shadow:none;cursor:pointer;transition:background .18s,border-color .18s}
+.settings-stack .mw-setting-toggle::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .18s;pointer-events:none}
+.settings-stack .mw-setting-toggle:checked,.settings-stack .mw-setting-toggle[aria-checked="true"]{background:#2585b6;border-color:#2585b6}
+.settings-stack .mw-setting-toggle:checked::after,.settings-stack .mw-setting-toggle[aria-checked="true"]::after{transform:translateX(20px)}
+.settings-stack .mw-setting-toggle:focus-visible{outline:2px solid #a4dcff;outline-offset:3px}
+.settings-stack .mw-setting-toggle:disabled{opacity:.55;cursor:wait}
+@media(prefers-reduced-motion:reduce){.settings-stack .mw-setting-toggle,.settings-stack .mw-setting-toggle::after{transition:none}}
 </style>
 </head>
 <body>
@@ -6142,7 +6155,7 @@ let mwNotificationBusy=false;
 function mwUpdateNotificationControls(busy=false){
  const on=notificationEnabled()&&pushSupported()&&Notification.permission==='granted';
  document.querySelectorAll('[data-act="notificationToggle"]').forEach(b=>{
-  b.disabled=busy;b.textContent=ux(on?'O‘chirish':'Yoqish');b.setAttribute('aria-busy',String(busy));
+  b.disabled=busy;if(b.classList.contains('mw-setting-toggle')){b.setAttribute('aria-checked',String(on));}else{b.textContent=ux(on?'O‘chirish':'Yoqish');}b.setAttribute('aria-busy',String(busy));
   const row=b.closest('.settings-row');const state=row?.querySelector('[data-mw-notification-state]');if(state)state.textContent=ux(on?'Yoqilgan':'O‘chirilgan');
  });
 }
@@ -6214,17 +6227,20 @@ async function savedModal(liked=false){
   }
 }
 function winterSetting(){
-  return `<div class="settings-row winter-setting">
-    <label class="winter-control">
-      <input type="checkbox" id="winterBackground" ${document.documentElement.dataset.winterBackground==='off'?'':'checked'}>
-      <b>${t('winterBackground')}</b>
-    </label>
-    <p class="mini muted">${t('winterBackgroundHelp')}</p>
-  </div>`;
+  return `<div class="settings-row winter-setting"><label class="mw-setting-line">
+    <span class="mw-setting-copy"><strong>${t('winterBackground')}</strong><small>${t('winterBackgroundHelp')}</small></span>
+    <input class="mw-setting-toggle" type="checkbox" role="switch" id="winterBackground" ${document.documentElement.dataset.winterBackground==='off'?'':'checked'}>
+  </label></div>`;
+}
+function notificationSetting(on){
+  return `<div class="settings-row"><div class="mw-setting-line">
+    <span class="mw-setting-copy"><strong>${ico('bell',19)} ${t('notifications')}</strong><small>Chat xabarlari, layklar, izohlar, obunachilar va arizalar haqida telefoningizda xabar oling.</small></span>
+    <button type="button" class="mw-setting-toggle" role="switch" aria-label="${t('notifications')}" aria-checked="${on}" data-act="notificationToggle"></button>
+  </div></div>`;
 }
 async function settings(){
   if(!S.u){
-    dialog(t('settings'),`<div class="settings-stack">${winterSetting()}<div class="settings-row"><b>${ico('bell',19)} Telefon bildirishnomalari</b>${btn('notificationToggle',notificationEnabled()&&pushSupported()&&Notification.permission==='granted'?'O‘chirish':'Yoqish','','ghost')}</div></div>`);
+    dialog(t('settings'),`<div class="settings-stack">${winterSetting()}${notificationSetting(notificationEnabled()&&pushSupported()&&Notification.permission==='granted')}</div>`);
     return;
   }
   if(!requireUser())return;
@@ -6248,16 +6264,9 @@ async function settings(){
           <option value="en" ${S.lang==='en'?'selected':''}>English</option>
         </select>
       </div>
-      <div class="settings-row"><label class="mw-switch-row"><span><strong>Guruhga qo‘shish uchun ruxsatim</strong><small>Yoqilsa, avval taklif yuboriladi.</small></span><input type="checkbox" id="mwGroupApprovalSetting" ${approval?.require_group_approval!==false?'checked':''}></label></div>
+      <div class="settings-row"><label class="mw-setting-line"><span class="mw-setting-copy"><strong>Guruhga qo‘shish ruxsati</strong><small>Yoqilsa, guruhga qo‘shishdan oldin sizga so‘rov yuboriladi.</small></span><input class="mw-setting-toggle" type="checkbox" role="switch" id="mwGroupApprovalSetting" ${approval?.require_group_approval!==false?'checked':''}></label></div>
       <h3>Bildirishnomalar va ilova</h3>
-      <div class="settings-row">
-        <b>${ico('bell',19)} Bildirishnomalar</b>
-        <div class="row">
-          <span class="muted" data-mw-notification-state>${on?'Yoqilgan':'O‘chirilgan'}</span>
-          ${btn('notificationToggle',on?'O‘chirish':'Yoqish','','ghost')}
-        </div>
-        <p class="mini muted">Chat xabarlari, layklar, izohlar, obunachilar va arizalar haqida sayt ochiq yoki yopiq bo‘lganda telefoningizda xabar oling.</p>
-      </div>
+      ${notificationSetting(on)}
       <div class="settings-row">
         <b>${ico('badge',18)} ${t('request')}</b>
         ${S.me?.verified&&(!S.me.verified_until||new Date(S.me.verified_until)>new Date())?'<span class="status">Tasdiqlangan</span><small class="muted">'+(S.me.verified_until?'Amal qilish muddati: '+e(new Date(S.me.verified_until).toLocaleDateString('uz-UZ')):'Muddatsiz')+'</small>':
