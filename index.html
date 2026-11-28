@@ -3278,39 +3278,47 @@ const AUTUMN_UI_TEXT={
     'Modlar':'Mods',
   }
 };
-function ux(text){
-  return EXTRA_WORDS[S.lang]?.[text]||
-    MORE_UI_TRANSLATIONS[S.lang]?.[text]||
-    AUTUMN_UI_TEXT[S.lang]?.[text]||text;
+const MW_UI_FULL={"ru":{"Guruhga qo‘shish ruxsati":"Разрешение на добавление в группы","Yoqilsa, guruhga qo‘shishdan oldin sizga so‘rov yuboriladi.":"Если включено, перед добавлением в группу вам отправят запрос.","Chat xabarlari, layklar, izohlar, obunachilar va arizalar haqida telefoningizda xabar oling.":"Получайте уведомления о сообщениях, лайках, комментариях, подписчиках и заявках на телефоне.","Ko‘rinish":"Внешний вид","Akkaunt":"Аккаунт","Bildirishnomalar va ilova":"Уведомления и приложение","Ariza tekshiruvda":"Заявка на рассмотрении","Tasdiqlangan":"Подтверждено","Muddatsiz":"Бессрочно","Amal qilish muddati:":"Срок действия:","Akkaunt ma’lumotlari":"Информация об аккаунте","Akkaunt ochilgan sana":"Дата создания аккаунта","Akkaunt ID":"ID аккаунта","Hozircha modlar yo‘q":"Пока нет модов","Obunani olish":"Отписаться","Obunani qaytarish":"Подписаться в ответ","Shikoyat qilish":"Пожаловаться","Rasmni o‘chirish":"Удалить фото","Ism":"Имя","Ismingiz":"Ваше имя","Bio":"О себе","Username":"Имя пользователя","Username bo‘sh":"Имя пользователя свободно","Username band":"Имя пользователя занято","Username noto‘g‘ri":"Некорректное имя пользователя","Yana":"Ещё","Kamroq":"Свернуть","Yopish":"Закрыть","Tanlash":"Выбрать","Tasdiqlash":"Подтвердить","Ma’lumot kiriting":"Введите данные","Ma’lumot yo‘q":"Нет данных","Chat sozlamalari":"Настройки чата","Chat foni":"Фон чата","Chat fonini tanlash":"Выбрать фон чата","Minecraft chat fonlari":"Фоны чата Minecraft","Standart ko‘k":"Стандартный синий","Standart ko‘k fon, 10 ta Minecraft manzarasi va 5 ta maxsus animatsiyali fon.":"Стандартный синий фон, 10 пейзажей Minecraft и 5 специальных анимированных фонов.","Maxsus fonlarda kamera effekti va ixtiyoriy fon ovozi mavjud.":"Специальные фоны включают движение камеры и дополнительный звук.","Oddiy":"Обычный","Premium":"Премиум","Tayga":"Тайга","Qoyalar":"Скалы","Jungli":"Джунгли","O‘rmon":"Лес","Oltin vodiy":"Золотая долина","Tog‘ ko‘li":"Горное озеро","Qorli tog‘":"Снежная гора","Qorli tog‘lar":"Снежные горы","Yomg‘irli o‘rmon":"Дождливый лес","Nether uchqunlari":"Искры Незера","End olami":"Мир Края","Sirli jungli":"Таинственные джунгли","Fon ovozi":"Звук фона","Fon ovozini yoqish yoki o‘chirish":"Включить или выключить звук фона","Ovoz qo‘llab-quvvatlanmaydi":"Звук не поддерживается","Chat foni o‘zgartirildi":"Фон чата изменён","Chat fonini faqat guruh egasi o‘zgartirishi mumkin":"Только владелец группы может изменить фон","Bu chat fonini o‘zgartirishga ruxsat yo‘q":"Нет разрешения на изменение фона","Bu fon faqat ko‘k belgili chatlar uchun":"Этот фон доступен только подтверждённым чатам","Guruh yaratish":"Создать группу","Guruhni tahrirlash":"Редактировать группу","Guruh ma’lumotlari":"Информация о группе","Guruh nomi":"Название группы","Guruh turi":"Тип группы","Guruh username":"Имя пользователя группы","Guruhga odam qo‘shish":"Добавить участников","Ommaviy":"Публичная","Maxfiy":"Частная","Maxfiy guruh":"Частная группа","Ommaviy guruhlar":"Публичные группы","Ommaviy guruh topilmadi.":"Публичная группа не найдена.","A’zo":"Участник","A’zolar":"Участники","Egasi":"Владелец","Fon":"Фон","Tahrir":"Изменить","Guruhni o‘chirish":"Удалить группу","Qo‘shilgan":"Добавлен","So‘rov yuborilgan":"Запрос отправлен","Onlayn":"В сети","Oxirgi marta:":"Был(а):","A’zolar va ma’lumotlar yuklanmoqda...":"Загрузка участников и информации...","Ma’lumotlarni yuklab bo‘lmadi":"Не удалось загрузить информацию","Guruhga qo‘shilish so‘rovi keldi":"Получен запрос на вступление в группу","Guruh egasiga qo‘shilish so‘rovi yuborildi":"Запрос отправлен владельцу группы","So‘rovingiz hali ko‘rib chiqilmoqda":"Ваш запрос ещё рассматривается","Faqat guruh egasi tahrirlay oladi":"Только владелец может редактировать группу","Ism yoki @username":"Имя или @username","Guruh nomini yozing":"Введите название группы","Username kerak":"Укажите имя пользователя","Tekshirib bo‘lmadi":"Не удалось проверить","Bu guruhga a’zo emassiz":"Вы не участник этой группы","Xabar yozing...":"Напишите сообщение...","A’zoni guruhdan chiqarish":"Удалить участника из группы","Taklif va so‘rovlar":"Приглашения и запросы","A’zo guruhga qo‘shildi":"Участник вступил в группу","So‘rov rad etildi":"Запрос отклонён","Faqat guruh egasi a’zoni chiqaradi":"Только владелец может удалить участника","Bu a’zoni guruhdan chiqarasizmi?":"Удалить этого участника из группы?","A’zoni chiqarib bo‘lmadi":"Не удалось удалить участника","A’zo guruhdan chiqarildi":"Участник удалён из группы","Faqat ommaviy guruh egasi ariza bera oladi":"Только владелец публичной группы может подать заявку","Guruh uchun ko‘k belgi":"Галочка для группы","Guruhni barcha xabarlari bilan o‘chirasizmi?":"Удалить группу со всеми сообщениями?","Bo‘sh xabar":"Пустое сообщение","Xabarni o‘chirasizmi?":"Удалить сообщение?","Ko‘k belgi arizasi yuborildi":"Заявка на подтверждение отправлена","Obunalar yo‘q. Username orqali qidiring.":"Нет подписок. Ищите по имени пользователя.","Obunachilar yo‘q":"Нет подписчиков","Yana akkauntlarni ko‘rish":"Показать ещё аккаунты","Akkaunt topilmadi.":"Аккаунт не найден.","guruhga qo‘shildi":"вступил(а) в группу","Birinchi xabarni yuboring":"Отправьте первое сообщение","Maxfiy guruh · Xabarlarni ko‘rish uchun taklifni qabul qiling.":"Частная группа · Примите приглашение, чтобы читать сообщения.","Qabul qilish":"Принять","Ko‘k belgi tasdiqlangan":"Группа подтверждена","Ko‘k belgi arizasi tekshiruvda":"Заявка на подтверждение рассматривается","Guruh uchun ko‘k belgi arizasi":"Заявка на подтверждение группы","sizni taklif qildi":"пригласил(а) вас","guruhga qo‘shilmoqchi":"хочет вступить в группу","Hozircha taklif yoki so‘rov yo‘q.":"Пока нет приглашений или запросов.","Guruh nima sababdan tasdiqlanishi kerak?":"Почему группу следует подтвердить?","Ariza yuborish":"Отправить заявку","Guruhdan chiqish":"Покинуть группу","Xabar topilmadi.":"Сообщение не найдено.","Qidirilmoqda...":"Поиск...","Yuborilmoqda":"Отправляется","Yuborilmadi":"Не отправлено","O‘qildi":"Прочитано","Kamida bir ishtirokchi o‘qidi":"Прочитал хотя бы один участник","Fayl":"Файл","Rasm":"Изображение","Fayl:":"Файл:","Fayl biriktirish":"Прикрепить файл","Rasm, video yoki fayl yuborish":"Отправить фото, видео или файл","Rasm 500 KB dan katta. Sifatini biroz pasaytirib 500 KB gacha kichraytirishga rozimisiz?":"Изображение больше 500 КБ. Сжать его до 500 КБ с небольшим снижением качества?","Rasm yuborish bekor qilindi":"Отправка изображения отменена","Bu rasmni 500 KB gacha kichraytirib bo‘lmadi. Boshqa rasm tanlang.":"Не удалось сжать изображение до 500 КБ. Выберите другое.","Bu fayl turi qo‘llab-quvvatlanmaydi":"Этот тип файла не поддерживается","Rasm 500 KB dan oshmasin":"Изображение не должно превышать 500 КБ","Fayl 10 MB dan oshmasin":"Файл не должен превышать 10 МБ","Bo‘sh faylni yuborib bo‘lmaydi":"Нельзя отправить пустой файл","Bir vaqtda ko‘pi bilan 5 ta rasm tanlang":"Выберите не более 5 изображений за раз","Ko‘pi bilan 5 ta rasm tanlang":"Выберите не более 5 изображений","Faylni ochib bo‘lmadi":"Не удалось открыть файл","Bir nechta faylda faqat rasm bo‘lishi mumkin":"При выборе нескольких файлов допустимы только изображения","Xabar amallari":"Действия с сообщением","Xabar 1–2000 belgi bo‘lishi kerak":"Сообщение должно содержать 1–2000 символов","Bu xabarni o‘chirishga ruxsat yo‘q":"Нет разрешения на удаление сообщения","Xabar topilmadi":"Сообщение не найдено","Bu xabar avval saqlangan":"Сообщение уже сохранено","Xabar saqlandi":"Сообщение сохранено","Boshqa akkaunt topilmadi":"Другой аккаунт не найден","Mod mavjud emas":"Мод недоступен","Yig‘ish":"Свернуть","Chatni ochish · Sozlamalar uchun bosib turing":"Открыть чат · Удерживайте для настроек","Profil rasmini moslash":"Настроить фото профиля","Rasmni suring yoki ikki barmoq bilan kattalashtiring. Doira ichida qanday ko‘rinsa, profilda ham shunday bo‘ladi.":"Перемещайте или увеличивайте фото двумя пальцами. В профиле оно будет выглядеть как внутри круга.","Tayyor":"Готово","Parol":"Пароль","Parolni takrorlang":"Повторите пароль","O‘zingiz haqingizda...":"О себе...","Akkauntlarni almashtirish":"Переключение аккаунтов","Hali saqlangan akkaunt yo‘q":"Нет сохранённых аккаунтов","Birinchi kirishda parol kerak. Keyingi almashishda parol so‘ralmaydi. Umumiy kompyuterda akkauntlarni saqlamang.":"При первом входе нужен пароль. При переключении пароль не потребуется. Не сохраняйте аккаунты на общих компьютерах.","Mod nomi va tavsifi qaysi tilda?":"На каком языке название и описание мода?","Kamida bitta tilni to‘ldiring. Boshqa tillar ixtiyoriy.":"Заполните хотя бы один язык. Остальные необязательны.","Yuborishga tayyorlanmoqda...":"Подготовка к отправке...","Iltimos, sahifani yopmang.":"Пожалуйста, не закрывайте страницу.","Rasmni siqishga ruxsat berasizmi?":"Разрешить сжатие изображения?","Siqish va tanlash":"Сжать и выбрать","Hali qoralama yo‘q.":"Пока нет черновиков.","Mod yuklanmoqda...":"Загрузка мода...","Qayta urinish":"Повторить","Izohlarni yuklab bo‘lmadi.":"Не удалось загрузить комментарии.","Rejim":"Режим","Xabarlar yuklanmoqda...":"Загрузка сообщений...","U sizga obuna bo‘lmaguncha boshqa xabar yubora olmaysiz.":"Вы не сможете отправить ещё сообщение, пока пользователь не подпишется на вас.","Faqat bitta xabar yuborishingiz mumkin.":"Вы можете отправить только одно сообщение.","Username orqali odam qidirish":"Поиск людей по имени пользователя","Kimga yozmoqchisiz?":"Кому хотите написать?","Kamida 2 ta harf yozing.":"Введите минимум 2 буквы.","Foydalanuvchi topilmadi.":"Пользователь не найден.","Telefon bildirishnomalari":"Уведомления на телефоне","Yangi xabar va obunachilar haqida telefoningizda bildirishnoma olasizmi?":"Получать уведомления о новых сообщениях и подписчиках на телефоне?","Ruxsat berish":"Разрешить","Hozircha yo‘q":"Не сейчас","Sabab":"Причина","Ariza sababi":"Причина заявки","Amal qilish muddati (kun)":"Срок действия (дни)","Bo‘sh qoldirilsa, muddatsiz beriladi.":"Оставьте пустым для бессрочного действия.","Ushbu akkauntdan chiqmoqchimisiz?":"Выйти из этого аккаунта?","Bugun":"Сегодня","Kecha":"Вчера"},"en":{"Guruhga qo‘shish ruxsati":"Group invitation approval","Yoqilsa, guruhga qo‘shishdan oldin sizga so‘rov yuboriladi.":"When enabled, you receive a request before being added to a group.","Chat xabarlari, layklar, izohlar, obunachilar va arizalar haqida telefoningizda xabar oling.":"Receive phone notifications for messages, likes, comments, followers and requests.","Ko‘rinish":"Appearance","Akkaunt":"Account","Bildirishnomalar va ilova":"Notifications and app","Ariza tekshiruvda":"Application under review","Tasdiqlangan":"Verified","Muddatsiz":"No expiration","Amal qilish muddati:":"Valid until:","Akkaunt ma’lumotlari":"Account information","Akkaunt ochilgan sana":"Account creation date","Akkaunt ID":"Account ID","Hozircha modlar yo‘q":"No mods yet","Obunani olish":"Unfollow","Obunani qaytarish":"Follow back","Shikoyat qilish":"Report","Rasmni o‘chirish":"Remove photo","Ism":"Name","Ismingiz":"Your name","Bio":"Bio","Username":"Username","Username bo‘sh":"Username available","Username band":"Username taken","Username noto‘g‘ri":"Invalid username","Yana":"More","Kamroq":"Less","Yopish":"Close","Tanlash":"Select","Tasdiqlash":"Confirm","Ma’lumot kiriting":"Enter information","Ma’lumot yo‘q":"No information","Chat sozlamalari":"Chat settings","Chat foni":"Chat background","Chat fonini tanlash":"Choose chat background","Minecraft chat fonlari":"Minecraft chat backgrounds","Standart ko‘k":"Standard blue","Standart ko‘k fon, 10 ta Minecraft manzarasi va 5 ta maxsus animatsiyali fon.":"Standard blue, 10 Minecraft landscapes and 5 special animated backgrounds.","Maxsus fonlarda kamera effekti va ixtiyoriy fon ovozi mavjud.":"Special backgrounds feature camera motion and optional ambient sound.","Oddiy":"Standard","Premium":"Premium","Tayga":"Taiga","Qoyalar":"Cliffs","Jungli":"Jungle","O‘rmon":"Forest","Oltin vodiy":"Golden valley","Tog‘ ko‘li":"Mountain lake","Qorli tog‘":"Snowy mountain","Qorli tog‘lar":"Snowy mountains","Yomg‘irli o‘rmon":"Rainy forest","Nether uchqunlari":"Nether embers","End olami":"The End","Sirli jungli":"Mystic jungle","Fon ovozi":"Ambient sound","Fon ovozini yoqish yoki o‘chirish":"Toggle ambient sound","Ovoz qo‘llab-quvvatlanmaydi":"Audio not supported","Chat foni o‘zgartirildi":"Chat background changed","Chat fonini faqat guruh egasi o‘zgartirishi mumkin":"Only the group owner can change the background","Bu chat fonini o‘zgartirishga ruxsat yo‘q":"You cannot change this chat background","Bu fon faqat ko‘k belgili chatlar uchun":"This background is for verified chats only","Guruh yaratish":"Create group","Guruhni tahrirlash":"Edit group","Guruh ma’lumotlari":"Group information","Guruh nomi":"Group name","Guruh turi":"Group type","Guruh username":"Group username","Guruhga odam qo‘shish":"Add members","Ommaviy":"Public","Maxfiy":"Private","Maxfiy guruh":"Private group","Ommaviy guruhlar":"Public groups","Ommaviy guruh topilmadi.":"No public group found.","A’zo":"Member","A’zolar":"Members","Egasi":"Owner","Fon":"Background","Tahrir":"Edit","Guruhni o‘chirish":"Delete group","Qo‘shilgan":"Joined","So‘rov yuborilgan":"Request sent","Onlayn":"Online","Oxirgi marta:":"Last seen:","A’zolar va ma’lumotlar yuklanmoqda...":"Loading members and information...","Ma’lumotlarni yuklab bo‘lmadi":"Unable to load information","Guruhga qo‘shilish so‘rovi keldi":"Group join request received","Guruh egasiga qo‘shilish so‘rovi yuborildi":"Join request sent to the group owner","So‘rovingiz hali ko‘rib chiqilmoqda":"Your request is still pending","Faqat guruh egasi tahrirlay oladi":"Only the owner can edit the group","Ism yoki @username":"Name or @username","Guruh nomini yozing":"Enter a group name","Username kerak":"Username required","Tekshirib bo‘lmadi":"Unable to verify","Bu guruhga a’zo emassiz":"You are not a member of this group","Xabar yozing...":"Write a message...","A’zoni guruhdan chiqarish":"Remove member from group","Taklif va so‘rovlar":"Invitations and requests","A’zo guruhga qo‘shildi":"Member joined the group","So‘rov rad etildi":"Request declined","Faqat guruh egasi a’zoni chiqaradi":"Only the owner can remove members","Bu a’zoni guruhdan chiqarasizmi?":"Remove this member from the group?","A’zoni chiqarib bo‘lmadi":"Unable to remove member","A’zo guruhdan chiqarildi":"Member removed from group","Faqat ommaviy guruh egasi ariza bera oladi":"Only a public group owner can apply","Guruh uchun ko‘k belgi":"Group verification","Guruhni barcha xabarlari bilan o‘chirasizmi?":"Delete the group and all its messages?","Bo‘sh xabar":"Empty message","Xabarni o‘chirasizmi?":"Delete message?","Ko‘k belgi arizasi yuborildi":"Verification application sent","Obunalar yo‘q. Username orqali qidiring.":"No follows. Search by username.","Obunachilar yo‘q":"No followers","Yana akkauntlarni ko‘rish":"Show more accounts","Akkaunt topilmadi.":"Account not found.","guruhga qo‘shildi":"joined the group","Birinchi xabarni yuboring":"Send the first message","Maxfiy guruh · Xabarlarni ko‘rish uchun taklifni qabul qiling.":"Private group · Accept the invitation to read messages.","Qabul qilish":"Accept","Ko‘k belgi tasdiqlangan":"Group verified","Ko‘k belgi arizasi tekshiruvda":"Verification application under review","Guruh uchun ko‘k belgi arizasi":"Group verification application","sizni taklif qildi":"invited you","guruhga qo‘shilmoqchi":"wants to join the group","Hozircha taklif yoki so‘rov yo‘q.":"No invitations or requests yet.","Guruh nima sababdan tasdiqlanishi kerak?":"Why should the group be verified?","Ariza yuborish":"Submit application","Guruhdan chiqish":"Leave group","Xabar topilmadi.":"Message not found.","Qidirilmoqda...":"Searching...","Yuborilmoqda":"Sending","Yuborilmadi":"Not sent","O‘qildi":"Read","Kamida bir ishtirokchi o‘qidi":"Read by at least one participant","Fayl":"File","Rasm":"Image","Fayl:":"File:","Fayl biriktirish":"Attach file","Rasm, video yoki fayl yuborish":"Send image, video or file","Rasm 500 KB dan katta. Sifatini biroz pasaytirib 500 KB gacha kichraytirishga rozimisiz?":"The image exceeds 500 KB. Compress it to 500 KB with a slight quality reduction?","Rasm yuborish bekor qilindi":"Image sending cancelled","Bu rasmni 500 KB gacha kichraytirib bo‘lmadi. Boshqa rasm tanlang.":"Could not compress this image to 500 KB. Choose another image.","Bu fayl turi qo‘llab-quvvatlanmaydi":"Unsupported file type","Rasm 500 KB dan oshmasin":"Image must not exceed 500 KB","Fayl 10 MB dan oshmasin":"File must not exceed 10 MB","Bo‘sh faylni yuborib bo‘lmaydi":"Cannot send an empty file","Bir vaqtda ko‘pi bilan 5 ta rasm tanlang":"Select up to 5 images at once","Ko‘pi bilan 5 ta rasm tanlang":"Select up to 5 images","Faylni ochib bo‘lmadi":"Unable to open file","Bir nechta faylda faqat rasm bo‘lishi mumkin":"Only images can be selected together","Xabar amallari":"Message actions","Xabar 1–2000 belgi bo‘lishi kerak":"Message must contain 1–2000 characters","Bu xabarni o‘chirishga ruxsat yo‘q":"You cannot delete this message","Xabar topilmadi":"Message not found","Bu xabar avval saqlangan":"Message already saved","Xabar saqlandi":"Message saved","Boshqa akkaunt topilmadi":"No other account found","Mod mavjud emas":"Mod unavailable","Yig‘ish":"Collapse","Chatni ochish · Sozlamalar uchun bosib turing":"Open chat · Hold for settings","Profil rasmini moslash":"Adjust profile picture","Rasmni suring yoki ikki barmoq bilan kattalashtiring. Doira ichida qanday ko‘rinsa, profilda ham shunday bo‘ladi.":"Drag or pinch to zoom. Your profile picture will appear as shown inside the circle.","Tayyor":"Done","Parol":"Password","Parolni takrorlang":"Repeat password","O‘zingiz haqingizda...":"About yourself...","Akkauntlarni almashtirish":"Switch accounts","Hali saqlangan akkaunt yo‘q":"No saved accounts yet","Birinchi kirishda parol kerak. Keyingi almashishda parol so‘ralmaydi. Umumiy kompyuterda akkauntlarni saqlamang.":"A password is required on first sign-in. Switching accounts does not require a password. Do not save accounts on shared computers.","Mod nomi va tavsifi qaysi tilda?":"Which language is the mod title and description in?","Kamida bitta tilni to‘ldiring. Boshqa tillar ixtiyoriy.":"Complete at least one language. Other languages are optional.","Yuborishga tayyorlanmoqda...":"Preparing to upload...","Iltimos, sahifani yopmang.":"Please do not close this page.","Rasmni siqishga ruxsat berasizmi?":"Allow image compression?","Siqish va tanlash":"Compress and select","Hali qoralama yo‘q.":"No drafts yet.","Mod yuklanmoqda...":"Uploading mod...","Qayta urinish":"Retry","Izohlarni yuklab bo‘lmadi.":"Unable to load comments.","Rejim":"Mode","Xabarlar yuklanmoqda...":"Loading messages...","U sizga obuna bo‘lmaguncha boshqa xabar yubora olmaysiz.":"You cannot send another message until this user follows you.","Faqat bitta xabar yuborishingiz mumkin.":"You can send only one message.","Username orqali odam qidirish":"Find people by username","Kimga yozmoqchisiz?":"Who would you like to message?","Kamida 2 ta harf yozing.":"Enter at least 2 letters.","Foydalanuvchi topilmadi.":"User not found.","Telefon bildirishnomalari":"Phone notifications","Yangi xabar va obunachilar haqida telefoningizda bildirishnoma olasizmi?":"Receive phone notifications for new messages and followers?","Ruxsat berish":"Allow","Hozircha yo‘q":"Not now","Sabab":"Reason","Ariza sababi":"Application reason","Amal qilish muddati (kun)":"Validity period (days)","Bo‘sh qoldirilsa, muddatsiz beriladi.":"Leave blank for no expiration.","Ushbu akkauntdan chiqmoqchimisiz?":"Sign out of this account?","Bugun":"Today","Kecha":"Yesterday"}};
+const mwNormalizeUi=s=>String(s).replace(/[ʻʼ’‘`]/g,"‘").replace(/…/g,"...").replace(/\s+/g," ").trim();
+const mwUiMap={};
+for(const lang of ['ru','en']){
+ const merged={...AUTUMN_UI_TEXT[lang],...MORE_UI_TRANSLATIONS[lang],...EXTRA_WORDS[lang],...MW_UI_FULL[lang]};
+ for(const [key,value] of Object.entries(words.uz||{}))if(words[lang]?.[key])merged[value]=words[lang][key];
+ mwUiMap[lang]=new Map(Object.entries(merged).map(([k,v])=>[mwNormalizeUi(k),v]));
 }
-const uiObserver = new MutationObserver(records=>{
-  if(S.lang==='uz')return;
-  for(const record of records){
-    for(const node of record.addedNodes){
-      if(node.nodeType===1)translateUi(node);
-      else if(node.nodeType===3)translateTextNode(node);
-    }
-  }
+function ux(text){
+ if(S.lang==='uz'||typeof text!=='string')return text;
+ const normalized=mwNormalizeUi(text),map=mwUiMap[S.lang];if(!map)return text;
+ if(map.has(normalized))return map.get(normalized);
+ const patterns=S.lang==='ru'?[
+ [/^(\d+) a‘zo$/,'Участников: $1'],[/^(\d+) a‘zo guruhga qo‘shildi$/,'В группу вступило: $1'],[/^(\d+) ta taklif yuborilmadi$/,'Не отправлено приглашений: $1'],[/^Qo‘shilish so‘rovlari \((\d+)\)$/,'Запросы на вступление ($1)'],[/^Amal qilish muddati: (.+)$/,'Срок действия: $1'],[/^Oxirgi marta: (.+)$/,'Был(а): $1']
+ ]:[
+ [/^(\d+) a‘zo$/,'Members: $1'],[/^(\d+) a‘zo guruhga qo‘shildi$/,'Members joined: $1'],[/^(\d+) ta taklif yuborilmadi$/,'Invitations not sent: $1'],[/^Qo‘shilish so‘rovlari \((\d+)\)$/,'Join requests ($1)'],[/^Amal qilish muddati: (.+)$/,'Valid until: $1'],[/^Oxirgi marta: (.+)$/,'Last seen: $1']
+ ];
+ for(const [re,replacement] of patterns)if(re.test(normalized))return normalized.replace(re,replacement);
+ const end=normalized.match(/[.!?]+$/)?.[0];if(end&&map.has(normalized.slice(0,-end.length)))return map.get(normalized.slice(0,-end.length)).replace(/[.!?]+$/,'')+end;
+ return text;
+}
+const mwUserText='.bubble-body,.mod-description,.profile-bio,.linkbtn[data-act="user"],.saved-modal-row,.mod-content,.mod-title,.mw-profile-real-name,.mw-profile-handle,.mw-info-copy h3,.mw-info-copy p,.mw-group-pick-copy b,.mw11-group-sender,.peer-text b,.peer-text small,.mw-thread-result span,.mw-profile-info-person strong,.mw-profile-info-person small';
+const uiObserver=new MutationObserver(records=>{
+ if(S.lang==='uz')return;
+ for(const record of records){
+ if(record.type==='characterData')translateTextNode(record.target);
+ else for(const node of record.addedNodes){if(node.nodeType===1)translateUi(node);else if(node.nodeType===3)translateTextNode(node);}
+ }
 });
 function translateTextNode(n){
-  const parent=n.parentElement;
-  if(!parent||parent.closest('.bubble-body,.mod-description,.profile-bio,.linkbtn[data-act="user"],.saved-modal-row,.mod-content,.mod-title'))return;
-  const v=n.nodeValue;
-  const trim=v.trim();
-  const translated=ux(trim);
-  if(trim && trim!==translated)n.nodeValue=v.replace(trim,translated);
+ const parent=n.parentElement;if(!parent||parent.closest(mwUserText+',script,style,textarea,[contenteditable]'))return;
+ const v=n.nodeValue,trim=v.trim(),translated=ux(trim);if(trim&&trim!==translated)n.nodeValue=v.replace(trim,translated);
 }
 function translateUi(root){
-  if(S.lang==='uz'||!root)return;
-  if(root.nodeType===3){translateTextNode(root);return}
-  if(root.nodeType!==1&&root.nodeType!==9)return;
-  if(root.nodeType===1&&root.matches('input,textarea')&&root.hasAttribute('placeholder')){
-    root.placeholder=ux(root.placeholder);
-  }
-  const walk=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
-  let t;while(t=walk.nextNode())translateTextNode(t);
-  for(const item of root.querySelectorAll?.('input[placeholder],textarea[placeholder]')||[])
-    item.placeholder=ux(item.placeholder);
+ if(S.lang==='uz'||!root)return;
+ if(root.nodeType===3){translateTextNode(root);return;}
+ if(root.nodeType!==1&&root.nodeType!==9)return;
+ const walk=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while(node=walk.nextNode())translateTextNode(node);
+ const attrs=['placeholder','title','aria-label','alt'];
+ const update=el=>{for(const attr of attrs)if(el.hasAttribute(attr)){const value=el.getAttribute(attr),translated=ux(value);if(value!==translated)el.setAttribute(attr,translated);}};
+ if(root.nodeType===1)update(root);for(const el of root.querySelectorAll?.('[placeholder],[title],[aria-label],[alt]')||[])update(el);
 }
 
 function e(v){
@@ -3368,7 +3376,7 @@ function btn(a,text,id='',extra=''){
 }
 function blank(){return `<div class="empty">${ico('package',34)}<span>${t('empty')}</span></div>`}
 function toast(s){
-  $('#toast').textContent=String(s);
+  $('#toast').textContent=ux(String(s));
   $('#toast').style.display='block';
   clearTimeout(window._tt);
   window._tt=setTimeout(()=>$('#toast').style.display='none',4200)
@@ -3544,7 +3552,7 @@ function saveScreen(page,id){
   fastScreens.set(screenKey(page,id),snapshot);
   // Cache only profile views, not chats or private messages.
   if(page==='profile'&&S.u?.id){
-    try{localStorage.setItem('mw_profile_v5:'+S.u.id+':'+id+':'+S.lang,JSON.stringify(snapshot))}catch(error){}
+    try{localStorage.setItem('mw_profile_v6:'+S.u.id+':'+id+':'+S.lang,JSON.stringify(snapshot))}catch(error){}
   }
   if(fastScreens.size>12)fastScreens.delete(fastScreens.keys().next().value);
 }
@@ -3588,7 +3596,7 @@ async function go(page='home',id=null){
   let cached=useCache?fastScreens.get(key):null;
   if(!cached&&page==='profile'&&S.u?.id){
     try{
-      const saved=JSON.parse(localStorage.getItem('mw_profile_v5:'+S.u.id+':'+target+':'+S.lang)||'null');
+      const saved=JSON.parse(localStorage.getItem('mw_profile_v6:'+S.u.id+':'+target+':'+S.lang)||'null');
       if(saved?.html&&Date.now()-saved.at<24*60*60*1000)cached=saved;
     }catch(error){}
   }
@@ -4027,7 +4035,7 @@ async function toggleFollow(id,button){
     if(S.u?.id!==uid)return;
     if(S.accountFollowing){if(desired)S.accountFollowing.add(id);else S.accountFollowing.delete(id);}
     invalidateProfileData();
-    try{localStorage.removeItem('mw_profile_v5:'+uid+':'+id+':'+S.lang)}catch{}
+    try{localStorage.removeItem('mw_profile_v6:'+uid+':'+id+':'+S.lang)}catch{}
     if(S.page==='profile'&&S.profileId===id){
       const actions=document.querySelector('.mw-profile-actions:not(.mw-own-profile-actions)');
       if(actions)actions.innerHTML=profileFollowActions(id,desired);
@@ -7041,13 +7049,13 @@ window.addEventListener('change',async ev=>{
   }else if(ev.target.id==='language'){
     S.lang=ev.target.value;
     localStorage.setItem('mw_lang',S.lang);
+    invalidateProfileData();
     close();
     document.documentElement.lang=S.lang;
     document.querySelectorAll('[data-tr]').forEach(
       x=>x.textContent=t(x.dataset.tr)
     );
-    await go(S.page,S.profileId);
-    translateUi($('#app'))
+    location.reload();
   }
 });
 
@@ -7411,8 +7419,8 @@ function mwInstallBackGuard(){
   document.querySelectorAll('[data-tr]').forEach(
     x=>x.textContent=t(x.dataset.tr)
   );
-  uiObserver.observe($('#app'),{childList:true,subtree:true});
-  uiObserver.observe($('#overlay'),{childList:true,subtree:true});
+  uiObserver.observe($('#app'),{childList:true,subtree:true,characterData:true});
+  uiObserver.observe($('#overlay'),{childList:true,subtree:true,characterData:true});
   mwInstallBackGuard();
   await Promise.allSettled([go('home'),refreshUser()]);
   mwInitialNavigation=false;
