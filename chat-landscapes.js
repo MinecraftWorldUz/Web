@@ -24,6 +24,23 @@ function svg(id){
  out+='<rect width="900" height="1200" fill="url(#f)"/></svg>';
  const url='data:image/svg+xml,'+encodeURIComponent(out);cache.set(id,url);return url;
 }
-function install(){const style=document.createElement('style');style.textContent=Object.keys(palettes).map(id=>'#app.mw11-chat-page #msgs[data-mw-theme="'+id+'"],.mw-theme-swatch[data-theme="'+id+'"]{background-image:linear-gradient(180deg,rgba(8,20,30,.08),rgba(8,20,30,.22)),url("'+svg(id)+'")!important;background-size:cover!important;background-position:center!important}').join('\n');document.head.append(style);}
-return {install,svg};
+const installed=new Set();
+let sheet=null;
+function ensure(id){
+ if(!Object.hasOwn(palettes,id)||installed.has(id))return;
+ if(!sheet){sheet=document.createElement('style');document.head.append(sheet);}
+ const rule='#app.mw11-chat-page #msgs[data-mw-theme="'+id+'"],.mw-theme-swatch[data-theme="'+id+'"]{background-image:linear-gradient(180deg,rgba(8,20,30,.08),rgba(8,20,30,.22)),url("'+svg(id)+'")!important;background-size:cover!important;background-position:center!important}';
+ sheet.sheet.insertRule(rule,sheet.sheet.cssRules.length);installed.add(id);
+}
+function scan(node){
+ if(node.nodeType!==1)return;
+ const selector='#msgs[data-mw-theme],.mw-theme-swatch[data-theme]';
+ if(node.matches(selector))ensure(node.dataset.mwTheme||node.dataset.theme);
+ for(const item of node.querySelectorAll(selector))ensure(item.dataset.mwTheme||item.dataset.theme);
+}
+function install(){
+ new MutationObserver(records=>{for(const record of records){if(record.type==='attributes')scan(record.target);else for(const node of record.addedNodes)scan(node);}}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['data-mw-theme','data-theme']});
+ scan(document.body);
+}
+return {install,svg,ensure};
 })();MWLandscapes.install();
