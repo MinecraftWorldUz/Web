@@ -2749,6 +2749,15 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
 .mw-avatar-remove{display:flex;align-items:center;justify-content:center;gap:4px;background:transparent!important;border:0!important;box-shadow:none!important;color:#f2a0a6!important;font-size:11px;padding:4px 0!important;white-space:normal;cursor:pointer}
 .mw-avatar-remove[hidden]{display:none!important}
 .mw-edit-username .field{padding-inline:14px!important}
+
+select[data-mw-custom="1"][hidden]{display:none!important}
+.mw-site-select{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;padding:10px 13px;border:1px solid #456681!important;border-radius:10px!important;background:#172f46!important;color:#e5f3ff!important;box-shadow:none!important;text-align:left;font-size:14px;cursor:pointer}
+.mw-site-select>svg{transform:rotate(-90deg);flex:none;color:#a8d2ed}
+.mw-site-select-list{display:grid;gap:7px;max-height:55dvh;overflow:auto}
+.mw-site-select-option{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;min-height:45px;padding:11px 13px;background:#192f43!important;color:#e5f3ff!important;border:1px solid #34536b!important;border-radius:10px!important;box-shadow:none!important;font-size:15px;cursor:pointer}
+.mw-site-select-option.selected{background:#25465f!important;border-color:#7ab9e2!important}
+.mw-site-select-option.selected svg{color:#a4ddff}
+.mw-site-select-option:disabled{opacity:.4}
 </style>
 </head>
 <body>
@@ -5183,6 +5192,34 @@ async function editMod(id){
 }
 // Site-owned dialogs, separate from the current page or profile editor.
 let mwQuestionQueue=Promise.resolve();
+// Replace native select popups while preserving form values and change handlers.
+function mwMountSiteSelects(){
+  for(const select of document.querySelectorAll('select:not([multiple]):not([size])')){
+    if(select.dataset.mwCustom==='1')continue;
+    select.dataset.mwCustom='1';
+    const button=document.createElement('button');button.type='button';button.className='mw-site-select';button.setAttribute('aria-haspopup','dialog');
+    const sync=()=>{button.innerHTML='<span>'+e(select.selectedOptions[0]?.textContent||'Tanlash')+'</span>'+ico('back',18);button.disabled=select.disabled;};
+    sync();select.hidden=true;select.setAttribute('tabindex','-1');select.after(button);
+    select.addEventListener('change',sync);
+    button.addEventListener('click',()=>{
+      const modal=document.createElement('dialog');modal.className='mw-question mw-site-select-dialog';modal.setAttribute('aria-label',select.id==='language'?t('language'):'Tanlash');
+      const title=select.id==='language'?t('language'):select.closest('.formgroup')?.querySelector('label')?.textContent||'Tanlash';
+      modal.innerHTML='<div class="mw-question-form"><header><strong>'+e(title)+'</strong><button type="button" class="mw-question-close" aria-label="Yopish">'+ico('x',20)+'</button></header><div class="mw-site-select-list">'+Array.from(select.options).map((o,i)=>'<button type="button" data-option-index="'+i+'" class="mw-site-select-option'+(o.selected?' selected':'')+'" '+(o.disabled?'disabled':'')+'><span>'+e(o.textContent)+'</span>'+(o.selected?ico('check',20):'')+'</button>').join('')+'</div></div>';
+      const closePicker=()=>{if(modal.open)modal.close();modal.remove();if(button.isConnected)button.focus({preventScroll:true});};
+      modal.addEventListener('cancel',ev=>{ev.preventDefault();closePicker();});
+      modal.addEventListener('close',()=>modal.remove());
+      modal.addEventListener('keydown',ev=>{if(ev.key==='Escape')ev.stopPropagation();});
+      modal.addEventListener('click',ev=>{
+        const option=ev.target.closest('[data-option-index]');
+        if(option){const index=Number(option.dataset.optionIndex);if(select.options[index]?.disabled)return;const changed=select.selectedIndex!==index;select.selectedIndex=index;sync();closePicker();if(changed)select.dispatchEvent(new Event('change',{bubbles:true}));}
+        else if(ev.target===modal||ev.target.closest('.mw-question-close'))closePicker();
+      });
+      document.body.append(modal);modal.showModal();modal.querySelector('.selected')?.focus();
+    });
+  }
+}
+new MutationObserver(mwMountSiteSelects).observe(document.body,{childList:true,subtree:true});
+mwMountSiteSelects();
 function mwQuestion(message,options={}){
   const run=()=>new Promise(resolve=>{
     const prior=document.activeElement;
