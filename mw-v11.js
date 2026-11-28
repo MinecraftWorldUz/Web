@@ -160,6 +160,7 @@ window.MWV11=(()=>{
     hydrateSharedMods().catch(console.warn);
     const holder=document.getElementById('msgs');if(holder&&!holder.dataset.mwTheme)applyTheme(scope==='world'?'world':scope==='group'?S.chatId:'u:'+S.chatId).catch(console.warn);
     for(const m of rows)if(m.id)V.rows.set(rxKey(scope,m.id),m);
+    while(V.rows.size>500)V.rows.delete(V.rows.keys().next().value);
     loadMedia(rows).catch(err=>console.warn('Chat media:',err));
     if(scope==='dm')refreshDmReceipts().catch(console.warn);
     if(scope==='world'||scope==='group')refreshRoomReceipts(scope,rows).catch(console.warn);
@@ -243,10 +244,13 @@ window.MWV11=(()=>{
   async function loadMedia(rows){
     if(!rows?.length||!authUser())return;
     if(V.mediaUser!==authUser()){V.mediaUser=authUser();V.mediaCache.clear()}
+    const uid=authUser();
     const media=rows.filter(m=>m.attachment_path&&m.id);
-    for(const m of media){
+    const queue=media.slice();
+    async function worker(){while(queue.length&&uid===authUser()){
+      const m=queue.shift();
       const target=document.querySelector('.mw11-bubble[data-v11-msg="'+m.id+'"] .mw11-attachment');
-      if(!target||target.dataset.mw11Media!==m.attachment_path)continue;
+      if(!target||target.dataset.mw11Media!==m.attachment_path||target.querySelector('img,video,a[href]'))continue;
       let item=V.mediaCache.get(m.attachment_path),url=item?.until>Date.now()?item.url:null;
       if(!url){
         const result=await DB.storage.from('mw-chat').createSignedUrl(m.attachment_path,240);
@@ -255,7 +259,7 @@ window.MWV11=(()=>{
         if(!url)continue;
         V.mediaCache.set(m.attachment_path,{url,until:Date.now()+210000});
       }
-      if(!target.isConnected||target.dataset.mw11Media!==m.attachment_path)continue;
+      if(uid!==authUser()||!target.isConnected||target.dataset.mw11Media!==m.attachment_path)continue;
       const name=esc(m.attachment_name||'Fayl');
       const href=esc(url);
       if(m.attachment_type==='image'){
@@ -267,7 +271,8 @@ window.MWV11=(()=>{
         target.innerHTML='<a class="mw11-file-message" href="'+href+'" target="_blank" rel="noopener noreferrer" download>'+
           '<span>'+ico('file',18)+'</span><strong>'+name+'</strong><span>↗</span></a>';
       }
-    }
+    }}
+    await Promise.all(Array.from({length:Math.min(3,queue.length)},worker));
   }
   const previewUrls=new WeakMap();
   function clearPreviewUrls(form){
@@ -343,9 +348,8 @@ window.MWV11=(()=>{
   }
   async function markRead(thread){
     if(!authUser())return;
-    const pref=getPref(thread),value={user_id:authUser(),thread_key:thread,muted:!!pref.muted,
-      pinned:!!pref.pinned,archived:!!pref.archived,last_read_at:new Date().toISOString(),updated_at:new Date().toISOString()};
-    V.prefs.set(thread,value);
+    const pref=getPref(thread),value={user_id:authUser(),thread_key:thread,last_read_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+    V.prefs.set(thread,{...pref,...value});
     const r=await DB.from('mw_chat_preferences').upsert(value,{onConflict:'user_id,thread_key'});
     if(r.error)console.warn('Mark read:',r.error.message);
     if(thread.startsWith('u:')){
@@ -358,7 +362,7 @@ window.MWV11=(()=>{
   async function refreshRequestPeers(force=false){
     const uid=authUser();if(!uid)return;
     if(V.requestUid!==uid){V.requestUid=uid;V.requestPeers=new Set();V.requestAt=0;}
-    if(!force&&Date.now()-(V.requestAt||0)<1500)return;
+    if(!force&&Date.now()-(V.requestAt||0)<15000)return;
     V.requestAt=Date.now();
     const [incoming,following]=await Promise.all([
       DB.from('mw_dm_contact_history').select('sender_id').eq('recipient_id',uid),
@@ -880,9 +884,11 @@ window.MWV11=(()=>{
 
   // Refresh visible check marks while someone keeps a conversation open.
   setInterval(()=>{
-    if(!authUser()||S.page!=='chat'||!document.getElementById('msgs'))return;
+    if(!authUser()||document.hidden||S.page!=='chat'||(!S.mw11MobileOpen&&innerWidth<=760)||!document.getElementById('msgs'))return;
     const scope=S.chatId==='world'?'world':S.chatId?.startsWith('g:')?'group':'dm';
-    const rows=[...V.rows.values()].filter(m=>m.id&&document.querySelector('#msgs [data-v11-msg="'+m.id+'"]'));
+    const visible=new Set(Array.from(document.querySelectorAll('#msgs [data-v11-msg]'),n=>n.dataset.v11Msg));
+    const rows=[...V.rows.values()].filter(m=>m.id&&visible.has(m.id));
+    if(!rows.length)return;
     if(scope==='dm')refreshDmReceipts().catch(console.warn);
     else refreshRoomReceipts(scope,rows).catch(console.warn);
   },5000);
