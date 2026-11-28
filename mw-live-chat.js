@@ -308,20 +308,33 @@ window.MWChat=(()=>{
   if(member)window.MWV11?.markRead?.('g:'+id).catch(console.warn);
  }
  async function info(id){
-  const group=check(await DB.from('mw_groups').select('*').eq('id',id).single());
-  const members=check(await DB.from('mw_group_members').select('user_id').eq('group_id',id));
-  const own=group.owner_id===S.u.id;
-  const membership=members.some(m=>m.user_id===S.u.id);
-  const badge=check(await DB.from('mw_group_badges').select('group_id,verified_until').eq('group_id',id).maybeSingle());
+  const uid=S.u?.id;if(!uid)return;
+  const cached=C.userId===uid?C.groups.find(g=>g.id===id):null;
+  dialog('Guruh ma’lumotlari','<div id="mwGroupInfoLoading">'+(cached?'<div class="mw-group-top">'+(cached.avatar_url?'<img class="av large" src="'+escape(cached.avatar_url)+'" alt="">':icon('users',40))+'<div><h3>'+escape(cached.name)+'</h3><p>'+escape(cached.bio||'')+'</p></div></div>':'')+'<p class="muted" role="status">A’zolar va ma’lumotlar yuklanmoqda...</p></div>');
+  const holder=$('#mwGroupInfoLoading');
+  const alive=()=>holder?.isConnected&&S.u?.id===uid;
+  try{
+  const [gr,mr,br]=await Promise.all([
+    DB.from('mw_groups').select('*').eq('id',id).single(),
+    DB.from('mw_group_members').select('user_id').eq('group_id',id),
+    DB.from('mw_group_badges').select('group_id,verified_until').eq('group_id',id).maybeSingle()
+  ]);
+  if(!alive())return;
+  const group=check(gr),members=check(mr),badge=check(br);
+  const own=group.owner_id===uid;
+  const membership=members.some(m=>m.user_id===uid);
   const certified=!!badge&&(!badge.verified_until||new Date(badge.verified_until)>new Date());
-  const application=own&&group.visibility==='public'&&!certified?check(await DB.from('mw_group_badge_requests').select('id,status')
-    .eq('group_id',id).eq('status','pending').maybeSingle()):null;
-  const pending=own?check(await DB.from('mw_group_join_requests')
-    .select('id,requester_id').eq('group_id',id).eq('status','pending')):[];
-  const map=await users([...members.map(x=>x.user_id),...pending.map(x=>x.requester_id)]);
-  // Supabase RLS returns presence only for self and mutually following users.
-  const presenceResult=members.length?await DB.from('mw_presence').select('user_id,last_seen_at')
-    .in('user_id',members.map(x=>x.user_id)):{data:[],error:null};
+  const memberIds=members.map(x=>x.user_id);
+  const [ar,pr,memberMap]=await Promise.all([
+    own&&group.visibility==='public'&&!certified?DB.from('mw_group_badge_requests').select('id,status').eq('group_id',id).eq('status','pending').maybeSingle():Promise.resolve({data:null,error:null}),
+    own?DB.from('mw_group_join_requests').select('id,requester_id').eq('group_id',id).eq('status','pending'):Promise.resolve({data:[],error:null}),
+    users(memberIds)
+  ]);
+  if(!alive())return;
+  const application=check(ar),pending=check(pr);
+  const map={...memberMap,...cachedPeople(pending.map(x=>x.requester_id))};
+  const missing=pending.map(x=>x.requester_id).filter(x=>!map[x]);
+  const presenceResult={data:[]};
   const times=new Map((presenceResult.data||[]).map(x=>[x.user_id,x.last_seen_at]));
   const presenceText=id=>{
     const date=times.get(id);if(!date)return '';
@@ -337,7 +350,7 @@ window.MWChat=(()=>{
       ${own&&m.user_id!==group.owner_id?`<button type="button" class="mw11-kick" data-mw="kick" data-id="${escape(id)}"
         data-user="${escape(m.user_id)}" aria-label="A’zoni guruhdan chiqarish" title="Guruhdan chiqarish">${icon('x',18)}</button>`:''}
     </div>`).join('');
-  dialog('Guruh ma’lumotlari',`
+  holder.innerHTML=`
     <div class="mw-group-top">
       ${group.avatar_url?'<img class="av large" src="'+escape(group.avatar_url)+'" alt="">':icon('users',40)}
       <div><h3>${escape(group.name)} ${tick({verified:certified})}</h3><p>${group.visibility==='public'?'@'+escape(group.username||''):'Maxfiy guruh'}</p><p>${escape(group.bio||'')}</p></div>
@@ -357,7 +370,11 @@ window.MWChat=(()=>{
       '<button class="btn" data-mw="edit-group" data-id="'+escape(id)+'">Tahrirlash / a’zo qo‘shish</button>'+
       '<button class="btn danger" data-mw="delete-group" data-id="'+escape(id)+'">Guruhni o‘chirish</button>':
       (membership?'<button class="btn danger" data-mw="leave-group" data-id="'+escape(id)+'">Guruhdan chiqish</button>':'')}
-    </div>`);
+    </div>`;
+  const presenceTask=memberIds.length?DB.from("mw_presence").select("user_id,last_seen_at").in("user_id",memberIds):Promise.resolve({data:[]});
+  Promise.resolve(presenceTask).then(result=>{if(!alive()||result.error)return;for(const row of result.data||[])times.set(row.user_id,row.last_seen_at);for(const node of holder.querySelectorAll(".mw11-member-person")){const small=node.querySelector("small");if(small)small.textContent=presenceText(node.dataset.id);}}).catch(console.warn);
+  if(missing.length)users(missing).then(people=>{if(!alive())return;for(const node of holder.querySelectorAll("[data-mw=review-join]")){const req=pending.find(x=>x.id===node.dataset.id);const name=node.closest(".mw-invite-card")?.querySelector("strong");if(name&&req&&people[req.requester_id])name.textContent=people[req.requester_id].display_name||people[req.requester_id].username;}}).catch(console.warn);
+  }catch(err){if(alive())holder.textContent=err.message||"Ma’lumotlarni yuklab bo‘lmadi";}
  }
 
 
