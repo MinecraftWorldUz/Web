@@ -554,13 +554,14 @@ window.MWV11=(()=>{
     await go('chat');
   }
   const themes=[
+    ['standard','','Standart ko‘k'],
     ['forest','','Tayga'],['stone','','Qoyalar'],['grass','','Jungli'],['oak','','O‘rmon'],
     ['sunset','','Oltin vodiy'],['night','','Deep Dark'],['desert','','End'],
     ['nether','','Nether'],['ocean','','Tog‘ ko‘li'],['sky','','Qorli tog‘'],
     ['autumn','','Yomg‘irli o‘rmon'],['embers','','Nether uchqunlari'],['snow','','Qorli tog‘lar'],
     ['portal','','End olami'],['fireflies','','Sirli jungli']
   ];
-  const premiumThemes=new Set(themes.slice(10).map(x=>x[0]));
+  const premiumThemes=new Set(themes.slice(11).map(x=>x[0]));
   const themeStorage=thread=>'mw_theme_'+(authUser()||'guest')+'_'+thread;
   async function themeAccess(thread){
     if(thread==='world')return {edit:!!(S.me?.is_admin&&S.me?.username==='admin'),premium:false};
@@ -607,7 +608,7 @@ window.MWV11=(()=>{
     if(!target||!thread)return;
     const cacheKey=authUser()+'|'+thread;
     const cached=themeCache.get(cacheKey);if(cached)target.dataset.mwTheme=cached;
-    let id='forest';
+    let id='standard';
     if(thread==='world'){
       const r=await DB.from('mw_world_theme').select('theme_id').eq('singleton',true).maybeSingle();
       if(!r.error)id=r.data?.theme_id||id;
@@ -620,7 +621,7 @@ window.MWV11=(()=>{
     if(S.chatId!==thread&&!(S.chatId===thread.slice(2)))return;
     if(premiumThemes.has(id)){
       const access=await themeAccess(thread);
-      if(!access.premium)id='forest';
+      if(!access.premium)id='standard';
     }
     if(S.chatId!==thread&&!(S.chatId===thread.slice(2)))return;
     const holder=document.querySelector('#conversation #msgs');
@@ -648,8 +649,8 @@ window.MWV11=(()=>{
   async function themePicker(thread){
     const access=await themeAccess(thread);
     if(!access.edit){toast('Chat fonini faqat guruh egasi o‘zgartirishi mumkin');return;}
-    const current=document.querySelector('#conversation #msgs')?.dataset.mwTheme||'forest';
-    dialog('Minecraft chat fonlari','<p class="muted">Minecraft manzaralari: 10 ta oddiy va 5 ta animatsiyali maxsus fon.</p>'+
+    const current=document.querySelector('#conversation #msgs')?.dataset.mwTheme||'standard';
+    dialog('Minecraft chat fonlari','<p class="muted">Standart ko‘k fon, 10 ta Minecraft manzarasi va 5 ta maxsus animatsiyali fon.</p>'+
       '<div class="mw-theme-grid">'+themes.map(([id,emoji,label])=>
         '<button type="button" data-v11="theme-select" data-thread="'+esc(thread)+'" data-theme="'+id+'" '+
         ((!access.edit||(premiumThemes.has(id)&&!access.premium))?'disabled ':'')+
@@ -673,12 +674,15 @@ window.MWV11=(()=>{
 
   function chatOptions(thread){
     const pref=getPref(thread);
-    dialog('Chat', '<div class="mw11-actions">'+
-      '<button data-v11="pref" data-thread="'+esc(thread)+'" data-field="pinned">'+ico('bookmark',18)+' '+T(pref.pinned?'unpin':'pin')+'</button>'+
-      '<button data-v11="pref" data-thread="'+esc(thread)+'" data-field="muted">'+ico('bell',18)+' '+T(pref.muted?'unmute':'mute')+'</button>'+
-      '<button data-v11="pref" data-thread="'+esc(thread)+'" data-field="archived">'+ico('folder',18)+' '+T(pref.archived?'unarch':'arch')+'</button>'+
-      '<span id="mwThemeOption"></span></div>');
-    const option=document.getElementById('mwThemeOption');themeAccess(thread).then(access=>{if(option?.isConnected&&access.edit)option.innerHTML='<button data-v11="theme-open" data-thread="'+esc(thread)+'">'+ico('image',18)+' Chat fonini tanlash</button>';}).catch(console.warn);
+    const tile=(glyph,label,attrs,active=false)=>'<button type="button" class="mw-chat-menu-tile'+(active?' is-selected':'')+'" '+attrs+'>'+ico(glyph,24)+'<span>'+esc(label)+'</span></button>';
+    const attrs='data-v11="pref" data-thread="'+esc(thread)+'" data-field="';
+    dialog('Chat sozlamalari','<div class="mw-chat-menu-grid">'+
+      tile('bookmark',T(pref.pinned?'unpin':'pin'),attrs+'pinned"',pref.pinned)+
+      tile('bell',T(pref.muted?'unmute':'mute'),attrs+'muted"',pref.muted)+
+      tile('folder',T(pref.archived?'unarch':'arch'),attrs+'archived"',pref.archived)+
+      (thread.startsWith('u:')?tile('image','Chat foni','data-v11="theme-open" data-thread="'+esc(thread)+'"'):'<div id="mwThemeOption" hidden></div>')+'</div>');
+    const option=document.getElementById('mwThemeOption');
+    if(option)themeAccess(thread).then(access=>{if(option.isConnected&&access.edit){option.outerHTML=tile('image','Chat foni','data-v11="theme-open" data-thread="'+esc(thread)+'"');}}).catch(console.warn);
   }
   function handle(e){
     if(V.longPressTriggered){V.longPressTriggered=false;e.preventDefault();e.stopImmediatePropagation();return}
