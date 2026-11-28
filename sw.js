@@ -1,11 +1,13 @@
-const CACHE='mw-public-shell-winter-v23';
+const CACHE='mw-public-shell-winter-v25';
 const SCOPE=self.registration.scope;
-const PUBLIC_ASSETS=['./assets/winter-logo-192.png?v=21','./favicon.ico?v=21','./manifest.webmanifest','./winter.css?v=20.2','./assets/winter-mountains.webp']
-  .map(path=>new URL(path,SCOPE).href);
+const INDEX=new URL('./index.html',SCOPE).href;
+const PUBLIC_ASSETS=['./assets/winter-logo-192.png?v=21','./favicon.ico?v=21','./manifest.webmanifest','./winter.css?v=20.2','./assets/winter-mountains.webp','./mw-live-chat.js?v=groups36','./chat-landscapes.js?v=1','./mw-v11.js?v=20'].map(path=>new URL(path,SCOPE).href);
 self.addEventListener('install',event=>{
-  event.waitUntil(caches.open(CACHE).then(cache=>
-    cache.addAll(PUBLIC_ASSETS))
-    .then(()=>self.skipWaiting()));
+  event.waitUntil((async()=>{
+    const cache=await caches.open(CACHE);
+    await Promise.allSettled([INDEX,...PUBLIC_ASSETS].map(url=>cache.add(new Request(url,{cache:'reload'}))));
+    await self.skipWaiting();
+  })());
 });
 self.addEventListener('activate',event=>{
   event.waitUntil(Promise.all([
@@ -14,48 +16,47 @@ self.addEventListener('activate',event=>{
   ]));
 });
 self.addEventListener('fetch',event=>{
-  const req=event.request;
-  if(req.method!=='GET')return;
+  const req=event.request;if(req.method!=='GET')return;
   const url=new URL(req.url);
   if(PUBLIC_ASSETS.includes(url.href)){
-    event.respondWith(caches.open(CACHE).then(async cache=>(await cache.match(req))||fetch(req)));
+    event.respondWith((async()=>{
+      const cache=await caches.open(CACHE);
+      const cached=await cache.match(req);if(cached)return cached;
+      const response=await fetch(req);
+      if(response.ok)try{await cache.put(req,response.clone());}catch{}
+      return response;
+    })());
     return;
   }
-  // Reuse public mod covers only; storage paths are unique per upload.
+  // Only public mod covers; no API responses, private attachments or auth tokens.
   const publicCover=url.origin==='https://ruovdgyfcucspffrvijh.supabase.co'&&url.pathname.startsWith('/storage/v1/object/public/covers/');
   const bundledCover=url.origin===self.location.origin&&url.pathname.startsWith(new URL('./site-mods/',SCOPE).pathname);
   if(req.destination==='image'&&(publicCover||bundledCover)){
     event.respondWith((async()=>{
       const cache=await caches.open('mw-public-covers-v1');
-      const cached=await cache.match(req);
-      if(cached)return cached;
+      const cached=await cache.match(req);if(cached)return cached;
       const response=await fetch(req);
-      if(response.ok){
-        try{
-          await cache.put(req,response.clone());
-          const entries=await cache.keys();
-          await Promise.all(entries.slice(0,Math.max(0,entries.length-16)).map(entry=>cache.delete(entry)));
-        }catch{}
-      }
+      if(response.ok)try{
+        await cache.put(req,response.clone());
+        const entries=await cache.keys();
+        await Promise.all(entries.slice(0,Math.max(0,entries.length-40)).map(entry=>cache.delete(entry)));
+      }catch{}
       return response;
     })());
     return;
   }
-  // Never cache Supabase API, user sessions, or private data.
-  if(req.mode==='navigate'&&url.origin===self.location.origin&&url.pathname.startsWith('/Web/')){
+  const scopePath=new URL(SCOPE).pathname;
+  if(req.mode==='navigate'&&url.origin===self.location.origin&&(url.pathname===scopePath||url.pathname===new URL(INDEX).pathname)){
+    const task=(async()=>{
+      const online=await fetch(req);
+      if(online.ok)try{const cache=await caches.open(CACHE);await cache.put(INDEX,online.clone());}catch{}
+      return online;
+    })();
+    event.waitUntil(task.then(()=>{},()=>{}));
     event.respondWith((async()=>{
-      try{
-        const online=await fetch(req);
-        if(online.ok){
-          const cache=await caches.open(CACHE);
-          cache.put(new URL('./index.html',SCOPE).href,online.clone()).catch(()=>{});
-        }
-        return online;
-      }catch{
-        const cache=await caches.open(CACHE);
-        return (await cache.match(new URL('./index.html',SCOPE).href))||
-          Response.error();
-      }
+      const cached=await (await caches.open(CACHE)).match(INDEX);
+      if(!cached)return task.catch(()=>Response.error());
+      return Promise.race([task.catch(()=>cached),new Promise(resolve=>setTimeout(()=>resolve(cached),1800))]);
     })());
   }
 });
