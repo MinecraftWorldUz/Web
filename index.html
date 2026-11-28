@@ -2768,6 +2768,10 @@ select[data-mw-custom="1"][hidden]{display:none!important}
 /* Avoid expensive effects on low-powered mobile devices and hidden tabs. */
 @media(max-width:760px){.mw-chat-menu-grid,.mw-profile-actions{contain:layout style}.card.clickable-mod{content-visibility:auto;contain-intrinsic-size:auto 260px}.mw-question::backdrop{backdrop-filter:none}.winter-flake{will-change:transform;pointer-events:none}}
 html.mw-page-hidden .winter-flake,html.mw-page-hidden #msgs .mw-theme-particle{animation-play-state:paused!important}
+
+.mw-storage-offer{position:fixed;z-index:150;bottom:calc(85px + env(safe-area-inset-bottom));right:12px;width:min(360px,calc(100vw - 24px));padding:16px;border-radius:16px;background:#162e46;color:#eff8ff;border:1px solid #6389a5;box-shadow:0 8px 28px #0005}
+.mw-storage-offer p{margin:7px 0;color:#c1d6e6;font-size:14px;line-height:1.5}
+#mw-settings-loading{padding:18px 0;text-align:center}
 </style>
 </head>
 <body>
@@ -6370,6 +6374,26 @@ async function syncPushDevice(){
   check(await DB.from('mw_push_devices').upsert({user_id:uid,endpoint:sub.endpoint,p256dh:keys.p256dh,auth:keys.auth}));
   if(S.u?.id===uid&&notificationEnabled())await cache.put(record,new Response(uid));
 }
+// Ask only for storage persistence, never blanket access to personal files.
+function mwStorageText(key){
+ const labels={uz:{title:'Saytni tezroq ochish',body:'Sayt fayllarini brauzer xotirasida uzoqroq saqlashga ruxsat berasizmi?',yes:'Ruxsat berish',no:'Hozircha yo‘q',ok:'Brauzer xotirasi ruxsati berildi',fallback:'Oddiy kesh ishlashda davom etadi'},ru:{title:'Ускорить загрузку сайта',body:'Разрешить дольше хранить файлы сайта в памяти браузера?',yes:'Разрешить',no:'Не сейчас',ok:'Постоянное хранение разрешено',fallback:'Обычный кэш продолжит работать'},en:{title:'Load the site faster',body:'Allow site files to stay in browser storage longer?',yes:'Allow',no:'Not now',ok:'Persistent storage enabled',fallback:'Normal caching remains enabled'}};
+ return labels[S.lang]?.[key]||labels.uz[key];
+}
+async function mwOfferStorage(){
+ if(!navigator.storage?.persist||!navigator.storage?.persisted||document.getElementById('push-offer')||document.getElementById('mw-storage-offer'))return;
+ try{if(localStorage.getItem('mw-storage-asked-v1')||await navigator.storage.persisted())return;}catch{return}
+ const offer=document.createElement('aside');offer.id='mw-storage-offer';offer.className='mw-storage-offer';
+ offer.innerHTML='<strong>'+e(mwStorageText('title'))+'</strong><p>'+e(mwStorageText('body'))+'</p><div class="buttons"><button type="button" class="btn small" data-storage-allow>'+e(mwStorageText('yes'))+'</button><button type="button" class="btn small ghost" data-storage-later>'+e(mwStorageText('no'))+'</button></div>';
+ offer.addEventListener('click',async ev=>{
+  const button=ev.target.closest('[data-storage-allow],[data-storage-later]');if(!button)return;
+  try{localStorage.setItem('mw-storage-asked-v1','1');}catch{}
+  offer.remove();
+  if(button.hasAttribute('data-storage-allow')){
+   try{toast(mwStorageText(await navigator.storage.persist()?'ok':'fallback'));}catch{toast(mwStorageText('fallback'));}
+  }
+ });
+ document.body.append(offer);
+}
 function offerPush(){
   if(!pushSupported()||Notification.permission!=='default'||!notificationEnabled()||localStorage.getItem('mw-push-asked-v1'))return;
   if(document.getElementById('push-offer'))return;
@@ -6480,11 +6504,13 @@ async function settings(){
   }
   if(!requireUser())return;
   const uid=S.u.id;
+  dialog(t('settings'),'<div id="mw-settings-loading" class="muted" role="status">'+e(ux('Yuklanmoqda...'))+'</div>');
+  const settingsLoading=$('#mw-settings-loading');
   const [fresh,badge,approvalResult]=await Promise.all([DB.from('profiles').select('verified,verified_until').eq('id',uid).maybeSingle(),DB.from('verification_requests').select('id').eq('user_id',uid).eq('status','pending').maybeSingle(),DB.from('mw_chat_settings').select('require_group_approval').eq('user_id',uid).maybeSingle()]);
   check(fresh);check(badge);if(S.u?.id!==uid)return;if(fresh.data&&S.me)Object.assign(S.me,fresh.data);
   const on=notificationEnabled()&&pushSupported()&&Notification.permission==='granted';
   const approval=check(approvalResult);
-  if(S.u?.id!==uid)return;
+  if(S.u?.id!==uid||!settingsLoading?.isConnected)return;
   dialog(t('settings'),`
     <div class="settings-stack">
       <button class="mw-settings-account" data-act="accounts">${avatar(S.me)}<span><strong>@${e(S.me?.username||"Profil")}${tick(S.me)}</strong></span><span>${ico("arrow",18)}</span></button>
@@ -6847,6 +6873,7 @@ window.addEventListener('click',async event=>{
       localStorage.setItem('mw-push-asked-v1','1');
       document.getElementById('push-offer')?.remove();
       if(act==='pushAllow')await enablePhonePush();
+      mwOfferStorage().catch(console.warn);
     }
     else if(act==='settings')await settings();
     else if(act==='notificationToggle')await toggleNotifications();
@@ -7273,7 +7300,7 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js?v=25').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=26').catch(console.warn);
   });
 }
 
@@ -7475,6 +7502,7 @@ function mwInstallBackGuard(){
   mwInitialNavigation=false;
   mwSaveResume();
   offerPush();
+  mwOfferStorage().catch(console.warn);
   mwPageStack.length=0;
   mwPingPresence().catch(console.warn);
   scheduleFastPrefetch();
@@ -7518,7 +7546,7 @@ function mwInstallBackGuard(){
 });
 </script>
 <script src="./mw-live-chat.js?v=groups36"></script>
-<script src="./chat-landscapes.js?v=1"></script>
+<script src="./chat-landscapes.js?v=2"></script>
 <script src="./mw-v11.js?v=20"></script>
 </body>
 </html>
