@@ -2764,6 +2764,10 @@ select[data-mw-custom="1"][hidden]{display:none!important}
 #overlay #mwGroupForm .mw-avatar-button>.mw-group-avatar-plus{z-index:2}
 #overlay #mwGroupForm .mw-avatar-edit-stack{flex:0 0 96px;min-width:0}
 #overlay #mwGroupForm .mw-avatar-remove{max-width:100%;font-size:11px;line-height:1.3;text-align:center}
+
+/* Avoid expensive effects on low-powered mobile devices and hidden tabs. */
+@media(max-width:760px){.mw-chat-menu-grid,.mw-profile-actions{contain:layout style}.card.clickable-mod{content-visibility:auto;contain-intrinsic-size:auto 260px}.mw-question::backdrop{backdrop-filter:none}.winter-flake{will-change:transform;pointer-events:none}}
+html.mw-page-hidden .winter-flake,html.mw-page-hidden #msgs .mw-theme-particle{animation-play-state:paused!important}
 </style>
 </head>
 <body>
@@ -3420,7 +3424,8 @@ function mwRefreshModFields(){
 }
 document.addEventListener('input',ev=>{if(ev.target.matches('#modForm textarea'))mwRefreshModFields()});
 window.addEventListener('resize',mwRefreshModFields);
-new MutationObserver(()=>requestAnimationFrame(mwRefreshModFields)).observe(document.body,{childList:true,subtree:true});
+let mwModFieldsFrame=0;
+new MutationObserver(()=>{if(mwModFieldsFrame)return;mwModFieldsFrame=requestAnimationFrame(()=>{mwModFieldsFrame=0;mwRefreshModFields();});}).observe($('#overlay'),{childList:true,subtree:true});
 window.addEventListener('click',ev=>{
  const b=ev.target.closest('.mw-desc-more');if(!b)return;
  const expanded=b.parentElement.classList.toggle('expanded');b.textContent=expanded?'Kamroq':'Yana';b.setAttribute('aria-expanded',String(expanded));
@@ -3489,8 +3494,9 @@ const mwMarqueeObserver=new ResizeObserver(entries=>{
   el.style.setProperty('--mw-duration',Math.max(7,distance/15+4)+'s');
  }
 });
-function mountMarquees(){
- document.querySelectorAll('.mw-marquee:not([data-mw-marquee])').forEach(el=>{
+function mountMarquees(root=document){
+ const selector='.mw-marquee:not([data-mw-marquee])';
+ [...(root.matches?.(selector)?[root]:[]),...(root.querySelectorAll?.(selector)||[])].forEach(el=>{
   el.dataset.mwMarquee='1';mwMarqueeObserver.observe(el);
  });
 }
@@ -3500,7 +3506,7 @@ const mwMarqueeMutations=new MutationObserver(records=>{
   if(node.matches('.mw-marquee')&&!node.isConnected)mwMarqueeObserver.unobserve(node);
   node.querySelectorAll('.mw-marquee').forEach(el=>{if(!el.isConnected)mwMarqueeObserver.unobserve(el)});
  }
- mountMarquees();
+ for(const record of records)for(const node of record.addedNodes)if(node.nodeType===1)mountMarquees(node);
 });
 mwMarqueeMutations.observe(document.body,{childList:true,subtree:true});
 function miniUser(p){
@@ -4287,7 +4293,7 @@ async function refreshUser(){
     invalidateProfileData();
     prefetchedFor=null;
     S.communityData=null;S.accountsAt=0;
-    S.chatId=null;S.chatUnread=new Set();S.chatPeers=[];
+    S.chatId=null;S.chatUnread=new Set();S.chatPeers=[];recentThreads.clear();
     S.chatUsers={};S.worldUnread=0;S.worldPref=null;
     S.savedIds=new Set();
   }
@@ -5207,8 +5213,9 @@ async function editMod(id){
 // Site-owned dialogs, separate from the current page or profile editor.
 let mwQuestionQueue=Promise.resolve();
 // Replace native select popups while preserving form values and change handlers.
-function mwMountSiteSelects(){
-  for(const select of document.querySelectorAll('select:not([multiple]):not([size])')){
+function mwMountSiteSelects(root=document){
+  const selector='select:not([multiple]):not([size])';
+  for(const select of [...(root.matches?.(selector)?[root]:[]),...(root.querySelectorAll?.(selector)||[])]){
     if(select.dataset.mwCustom==='1')continue;
     select.dataset.mwCustom='1';
     const button=document.createElement('button');button.type='button';button.className='mw-site-select';button.setAttribute('aria-haspopup','dialog');
@@ -5232,7 +5239,7 @@ function mwMountSiteSelects(){
     });
   }
 }
-new MutationObserver(mwMountSiteSelects).observe(document.body,{childList:true,subtree:true});
+new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes)if(node.nodeType===1)mwMountSiteSelects(node);}).observe(document.body,{childList:true,subtree:true});
 mwMountSiteSelects();
 function mwQuestion(message,options={}){
   const run=()=>new Promise(resolve=>{
@@ -5291,7 +5298,7 @@ function getCachedMod(id){
   return item||null;
 }
 function cacheMod(m){
-  if(m?.id)modCache.set(m.id,m);
+  if(m?.id){modCache.set(m.id,m);while(modCache.size>180)modCache.delete(modCache.keys().next().value);}
   return m;
 }
 function modSkeleton(id){
@@ -5925,13 +5932,10 @@ async function chats(){
   updateChatBadge();
   window.MWV11?.prepareChatScreen?.();
   const selected=S.chatId;
-  const thread=selected==='world'?worldConversation():selected.startsWith('g:')?window.MWChat?.openGroup?.(selected.slice(2)):conversation(selected);
-  const [messages,pref]=await Promise.all([
-    DB.from('messages').select('sender_id,recipient_id,body,created_at')
+  const thread=(!S.mw11MobileOpen&&matchMedia('(max-width:760px)').matches)?Promise.resolve():selected==='world'?worldConversation():selected.startsWith('g:')?window.MWChat?.openGroup?.(selected.slice(2)):conversation(selected);
+  const messages=await DB.from('messages').select('sender_id,recipient_id,body,created_at')
       .or(`sender_id.eq.${owner},recipient_id.eq.${owner}`)
-      .order('created_at',{ascending:false}).limit(55),
-    worldPref()
-  ]);
+      .order('created_at',{ascending:false}).limit(55);
   check(messages);
   if(S.page!=='chat'||S.u?.id!==owner||request!==chatListRequest)return;
   S.mwDirectTimes={};S.mwLastMessage={};for(const m of messages.data){const id=m.sender_id===owner?m.recipient_id:m.sender_id;if(id&&!S.mwDirectTimes[id])S.mwDirectTimes[id]=new Date(m.created_at).getTime();if(id&&!S.mwLastMessage[id])S.mwLastMessage[id]=(m.sender_id===owner?'Siz: ':'')+String(m.body||'').slice(0,65)}
@@ -6013,6 +6017,7 @@ async function conversation(id){
     '<small>@'+e(p?.username||'...')+'</small>';
   const rows=msgResult.data.slice().reverse();
   recentThreads.set(key,{rows,at:Date.now()});
+  while(recentThreads.size>16)recentThreads.delete(recentThreads.keys().next().value);
   const msgs=$('#msgs');
   if(msgs){
     msgs.innerHTML=(window.MWV11?.dated?.(rows,m=>window.MWV11?.bubble?.(m,'dm',rows)||
@@ -6475,10 +6480,10 @@ async function settings(){
   }
   if(!requireUser())return;
   const uid=S.u.id;
-  const [fresh,badge]=await Promise.all([DB.from('profiles').select('verified,verified_until').eq('id',uid).maybeSingle(),DB.from('verification_requests').select('id').eq('user_id',uid).eq('status','pending').maybeSingle()]);
+  const [fresh,badge,approvalResult]=await Promise.all([DB.from('profiles').select('verified,verified_until').eq('id',uid).maybeSingle(),DB.from('verification_requests').select('id').eq('user_id',uid).eq('status','pending').maybeSingle(),DB.from('mw_chat_settings').select('require_group_approval').eq('user_id',uid).maybeSingle()]);
   check(fresh);check(badge);if(S.u?.id!==uid)return;if(fresh.data&&S.me)Object.assign(S.me,fresh.data);
   const on=notificationEnabled()&&pushSupported()&&Notification.permission==='granted';
-  const approval=check(await DB.from('mw_chat_settings').select('require_group_approval').eq('user_id',uid).maybeSingle());
+  const approval=check(approvalResult);
   if(S.u?.id!==uid)return;
   dialog(t('settings'),`
     <div class="settings-stack">
@@ -7232,9 +7237,10 @@ window.addEventListener('keydown',ev=>{
   if(ev.key==='Escape'&&$('#overlay').classList.contains('open')){ev.preventDefault();mwRequestDialogBack().catch(console.warn)}
 });
 
+document.addEventListener('visibilitychange',()=>document.documentElement.classList.toggle('mw-page-hidden',document.hidden));
 function createSnow(){
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  const flakes=window.matchMedia('(max-width:560px)').matches?18:34;
+  const flakes=window.matchMedia('(max-width:560px)').matches?9:20;
   const fragment=document.createDocumentFragment();
   for(let i=0;i<flakes;i++){
     const flake=document.createElement('span');
@@ -7267,13 +7273,15 @@ async function installApp(){
 }
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js?v=24').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js?v=25').catch(console.warn);
   });
 }
 
 // Cleanup runs on Supabase after fresh chat activity. Browser never deletes storage objects.
+let mwLastCleanup=0;
 async function mwMaybeExpireImages(){
-  if(!S.u)return;
+  if(!S.u||Date.now()-mwLastCleanup<300000)return;
+  mwLastCleanup=Date.now();
   const {error}=await DB.functions.invoke('mw-expire-chat-images',{method:'POST',body:{}});
   if(error)console.warn('Expired chat images:',error.message);
 }
@@ -7356,10 +7364,10 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)mwSaveResum
 let mwResumeScrollTimer;
 window.addEventListener('scroll',()=>{clearTimeout(mwResumeScrollTimer);mwResumeScrollTimer=setTimeout(mwSaveResume,150)},{passive:true});
 function mwSyncRoute(){
- mwSaveResume();
  if(!mwHistoryReady||mwBackRestoring||mwBackBusy)return;
  const key=mwRouteKey(),depth=mwRouteDepth();
  if(key===mwLastRoute)return;
+ mwSaveResume();
  const previousDepth=mwLastDepth;
  mwLastRoute=key;mwLastDepth=depth;mwHomeExitAt=0;
  try{
@@ -7509,8 +7517,8 @@ function mwInstallBackGuard(){
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=groups35"></script>
+<script src="./mw-live-chat.js?v=groups36"></script>
 <script src="./chat-landscapes.js?v=1"></script>
-<script src="./mw-v11.js?v=19"></script>
+<script src="./mw-v11.js?v=20"></script>
 </body>
 </html>
