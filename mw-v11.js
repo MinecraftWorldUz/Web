@@ -51,7 +51,7 @@ window.MWV11=(()=>{
     const quote=m.reply_to?'<div class="mw11-quote">'+esc((reply?.body||T('noReply')).slice(0,130))+'</div>':'';
     return '<div class="bubble '+(mine?'mine':'')+' mw11-bubble" tabindex="0" role="button" aria-label="Xabar amallari" data-v11-msg="'+esc(id)+'" data-v11-scope="'+scope+'">'+
       quote+'<div class="bubble-body">'+sharedBody(m.body||'')+'</div>'+
-      (m.attachment_path?'<div class="mw11-attachment" data-mw11-media="'+esc(m.attachment_path)+'"><span>📎 '+esc(m.attachment_name||'Fayl')+'</span></div>':'')+
+      (m.attachment_path?'<div class="mw11-attachment" data-mw11-media="'+esc(m.attachment_path)+'"><span>Fayl: '+esc(m.attachment_name||'Fayl')+'</span></div>':'')+
       '<div class="mw11-footer"><small>'+esc(chatTime(m.created_at))+(m.edited_at?' · ✎':'')+(mine?'<span class="mw11-delivery" data-created="'+esc(m.created_at)+'">'+(scope==='dm'&&V.readTimes.get(S.chatId)>=new Date(m.created_at).getTime()?' ✓✓':' ✓')+'</span>':'')+'</small></div>'+
       '<div class="mw11-reaction-list" data-v11-reactions="'+esc(id)+'"></div></div>';
   }
@@ -265,7 +265,7 @@ window.MWV11=(()=>{
         target.innerHTML='<video class="mw11-video-message" src="'+href+'" controls playsinline preload="metadata" aria-label="'+name+'"></video>';
       }else{
         target.innerHTML='<a class="mw11-file-message" href="'+href+'" target="_blank" rel="noopener noreferrer" download>'+
-          '<span>📄</span><strong>'+name+'</strong><span>↗</span></a>';
+          '<span>'+ico('file',18)+'</span><strong>'+name+'</strong><span>↗</span></a>';
       }
     }
   }
@@ -295,7 +295,7 @@ window.MWV11=(()=>{
         const url=URL.createObjectURL(file);urls.push(url);
         return '<div class="mw11-preview-item"><img src="'+esc(url)+'" alt="Tanlangan rasm"><small>'+Math.ceil(file.size/1024)+' KB'+(file.size>512000?' · kichraytiriladi':'')+'</small></div>';
       }
-      return '<div class="mw11-preview-item"><span>📎 '+esc(file.name.slice(0,55))+'</span></div>';
+      return '<div class="mw11-preview-item"><span>Fayl: '+esc(file.name.slice(0,55))+'</span></div>';
     }).join('')+'</div><button type="button" data-v11="clear-media" aria-label="Fayllarni olib tashlash">'+ico('x',18)+'</button>';
     previewUrls.set(form,urls);
   }
@@ -421,7 +421,7 @@ window.MWV11=(()=>{
       p.title='Chatni ochish · Sozlamalar uchun bosib turing';
       let flag=p.querySelector('.mw11-chat-flag');if(flag)flag.remove();
       if(pref.pinned||pref.muted){
-        p.insertAdjacentHTML('beforeend','<span class="mw11-chat-flag">'+(pref.pinned?'📌':'')+(pref.muted?'🔕':'')+'</span>');
+        p.insertAdjacentHTML('beforeend','<span class="mw11-chat-flag">'+(pref.pinned?ico('bookmark',15):'')+(pref.muted?ico('bell',15):'')+'</span>');
       }
       rows.append(p);
     }
@@ -604,7 +604,7 @@ window.MWV11=(()=>{
     if(holder.dataset.mwTheme===id&&holder.dataset.mwThemeReady==='1')return;
     themeCache.set(cacheKey,id);holder.dataset.mwTheme=id;holder.dataset.mwThemeReady='1';
     holder.querySelector('.mw-theme-particles')?.remove();
-    const symbols={autumn:'🍂',embers:'✦',snow:'❄',portal:'✧',fireflies:'✳'};
+    const symbols={autumn:'◆',embers:'✦',snow:'❄',portal:'✧',fireflies:'✳'};
     if(symbols[id]){
       const particles=document.createElement('div');
       particles.className='mw-theme-particles';
@@ -629,8 +629,8 @@ window.MWV11=(()=>{
         '<button type="button" data-v11="theme-select" data-thread="'+esc(thread)+'" data-theme="'+id+'" '+
         ((!access.edit||(premiumThemes.has(id)&&!access.premium))?'disabled ':'')+
         'class="mw-theme-choice '+(id===current?'chosen':'')+'">'+
-        '<span class="mw-theme-swatch" data-theme="'+id+'">'+emoji+'</span>'+
-        '<strong>'+esc(label)+'</strong><small>'+(premiumThemes.has(id)?'🔵 Premium':'Oddiy')+'</small></button>').join('')+'</div>'+
+        '<span class="mw-theme-swatch" data-theme="'+id+'">'+ico('image',22)+'</span>'+
+        '<strong>'+esc(label)+'</strong><small>'+(premiumThemes.has(id)?'Premium':'Oddiy')+'</small></button>').join('')+'</div>'+
       (!access.edit?'<p class="muted">Bu chat fonini faqat chat egasi yoki admin o‘zgartiradi.</p>':''));
   }
   async function selectTheme(thread,id){
