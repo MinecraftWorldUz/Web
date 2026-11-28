@@ -2615,6 +2615,11 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
 .settings-stack .mw-setting-toggle:focus-visible{outline:2px solid #a4dcff;outline-offset:3px}
 .settings-stack .mw-setting-toggle:disabled{opacity:.55;cursor:wait}
 @media(prefers-reduced-motion:reduce){.settings-stack .mw-setting-toggle,.settings-stack .mw-setting-toggle::after{transition:none}}
+
+.mw-pending-clock{display:inline-block;position:relative;width:12px;height:12px;border:1.5px solid currentColor;border-radius:50%;vertical-align:-2px;margin-left:3px}
+.mw-pending-clock:after{content:"";position:absolute;left:50%;top:50%;width:1px;height:4px;background:currentColor;transform-origin:top center;animation:mwPendingSpin 1.2s linear infinite}
+@keyframes mwPendingSpin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.mw-pending-clock:after{animation:none}}
 </style>
 </head>
 <body>
@@ -3468,7 +3473,7 @@ async function go(page='home',id=null){
     if(page==='home')await home();
     else if(page==='profile')await profile(target,nav);
     else if(page==='community')await community();
-    else if(page==='chat'){await chats();await window.MWChat?.load?.();await window.MWV11?.loadPrefs?.();}
+    else if(page==='chat'){await Promise.all([chats(),window.MWChat?.load?.(),window.MWV11?.loadPrefs?.()]);}
     else if(page==='create')create();
     else await home();
   }catch(err){
@@ -5695,7 +5700,7 @@ async function chats(){
   updateChatBadge();
   window.MWV11?.prepareChatScreen?.();
   const selected=S.chatId;
-  const thread=selected==='world'?worldConversation():selected.startsWith('g:')?Promise.resolve():conversation(selected);
+  const thread=selected==='world'?worldConversation():selected.startsWith('g:')?window.MWChat?.openGroup?.(selected.slice(2)):conversation(selected);
   const [messages,pref]=await Promise.all([
     DB.from('messages').select('sender_id,recipient_id,body,created_at')
       .or(`sender_id.eq.${owner},recipient_id.eq.${owner}`)
@@ -6877,6 +6882,8 @@ window.addEventListener('submit',async ev=>{
       const mediaList=files.length?files:[null];
       if(f.dataset.limited==='true'&&mediaList.length>1){toast('Bir martalik so‘rovda faqat bitta xabar yuborish mumkin');return;}
       const sent=[];
+      const pending=window.MWV11?.beginPending?.(text||'📎 Fayl');
+      try{
       for(let i=0;i<mediaList.length;i++){
         const media=mediaList[i]?await window.MWV11.uploadAttachment(f,'dm',f.dataset.id,mediaList[i]):{};
         const body=(i===0&&text)|| (media.attachment_type==='image'?'🖼 Rasm':'📎 '+(media.attachment_name||'Fayl'));
@@ -6886,6 +6893,8 @@ window.addEventListener('submit',async ev=>{
         }).select('id,sender_id,recipient_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type').single());
         sent.push(result);
       }
+      window.MWV11?.finishPending?.(pending);
+      }catch(err){window.MWV11?.finishPending?.(pending,true);throw err;}
       f.reset();window.MWV11?.clearAttachment?.(f);window.MWV11?.clearReply?.();
       const msgs=$('#msgs');
       if(msgs&&S.chatId===f.dataset.id)for(const result of sent){
@@ -6913,6 +6922,8 @@ window.addEventListener('submit',async ev=>{
       if(!text&&!files.length)return;
       const mediaList=files.length?files:[null];
       const sent=[];
+      const pending=window.MWV11?.beginPending?.(text||'📎 Fayl');
+      try{
       for(let i=0;i<mediaList.length;i++){
         const media=mediaList[i]?await window.MWV11.uploadAttachment(f,'world','world',mediaList[i]):{};
         const body=(i===0&&text)||(media.attachment_type==='image'?'🖼 Rasm':'📎 '+(media.attachment_name||'Fayl'));
@@ -6922,6 +6933,8 @@ window.addEventListener('submit',async ev=>{
         }).select('id,author_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type').single());
         sent.push(result);
       }
+      window.MWV11?.finishPending?.(pending);
+      }catch(err){window.MWV11?.finishPending?.(pending,true);throw err;}
       f.reset();window.MWV11?.clearAttachment?.(f);window.MWV11?.clearReply?.();
       const msgs=$('#msgs');
       if(msgs&&S.chatId==='world')for(const result of sent){
@@ -7234,7 +7247,7 @@ function mwInstallBackGuard(){
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=groups27"></script>
-<script src="./mw-v11.js?v=12"></script>
+<script src="./mw-live-chat.js?v=groups28"></script>
+<script src="./mw-v11.js?v=13"></script>
 </body>
 </html>
