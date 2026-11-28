@@ -86,9 +86,30 @@ window.MWV11=(()=>{
       return divider+render(m,i);
     }).join('');
   }
+  const pendingSends=new Map();
+  function pendingThread(){return authUser()+'|'+S.chatId}
+  function drawPending(item){
+    const h=document.getElementById('msgs');if(!h||item.thread!==pendingThread()||S.page!=='chat'||h.querySelector('[data-pending-id="'+item.id+'"]'))return;
+    const node=document.createElement('div');node.className='bubble mine mw11-bubble';node.dataset.pendingId=item.id;
+    node.innerHTML='<div class="bubble-body">'+esc(item.body)+'</div><div class="mw11-footer"><small>'+esc(chatTime(item.created_at))+' <span class="mw-pending-clock" title="Yuborilmoqda" aria-label="Yuborilmoqda"></span></small></div>';
+    h.querySelectorAll(':scope > p.muted').forEach(p=>p.remove());h.append(node);h.scrollTop=h.scrollHeight;
+  }
+  function beginPending(body){
+    const item={id:crypto.randomUUID(),thread:pendingThread(),body,created_at:new Date().toISOString()};
+    pendingSends.set(item.id,item);drawPending(item);return item.id;
+  }
+  function restorePending(){for(const item of pendingSends.values())drawPending(item)}
+  function finishPending(id,failed=false){
+    const item=pendingSends.get(id);pendingSends.delete(id);
+    const node=document.querySelector('#msgs [data-pending-id="'+id+'"]');
+    if(node&&failed){const mark=node.querySelector('.mw-pending-clock');if(mark){mark.className='';mark.textContent=' !';mark.title='Yuborilmadi';}}
+    else node?.remove();
+  }
   function appendDated(m,html){
     const holder=document.getElementById('msgs');
     if(!holder)return;
+    if(m.id&&holder.querySelector('[data-v11-msg="'+m.id+'"]'))return;
+    holder.querySelectorAll(':scope > p.muted').forEach(p=>p.remove());
     const key=chatDateKey(m.created_at);
     const prev=holder.dataset.mw11LastDay||'';
     holder.insertAdjacentHTML('beforeend',(key&&key!==prev?dateMarker(m.created_at):'')+html);
@@ -133,10 +154,11 @@ window.MWV11=(()=>{
     }
   }
   function afterRender(rows,scope){
+    restorePending();
     if(!rows?.length)return;
     syncLastDate(rows);
     hydrateSharedMods().catch(console.warn);
-    applyTheme(scope==='world'?'world':scope==='group'?S.chatId:'u:'+S.chatId).catch(console.warn);
+    const holder=document.getElementById('msgs');if(holder&&!holder.dataset.mwTheme)applyTheme(scope==='world'?'world':scope==='group'?S.chatId:'u:'+S.chatId).catch(console.warn);
     for(const m of rows)if(m.id)V.rows.set(rxKey(scope,m.id),m);
     loadMedia(rows).catch(err=>console.warn('Chat media:',err));
     if(scope==='dm')refreshDmReceipts().catch(console.warn);
@@ -555,9 +577,12 @@ window.MWV11=(()=>{
     const valid=!!S.me?.verified&&(!S.me?.verified_until||new Date(S.me.verified_until)>new Date());
     return {edit:true,premium:valid};
   }
+  const themeCache=new Map();
   async function applyTheme(thread){
     const target=document.querySelector('#conversation #msgs');
     if(!target||!thread)return;
+    const cacheKey=authUser()+'|'+thread;
+    const cached=themeCache.get(cacheKey);if(cached)target.dataset.mwTheme=cached;
     let id='forest';
     if(thread==='world'){
       const r=await DB.from('mw_world_theme').select('theme_id').eq('singleton',true).maybeSingle();
@@ -576,7 +601,8 @@ window.MWV11=(()=>{
     if(S.chatId!==thread&&!(S.chatId===thread.slice(2)))return;
     const holder=document.querySelector('#conversation #msgs');
     if(!holder||!themes.some(t=>t[0]===id))return;
-    holder.dataset.mwTheme=id;
+    if(holder.dataset.mwTheme===id&&holder.dataset.mwThemeReady==='1')return;
+    themeCache.set(cacheKey,id);holder.dataset.mwTheme=id;holder.dataset.mwThemeReady='1';
     holder.querySelector('.mw-theme-particles')?.remove();
     const symbols={autumn:'🍂',embers:'✦',snow:'❄',portal:'✧',fireflies:'✳'};
     if(symbols[id]){
@@ -817,7 +843,7 @@ window.MWV11=(()=>{
     const rows=[...V.rows.values()].filter(m=>m.id&&document.querySelector('#msgs [data-v11-msg="'+m.id+'"]'));
     if(scope==='dm')refreshDmReceipts().catch(console.warn);
     else refreshRoomReceipts(scope,rows).catch(console.warn);
-  },30000);
+  },5000);
 
-  return {refreshRequestPeers,bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate,uploadAttachment,selectedAttachments,loadMedia,clearAttachment,refreshDmReceipts,refreshRoomReceipts,themePicker,applyTheme};
+  return {beginPending,finishPending,restorePending,refreshRequestPeers,bubble,afterRender,replyId,clearReply,loadPrefs,markRead,isMuted,decorateInbox,addThreadSearch,resetMobileThread,prepareChatScreen,openMobileThread,backMobileThread,consumeLongPress,dated,appendDated,syncLastDate,uploadAttachment,selectedAttachments,loadMedia,clearAttachment,refreshDmReceipts,refreshRoomReceipts,themePicker,applyTheme};
 })();
