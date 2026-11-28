@@ -8,7 +8,7 @@ window.MWChat=(()=>{
   const uid=S.u.id;
   if(C.userId!==uid){
    if(C.channel)DB.removeChannel(C.channel);
-   C.userId=uid;C.groups=[];C.last={};C.preview={};
+   C.userId=uid;C.groups=[];C.last={};C.preview={};C.badges=new Set();
    C.channel=DB.channel('mw-groups-'+uid)
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'mw_group_messages'},payload=>{
      if(S.u?.id!==uid)return;
@@ -41,28 +41,18 @@ window.MWChat=(()=>{
   }
   const member=check(await DB.from('mw_group_members').select('group_id').eq('user_id',uid));
   const ids=member.map(m=>m.group_id);
-  const [groups,recent,invites,worldRecent]=await Promise.all([
+  const [groups,recent,badgeRows]=await Promise.all([
    ids.length?DB.from('mw_groups').select('*').in('id',ids):Promise.resolve({data:[],error:null}),
    ids.length?DB.from('mw_group_messages').select('group_id,body,created_at').in('group_id',ids).order('created_at',{ascending:false}).limit(150):Promise.resolve({data:[],error:null}),
-   DB.from('mw_group_invitations').select('id',{count:'exact',head:true}).eq('recipient_id',uid).eq('status','pending'),
-   DB.from('world_chat_messages').select('created_at').order('created_at',{ascending:false}).limit(1)
+   ids.length?DB.from('mw_group_badges').select('group_id,verified_until').in('group_id',ids):Promise.resolve({data:[],error:null})
   ]);
   check(groups);check(recent);
   if(S.u?.id!==uid||S.page!=='chat')return;
   C.groups=groups.data;
-  const badgeRows=ids.length?await DB.from('mw_group_badges').select('group_id,verified_until').in('group_id',ids):{data:[],error:null};
   if(!badgeRows.error)C.badges=new Set((badgeRows.data||[]).filter(row=>!row.verified_until||new Date(row.verified_until)>new Date()).map(row=>row.group_id));
-  S.mwWorldTime=worldRecent.data?.[0]?new Date(worldRecent.data[0].created_at).getTime():0;
   C.last={};C.preview={};
   for(const m of recent.data)if(!C.last[m.group_id]){C.last[m.group_id]=new Date(m.created_at).getTime();C.preview[m.group_id]=String(m.body||'').slice(0,65)}
   renderGroups();
-  const owned=C.groups.filter(g=>g.owner_id===uid).map(g=>g.id);
-  const pending=owned.length?await DB.from('mw_group_join_requests')
-    .select('id',{count:'exact',head:true}).in('group_id',owned).eq('status','pending'):null;
-  if(pending?.error)throw pending.error;
-  const requestCount=pending?.count||0;
-  $('#mwInviteButton')?.remove();
-  if(S.chatId?.startsWith('g:')&&S.mw11MobileOpen&&!$('#conversation #mwGroupMessage')&&!$('#conversation .mw-join-footer'))await openGroup(S.chatId.slice(2));
  }
  function renderGroups(){
   const rows=$('#chatRows');
@@ -288,6 +278,13 @@ window.MWChat=(()=>{
   const uid=S.u.id, seq=(C.openSeq||0)+1;C.openSeq=seq;
   S.chatId='g:'+id;
   const same=C.activeId===id&&$('#conversation #msgs')&&($('#conversation #mwGroupMessage')?.dataset.id===id);
+  const areaNow=$('#conversation');
+  if(!same&&areaNow){
+    const known=C.userId===uid?C.groups.find(g=>g.id===id):null;
+    areaNow.innerHTML='<header class="chat-toolbar"><span class="mw11-group-header-avatar">'+(known?.avatar_url?'<img class="av" src="'+escape(known.avatar_url)+'" alt="">':icon('users',28))+'</span><button class="linkbtn mw11-head-name" data-mw="group-info" data-id="'+escape(id)+'"><strong>'+escape(known?.name||ux('Guruh'))+'</strong></button></header><div class="messages" id="msgs" data-mw-theme="standard"><p class="muted">'+escape(ux('Xabarlar yuklanmoqda...'))+'</p></div>';
+    if(S.mw11MobileOpen)window.MWV11?.openMobileThread?.();
+  }
+  const messagesPromise=DB.from('mw_group_messages').select('id,sender_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type,is_join_event').eq('group_id',id).order('created_at',{ascending:false}).limit(65).then(r=>r);
   const [gr,mr]=await Promise.all([DB.from('mw_groups').select('*').eq('id',id).single(),DB.from('mw_group_members').select('user_id').eq('group_id',id).eq('user_id',uid).maybeSingle()]);
   const g=check(gr),member=check(mr);
   if(S.u?.id!==uid||S.page!=='chat'||S.chatId!=='g:'+id||C.openSeq!==seq)return;
@@ -312,14 +309,16 @@ window.MWChat=(()=>{
   if(S.mw11MobileOpen)window.MWV11?.openMobileThread?.();
   renderGroups();
   if(preview&&g.visibility!=='public'){$('#msgs').innerHTML='<p class="muted mw-preview-note">Maxfiy guruh · Xabarlarni ko‘rish uchun taklifni qabul qiling.</p>';return;}
-  const rows=check(await DB.from('mw_group_messages').select('id,sender_id,body,created_at,reply_to,edited_at,attachment_path,attachment_name,attachment_type,is_join_event').eq('group_id',id).order('created_at',{ascending:false}).limit(65));
-  const people=await users(rows.map(m=>m.sender_id));
+  const rows=check(await messagesPromise);
+  const people=cachedPeople(rows.map(m=>m.sender_id));
+  const missing=[...new Set(rows.map(m=>m.sender_id))].filter(id=>!people[id]);
   if(S.u?.id!==uid||S.page!=='chat'||S.chatId!=='g:'+id||C.openSeq!==seq||!$('#msgs'))return;
   const ordered=rows.slice().reverse();
   $('#msgs').innerHTML=(window.MWV11?.dated?.(ordered,m=>groupBubble(m,people[m.sender_id],ordered))||
    ordered.map(m=>groupBubble(m,people[m.sender_id],ordered)).join(''))||'<p class="muted">Birinchi xabarni yuboring</p>';
   $('#msgs').scrollTop=$('#msgs').scrollHeight;
   window.MWV11?.afterRender?.(ordered,'group');
+  if(missing.length)users(missing).then(mp=>{if(S.u?.id!==uid||S.chatId!=='g:'+id||C.openSeq!==seq)return;for(const m of ordered){const node=document.querySelector('#msgs [data-v11-msg="'+m.id+'"]')?.closest('.mw11-group-message')?.querySelector('.mw11-group-sender');if(node&&mp[m.sender_id])node.textContent=mp[m.sender_id].display_name||mp[m.sender_id].username;}}).catch(console.warn);
   window.MWV11?.addThreadSearch?.();
   if(member)window.MWV11?.markRead?.('g:'+id).catch(console.warn);
  }
