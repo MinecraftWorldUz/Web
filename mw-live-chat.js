@@ -448,7 +448,7 @@ window.MWChat=(()=>{
    const targetId=button.dataset.user;
    const g=check(await DB.from('mw_groups').select('owner_id').eq('id',id).single());
    if(g.owner_id!==S.u.id||targetId===g.owner_id)throw Error('Faqat guruh egasi a’zoni chiqaradi');
-   if(!confirm('Bu a’zoni guruhdan chiqarasizmi?'))return;
+   if(!await mwConfirm('Bu a’zoni guruhdan chiqarasizmi?'))return;
    const removed=check(await DB.from('mw_group_members').delete().eq('group_id',id)
      .eq('user_id',targetId).select('user_id'));
    if(!removed.length)throw Error('A’zoni chiqarib bo‘lmadi');
@@ -477,30 +477,30 @@ window.MWChat=(()=>{
   }
   else if(command==='world-leave'){
    const pref=await worldPref();
-   if(pref.joined){if(!confirm('Umumiy chatdan chiqmoqchimisiz?'))return;
-    if(!confirm('Tasdiqlang: umumiy chatdan chiqasiz.'))return;}
+   if(pref.joined){if(!await mwConfirm('Umumiy chatdan chiqmoqchimisiz?'))return;
+    if(!await mwConfirm('Tasdiqlang: umumiy chatdan chiqasiz.'))return;}
    await worldUpdate({joined:!pref.joined});close();await go('chat');
   }
   else if(command==='leave-group'){
-   if(!confirm('Guruhdan chiqmoqchimisiz?'))return;
-   if(!confirm('Tasdiqlang: guruhdan chiqasiz.'))return;
+   if(!await mwConfirm('Guruhdan chiqmoqchimisiz?'))return;
+   if(!await mwConfirm('Tasdiqlang: guruhdan chiqasiz.'))return;
    check(await DB.from('mw_group_members').delete().eq('group_id',id).eq('user_id',S.u.id));
    close();S.chatId='world';await go('chat');
   }
   else if(command==='delete-group'){
-   if(!confirm('Guruhni barcha xabarlari bilan o‘chirasizmi?'))return;
+   if(!await mwConfirm('Guruhni barcha xabarlari bilan o‘chirasizmi?'))return;
    check(await DB.from('mw_groups').delete().eq('id',id).eq('owner_id',S.u.id));
    close();S.chatId='world';await go('chat');
   }
   else if(command==='edit-message'){
    const prev=check(await DB.from('mw_group_messages').select('body').eq('id',id).single());
-   const body=prompt('Xabarni tahrirlash',prev.body);
+   const body=await mwPrompt('Xabarni tahrirlash',prev.body);
    if(body===null)return;if(!body.trim())throw Error('Bo‘sh xabar');
    check(await DB.from('mw_group_messages').update({body:body.trim(),edited_at:new Date().toISOString()}).eq('id',id).eq('sender_id',S.u.id));
    await openGroup(C.activeId);
   }
   else if(command==='delete-message'){
-   if(!confirm('Xabarni o‘chirasizmi?'))return;
+   if(!await mwConfirm('Xabarni o‘chirasizmi?'))return;
    check(await DB.from('mw_group_messages').delete().eq('id',id).eq('sender_id',S.u.id));
    await openGroup(C.activeId);
   }
