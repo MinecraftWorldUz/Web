@@ -191,7 +191,7 @@ window.MWChat=(()=>{
   C.group=g;C.selected=[];C.selectedNames=new Map();C.memberLocked=new Map();
   dialog(g?'Guruhni tahrirlash':'Guruh yaratish','<form id="mwGroupForm" data-id="'+escape(g?.id||'')+'">'+
    '<div class="mw-group-top"><div class="mw-avatar-edit-stack"><label class="mw-avatar-button"><span id="mwGroupAvatarPreview" class="mw-group-avatar-preview">'+(g?.avatar_url?'<img src="'+escape(g.avatar_url)+'" alt="">':icon('users',38))+
-   '</span><span>＋</span><input type="file" name="avatar" accept="image/png,image/jpeg,image/webp"></label><button type="button" id="mwRemoveGroupAvatar" class="mw-avatar-remove" '+(g?.avatar_url?'':'hidden')+'>'+icon('trash',16)+' Rasmni o‘chirish</button></div>'+
+   '</span><span class="mw-group-avatar-plus">＋</span><input type="file" name="avatar" accept="image/png,image/jpeg,image/webp"></label><button type="button" id="mwRemoveGroupAvatar" class="mw-avatar-remove" '+(g?.avatar_url?'':'hidden')+'>'+icon('trash',16)+' Rasmni o‘chirish</button></div>'+
    '<div class="formgroup"><label>Guruh nomi</label><input class="field" name="name" value="'+escape(g?.name||'')+'" maxlength="48" required></div></div>'+
    '<div class="formgroup"><label>Bio</label><textarea class="field" name="bio" maxlength="280">'+escape(g?.bio||'')+'</textarea></div>'+
    '<div class="formgroup"><label>Guruh turi</label><label class="mw-switch-row"><input type="radio" name="visibility" value="public" '+(g?.visibility==='private'?'':'checked')+'> Ommaviy</label>'+
@@ -199,7 +199,7 @@ window.MWChat=(()=>{
    '<div id="mwUsernameWrap" class="formgroup"><label>Guruh username</label><input class="field" id="mwGroupUsername" name="username" maxlength="25" value="'+escape(g?.username||'')+'" placeholder="minecraft_team"><small id="mwUsernameState"></small></div>'+
    '<div class="formgroup"><label>Guruhga odam qo‘shish</label><input class="field" id="mwMemberSearch" placeholder="Ism yoki @username">'+
    '<div id="mwMemberResults" class="mw-member-list"></div><small id="mwSelectedCount"></small></div>'+
-   '<button class="mw-group-save" type="submit">'+icon('check',19)+' Saqlash</button>'+
+   '<button class="mw-group-save" type="submit">'+icon('check',19)+' '+escape(ux('Saqlash'))+'</button>'+
    (g&&g.owner_id===S.u?.id?'<div class="mw-group-delete-zone"><button type="button" class="mw-group-delete" data-mw="delete-group" data-id="'+escape(g.id)+'">'+icon('trash',18)+' Guruhni o‘chirish</button></div>':'')+
    '</form>');
   const form=$('#mwGroupForm'),file=form.querySelector('[name="avatar"]'),remove=$('#mwRemoveGroupAvatar'),preview=$('#mwGroupAvatarPreview');
@@ -592,12 +592,11 @@ window.MWChat=(()=>{
     if(label)label.textContent=ev.target.checked?'Ommaviy':'Maxfiy';
   }
   if(ev.target.closest('.mw-avatar-button')&&ev.target.files?.[0]){
+   const input=ev.target,file=input.files[0],form=input.closest('form'),preview=form?.querySelector('#mwGroupAvatarPreview');
    const reader=new FileReader();reader.onload=()=>{
-    const l=ev.target.closest('.mw-avatar-button');
-    if(!l)return;
-    l.querySelectorAll('img,svg').forEach(el=>el.remove());
-    l.insertAdjacentHTML('afterbegin','<img src="'+reader.result+'" alt="">');
-   };reader.readAsDataURL(ev.target.files[0]);
+    if(!preview?.isConnected||input.files?.[0]!==file||form.dataset.removeAvatar==='1')return;
+    const img=document.createElement('img');img.src=reader.result;img.alt='';preview.replaceChildren(img);
+   };reader.readAsDataURL(file);
   }
  });
  window.addEventListener('submit',async ev=>{
