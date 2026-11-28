@@ -557,7 +557,7 @@ window.MWV11=(()=>{
     ['forest','','Tayga'],['stone','','Qoyalar'],['grass','','Jungli'],['oak','','O‘rmon'],
     ['sunset','','Oltin vodiy'],['night','','Deep Dark'],['desert','','End'],
     ['nether','','Nether'],['ocean','','Tog‘ ko‘li'],['sky','','Qorli tog‘'],
-    ['autumn','','Kuzgi tayga'],['embers','','Nether uchqunlari'],['snow','','Qorli tog‘lar'],
+    ['autumn','','Yomg‘irli o‘rmon'],['embers','','Nether uchqunlari'],['snow','','Qorli tog‘lar'],
     ['portal','','End olami'],['fireflies','','Sirli jungli']
   ];
   const premiumThemes=new Set(themes.slice(10).map(x=>x[0]));
@@ -576,6 +576,31 @@ window.MWV11=(()=>{
     const valid=!!S.me?.verified&&(!S.me?.verified_until||new Date(S.me.verified_until)>new Date());
     return {edit:true,premium:valid};
   }
+  let ambient=null;
+  function stopAmbient(){
+    if(ambient){const old=ambient;ambient=null;old.source.stop();old.ctx.close().catch(()=>{});}
+    document.querySelectorAll('.mw-ambient-toggle').forEach(b=>{b.setAttribute('aria-pressed','false');b.innerHTML=ico('bell',18);});
+  }
+  function toggleAmbient(button,id){
+    if(ambient){stopAmbient();return;}
+    const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio){toast('Ovoz qo‘llab-quvvatlanmaydi');return;}
+    const ctx=new Audio(),buffer=ctx.createBuffer(1,ctx.sampleRate*4,ctx.sampleRate),samples=buffer.getChannelData(0);
+    let previous=0;for(let i=0;i<samples.length;i++){const noise=Math.random()*2-1;previous=.96*previous+.04*noise;samples[i]=id==='autumn'?noise*.17+previous*.6:previous;}
+    const source=ctx.createBufferSource();source.buffer=buffer;source.loop=true;
+    const filter=ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=id==='autumn'?3200:id==='embers'?240:850;
+    const gain=ctx.createGain();gain.gain.value=.17;
+    source.connect(filter);filter.connect(gain);gain.connect(ctx.destination);source.start();ctx.resume().catch(()=>stopAmbient());
+    ambient={ctx,source,thread:S.chatId};button.setAttribute('aria-pressed','true');button.innerHTML=ico('x',18);
+  }
+  function ambientControl(id){
+    const toolbar=document.querySelector('#conversation .chat-toolbar');if(!toolbar)return;
+    toolbar.querySelector('.mw-ambient-toggle')?.remove();
+    if(!premiumThemes.has(id))return;
+    const b=document.createElement('button');b.type='button';b.className='mw-ambient-toggle';b.title='Fon ovozi';b.setAttribute('aria-label','Fon ovozini yoqish yoki o‘chirish');b.setAttribute('aria-pressed','false');b.innerHTML=ico('bell',18);
+    b.addEventListener('click',()=>toggleAmbient(b,id));toolbar.append(b);
+  }
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)stopAmbient();});
+  setInterval(()=>{if(ambient&&(S.page!=='chat'||S.chatId!==ambient.thread||!S.mw11MobileOpen&&innerWidth<=760))stopAmbient();},500);
   const themeCache=new Map();
   async function applyTheme(thread){
     const target=document.querySelector('#conversation #msgs');
@@ -601,20 +626,20 @@ window.MWV11=(()=>{
     const holder=document.querySelector('#conversation #msgs');
     if(!holder||!themes.some(t=>t[0]===id))return;
     if(holder.dataset.mwTheme===id&&holder.dataset.mwThemeReady==='1')return;
-    themeCache.set(cacheKey,id);holder.dataset.mwTheme=id;holder.dataset.mwThemeReady='1';
+    stopAmbient();themeCache.set(cacheKey,id);holder.dataset.mwTheme=id;holder.dataset.mwThemeReady='1';ambientControl(id);
     holder.querySelector('.mw-theme-particles')?.remove();
     const symbols={autumn:'',embers:'',snow:'',portal:'',fireflies:''};
     if(Object.hasOwn(symbols,id)){
       const particles=document.createElement('div');
       particles.className='mw-theme-particles';
       particles.setAttribute('aria-hidden','true');
-      for(let i=0;i<12;i++){
+      for(let i=0;i<32;i++){
         const particle=document.createElement('span');
         particle.className='mw-theme-particle';
         particle.textContent=symbols[id];
-        particle.style.left=((i*19+7)%94)+'%';
+        particle.style.left=((i*19+7)%94)+'%';particle.style.setProperty('--particle-drift',((i%5)-2)*28+'px');
         particle.style.animationDelay=(-i*1.8)+'s';
-        particle.style.animationDuration=(13+i%4*3)+'s';
+        particle.style.animationDuration=(id==='autumn'?0.9+i%4*.25:8+i%4*3)+'s';
         particles.append(particle);
       }
       holder.prepend(particles);
@@ -631,7 +656,7 @@ window.MWV11=(()=>{
         'class="mw-theme-choice '+(id===current?'chosen':'')+'">'+
         '<span class="mw-theme-swatch" data-theme="'+id+'">'+'</span>'+
         '<strong>'+esc(label)+'</strong><small>'+(premiumThemes.has(id)?'Premium':'Oddiy')+'</small></button>').join('')+'</div>'+
-      '<p class="muted mw-theme-credit">Minecraft kadrlar: Xbox México, <a href="https://commons.wikimedia.org/wiki/Category:Screenshots_of_Minecraft" target="_blank" rel="noopener">Wikimedia Commons</a> · <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>. Fon uchun rang, kesim va animatsiya qo‘llangan.</p>');
+      '<p class="muted mw-theme-credit">Maxsus fonlarda kamera effekti va ixtiyoriy fon ovozi mavjud.</p>');
   }
   async function selectTheme(thread,id){
     if(!themes.some(t=>t[0]===id))throw Error('Fon topilmadi');
