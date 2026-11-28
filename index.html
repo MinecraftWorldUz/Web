@@ -2702,6 +2702,15 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
 #conversation .mw-ambient-toggle{display:grid;place-items:center;flex:0 0 32px;width:32px;height:36px;border:0!important;background:transparent!important;box-shadow:none!important;color:#c4e9ff;padding:0!important}
 .mw-theme-credit{font-size:12px;line-height:1.5}
 @media(prefers-reduced-motion:reduce){#app.mw11-chat-page #msgs[data-mw-theme],#msgs .mw-theme-particle{animation:none!important}}
+
+/* Unified compact chat options and neutral default chat background. */
+.mw-chat-menu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:4px 0}
+.mw-chat-menu-grid .mw-chat-menu-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;min-height:82px;padding:12px 6px;border:1px solid #355974!important;border-radius:15px!important;background:#172f46!important;color:#e1f0fa!important;box-shadow:none!important;text-align:center;font-size:13px;font-weight:600;white-space:normal;cursor:pointer}
+.mw-chat-menu-grid .mw-chat-menu-tile svg{width:24px;height:24px;color:#b9ddf5}
+.mw-chat-menu-grid .mw-chat-menu-tile.is-selected{background:#25465f!important;border-color:#78b5df!important}
+.mw-chat-menu-grid .mw-chat-menu-tile:active{background:#25465f!important}
+#app.mw11-chat-page #msgs:not([data-mw-theme]),#app.mw11-chat-page #msgs[data-mw-theme="standard"],.mw-theme-swatch[data-theme="standard"]{background:#142a40!important;background-image:none!important;animation:none!important}
+#app.mw11-chat-page #msgs[data-mw-theme="standard"]::before{display:none!important}
 </style>
 </head>
 <body>
@@ -7342,6 +7351,6 @@ function mwInstallBackGuard(){
 </script>
 <script src="./mw-live-chat.js?v=groups34"></script>
 <script src="./chat-landscapes.js?v=1"></script>
-<script src="./mw-v11.js?v=18"></script>
+<script src="./mw-v11.js?v=19"></script>
 </body>
 </html>
