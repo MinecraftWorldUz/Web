@@ -2620,6 +2620,18 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
 .mw-pending-clock:after{content:"";position:absolute;left:50%;top:50%;width:1px;height:4px;background:currentColor;transform-origin:top center;animation:mwPendingSpin 1.2s linear infinite}
 @keyframes mwPendingSpin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.mw-pending-clock:after{animation:none}}
+
+/* Touch devices must not retain hover or selected inbox highlights. */
+@media (hover:none), (pointer:coarse) {
+  #app.mw11-chat-page #chatRows .chat-peer,
+  #app.mw11-chat-page #chatRows .chat-peer:hover,
+  #app.mw11-chat-page #chatRows .chat-peer.active,
+  #app.mw11-chat-page #chatRows .chat-peer:focus,
+  #app.mw11-chat-page #chatRows .chat-peer:active {
+    background:transparent!important;
+    -webkit-tap-highlight-color:transparent;
+  }
+}
 </style>
 </head>
 <body>
