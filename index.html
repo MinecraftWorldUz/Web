@@ -2674,6 +2674,18 @@ body .top .version-pill { background:#18354c!important; color:#c9ebff!important;
 .mw-question-ok{background:#91cbea;color:#10283a}
 .mw-question-ok.is-danger{background:#733d43;color:#fff;border-color:#ad646b}
 .mw-question-input{width:100%;resize:vertical;box-sizing:border-box}
+
+#mwGroupForm .mw-member-locked{opacity:.42;cursor:not-allowed;pointer-events:none}
+#mwGroupForm .mw-group-save,#mwGroupForm .mw-group-delete{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;border-radius:12px;font-weight:600;font-size:14px;padding:10px 12px;box-shadow:none}
+#mwGroupForm .mw-group-save{background:#8bc5e6;color:#12283b;border:1px solid #a7d7ee;margin-top:12px}
+#mwGroupForm .mw-group-delete-zone{margin-top:14px;padding-top:12px;border-top:1px solid #30485c}
+#mwGroupForm .mw-group-delete{background:transparent;color:#f29191;border:1px solid #854e55}
+#conversation #mw11SearchToggle{display:grid!important;place-items:center;width:40px;height:40px;flex:0 0 40px;border:0!important;border-radius:50%!important;background:transparent!important;color:#b9dff5;box-shadow:none!important;padding:0!important}
+#mw11ThreadResults{max-height:35vh;overflow:auto;padding:6px;background:#122538;border-radius:10px}
+#mw11ThreadResults .mw-thread-result{display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:100%;padding:9px;border:0;border-bottom:1px solid #29465e;background:transparent;color:#e1f1ff;text-align:left;box-shadow:none}
+#mw11ThreadResults .mw-thread-result small{color:#91afc5;font-size:11px}
+#mw11ThreadResults .mw-thread-result span{overflow-wrap:anywhere;font-size:14px}
+.mw-search-hit{outline:2px solid #88c8f1!important}
 </style>
 </head>
 <body>
@@ -7314,7 +7326,7 @@ function mwInstallBackGuard(){
   console.error(err)
 });
 </script>
-<script src="./mw-live-chat.js?v=groups32"></script>
-<script src="./mw-v11.js?v=15"></script>
+<script src="./mw-live-chat.js?v=groups33"></script>
+<script src="./mw-v11.js?v=16"></script>
 </body>
 </html>
